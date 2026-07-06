@@ -537,6 +537,183 @@ body.trip-mode { display: block; }
   .app-nav-button small { font-size: 7px; }
 }
 
+/* Animated x-Travel Agent compass-X branding */
+.brand-mark, .builder-brand > span { overflow:visible; padding:0; border:0; background:transparent !important; }
+.brand-mark img, .builder-brand img { display:block; width:100%; height:100%; object-fit:contain; }
+.builder-brand > span { width:38px; height:38px; }
+.trip-header-actions .export-button.loading { display:inline-flex; align-items:center; gap:6px; }
+.trip-header-actions .export-button.loading img { width:22px; height:22px; margin:-4px 0; }
+.output-created-list { grid-template-columns:repeat(auto-fit,minmax(235px,1fr)); }
+.output-created-list article { display:grid; gap:7px; padding:18px; border:1px solid var(--line); border-radius:14px; background:#fffdf8; box-shadow:0 8px 24px rgba(30,52,45,.08); }
+.output-created-list article strong { font-size:14px; }
+.output-created-list article span { color:var(--muted); font-size:10px; line-height:1.45; }
+
+/* Animated X-Travel Agent identity */
+.builder:not(.builder-wide) .builder-copy::after {
+  content:"✈️";
+  right:clamp(24px,7vw,112px);
+  width:auto;
+  height:auto;
+  background:none;
+  transform:translateY(-50%) rotate(-10deg);
+  font-size:clamp(100px,18vw,250px);
+  filter:drop-shadow(0 20px 22px rgba(0,0,0,.18));
+  opacity:.88;
+}
+.builder:not(.builder-wide) .builder-brand { gap:14px; font-size:clamp(20px,2vw,30px); }
+.builder:not(.builder-wide) .builder-brand > span { flex:0 0 clamp(82px,9vw,128px); width:clamp(82px,9vw,128px); height:clamp(92px,10vw,142px); }
+.builder:not(.builder-wide) .builder-brand strong { font-size:inherit; }
+.topbar .brand-mark { width:40px; height:45px; }
+.trip-app-header .brand-mark { width:38px; height:43px; }
+.brand-mark img,.builder-brand img { object-fit:contain; }
+.trip-header-actions .export-button.loading img { width:30px; height:34px; margin:-7px 0; }
+@media(max-width:780px) {
+  .builder:not(.builder-wide) .builder-copy::after { right:10px; width:auto; height:auto; font-size:110px; opacity:.48; }
+  .builder:not(.builder-wide) .builder-brand > span { flex-basis:74px; width:74px; height:84px; }
+  .builder:not(.builder-wide) .builder-brand { gap:10px; font-size:20px; }
+}
+
+/* Definitive five-stage arrow flowchart */
+.trip-form .form-progress {
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  width:100%;
+  height:auto;
+  gap:5px;
+  align-items:stretch;
+  margin:12px 0 18px;
+  overflow:visible;
+}
+.trip-form .form-progress span {
+  position:relative;
+  display:flex;
+  width:auto;
+  min-width:0;
+  height:68px;
+  gap:8px;
+  align-items:center;
+  justify-content:center;
+  padding:9px 18px 9px 25px;
+  border:0;
+  border-radius:0;
+  color:#25282b;
+  background:#f7edcf;
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%,14px 50%);
+  text-align:left;
+  transition:color .2s ease,background .2s ease,transform .2s ease;
+}
+.trip-form .form-progress span:first-child {
+  clip-path:polygon(0 0,calc(100% - 14px) 0,100% 50%,calc(100% - 14px) 100%,0 100%);
+  padding-left:15px;
+}
+.trip-form .form-progress span::after { display:none; content:none; }
+.trip-form .form-progress span b {
+  position:static;
+  z-index:auto;
+  display:grid;
+  width:28px;
+  height:28px;
+  place-items:center;
+  flex:0 0 28px;
+  border:1px solid rgba(121,88,18,.24);
+  border-radius:50%;
+  color:#30343a;
+  background:rgba(255,255,255,.7);
+  font-size:9px;
+  font-weight:800;
+  transform:none;
+  box-shadow:none;
+}
+.trip-form .form-progress span small {
+  display:grid;
+  width:max-content;
+  max-width:calc(100% - 36px);
+  min-width:0;
+  gap:3px;
+  overflow:visible;
+  color:inherit;
+  font-size:inherit;
+  line-height:1.1;
+  text-align:left;
+  text-overflow:clip;
+  white-space:normal;
+}
+.trip-form .form-progress span small strong {
+  overflow:hidden;
+  color:#202326;
+  font-size:clamp(9px,.76vw,12px);
+  font-weight:800;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.trip-form .form-progress span small em {
+  overflow:hidden;
+  color:#50555a;
+  font-size:clamp(7px,.61vw,9px);
+  font-style:normal;
+  font-weight:500;
+  opacity:1;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.trip-form .form-progress span.active {
+  color:#24272a;
+  background:#e8ca72;
+}
+.trip-form .form-progress span.active b {
+  color:#fff;
+  border-color:#a97510;
+  background:#a97510;
+}
+.trip-form .form-progress span.current {
+  z-index:2;
+  color:#17191b;
+  background:#d9a62e;
+  transform:translateY(-2px);
+  filter:drop-shadow(0 5px 6px rgba(112,77,7,.24));
+}
+.trip-form .form-progress span.current b {
+  color:#fff;
+  border-color:#5c4308;
+  background:#5c4308;
+  transform:none;
+  box-shadow:0 0 0 3px rgba(255,255,255,.38);
+}
+@media(max-width:700px) {
+  .trip-form .form-progress { gap:2px; }
+  .trip-form .form-progress span { height:64px; flex-direction:column; gap:3px; padding:6px 9px 6px 12px; clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%,8px 50%); text-align:center; }
+  .trip-form .form-progress span:first-child { padding-left:5px; clip-path:polygon(0 0,calc(100% - 8px) 0,100% 50%,calc(100% - 8px) 100%,0 100%); }
+  .trip-form .form-progress span b { flex-basis:18px; width:18px; height:18px; font-size:7px; }
+  .trip-form .form-progress span small { width:100%; max-width:100%; gap:2px; text-align:center; }
+  .trip-form .form-progress span small strong { font-size:clamp(6px,1.65vw,8px); }
+  .trip-form .form-progress span small em { font-size:clamp(5px,1.3vw,7px); }
+}
+
+/* Final five-step flow and automatic deliverables */
+.homepage-tagline { width:max-content; max-width:none; white-space:nowrap; font-size:clamp(9px,.75vw,12px); letter-spacing:-.01em; }
+.form-progress { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:0; margin:14px 0 19px; }
+.form-progress span { position:relative; display:grid; height:auto; min-width:0; justify-items:center; gap:5px; color:#958e80; background:transparent; text-align:center; }
+.form-progress span::after { content:""; position:absolute; z-index:0; left:calc(50% + 15px); right:calc(-50% + 15px); top:14px; height:2px; background:#ded8ca; }
+.form-progress span:last-child::after { display:none; }
+.form-progress span b { position:relative; z-index:1; display:grid; width:29px; height:29px; place-items:center; border:2px solid #d8d1c2; border-radius:50%; color:#81796a; background:#f8f5ed; font-size:10px; transition:.2s ease; }
+.form-progress span small { overflow:hidden; font-size:8px; font-weight:700; line-height:1.15; text-overflow:ellipsis; white-space:nowrap; }
+.form-progress span.active::after { background:var(--gold); }
+.form-progress span.active b { color:#fff; border-color:var(--gold); background:var(--gold); }
+.form-progress span.active small { color:#725516; }
+.form-progress span.current b { transform:scale(1.12); box-shadow:0 0 0 4px rgba(215,164,72,.18); }
+.output-created-list { display:grid; grid-template-columns:1fr; gap:10px; }
+.output-created-list article { grid-template-columns:minmax(190px,.42fr) minmax(0,1fr); align-items:center; }
+@media(max-width:900px){.homepage-tagline{width:auto;white-space:normal;font-size:12px}.form-progress span small{font-size:7px}.output-created-list article{grid-template-columns:1fr}}
+
+/* Compact single-line five-step progress path */
+.form-progress { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); width:100%; height:46px; gap:0; align-items:start; margin:12px 0 16px; overflow:visible; }
+.form-progress span { position:relative; display:flex; min-width:0; height:46px; flex-direction:column; align-items:center; justify-content:flex-start; gap:4px; background:transparent; }
+.form-progress span::after { left:calc(50% + 13px); right:calc(-50% + 13px); top:12px; height:2px; }
+.form-progress span b { flex:0 0 26px; width:26px; height:26px; font-size:9px; }
+.form-progress span small { display:block; width:100%; overflow:hidden; font-size:7px; line-height:1; text-align:center; text-overflow:ellipsis; white-space:nowrap; }
+.form-progress span.current b { transform:scale(1.06); box-shadow:0 0 0 3px rgba(215,164,72,.16); }
+@media(max-width:480px){.form-progress{height:43px}.form-progress span{height:43px;gap:3px}.form-progress span b{flex-basis:23px;width:23px;height:23px;font-size:8px}.form-progress span::after{left:calc(50% + 11px);right:calc(-50% + 11px);top:10px}.form-progress span small{font-size:6px;letter-spacing:-.02em}}
+
 /* Generated trip app — patterned after the original Tokyo itinerary */
 body.trip-mode { overflow: hidden; background: #dfe7e2; }
 body.trip-mode > .page-shell > .topbar { display: none; }
@@ -1800,3 +1977,97 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   .report-day-bar #dayNav.day-strip::-webkit-scrollbar-thumb { border-radius:99px; background:rgba(255,255,255,.52); }
   .report-day-bar .day-button { flex:0 0 118px; min-width:118px; min-height:58px; scroll-snap-align:start; }
 }
+
+/* Final animated compass-X branding and output list */
+.brand-mark, .builder-brand > span { overflow:visible; padding:0; border:0; background:transparent !important; }
+.brand-mark img, .builder-brand img { display:block; width:100%; height:100%; object-fit:contain; }
+.builder-brand > span { width:38px; height:38px; }
+.topbar .brand-mark { width:40px; height:45px; }
+.trip-app-header .app-brand .brand-mark { flex:0 0 38px; width:38px; height:43px; }
+.trip-header-actions .export-button.loading { display:inline-flex; align-items:center; gap:6px; }
+.trip-header-actions .export-button.loading img { width:30px; height:34px; margin:-7px 0; }
+.output-created-list { grid-template-columns:repeat(auto-fit,minmax(235px,1fr)); }
+.output-created-list article { display:grid; gap:7px; padding:18px; border:1px solid var(--line); border-radius:14px; background:#fffdf8; box-shadow:0 8px 24px rgba(30,52,45,.08); }
+.output-created-list article strong { font-size:14px; }
+.output-created-list article span { color:var(--muted); font-size:10px; line-height:1.45; }
+@media(max-width:620px) {
+  .trip-app-header .app-brand .brand-mark { flex-basis:24px; width:24px; height:27px; }
+}
+
+/* Final homepage brand lockup and airplane spacing */
+.builder:not(.builder-wide) .builder-copy::after { content:"\2708\FE0F" !important; }
+.builder:not(.builder-wide) .home-brand-lockup {
+  display:inline-flex;
+  width:fit-content;
+  align-items:center;
+  gap:11px;
+  margin:0 0 17px;
+  color:#fff;
+  font-size:clamp(18px,1.7vw,25px);
+  line-height:1;
+  text-decoration:none;
+}
+.builder:not(.builder-wide) .home-brand-lockup > span {
+  flex:0 0 58px;
+  width:58px;
+  height:58px;
+}
+.builder:not(.builder-wide) .home-brand-lockup strong { font-size:inherit; }
+.builder:not(.builder-wide) .demo-showcase {
+  width:min(100%,460px);
+  max-width:460px;
+  margin-top:17px;
+  padding:11px 14px;
+  gap:4px;
+}
+.builder:not(.builder-wide) .demo-showcase strong { font-size:13px; }
+.builder:not(.builder-wide) .demo-showcase span { font-size:9px; line-height:1.35; }
+.builder:not(.builder-wide) .demo-showcase a { font-size:9px; }
+@media(max-width:780px) {
+  .builder:not(.builder-wide) .home-brand-lockup > span { flex-basis:48px; width:48px; height:48px; }
+  .builder:not(.builder-wide) .home-brand-lockup { margin-bottom:13px; font-size:18px; }
+  .builder:not(.builder-wide) .demo-showcase { width:min(100%,400px); max-width:400px; }
+}
+
+/* Prominent generated-trip home banner */
+.app-home-hero { min-height:410px; padding-top:58px; padding-bottom:52px; }
+.app-home-hero .eyebrow { margin-bottom:11px; font-size:13px; letter-spacing:.17em; }
+.app-home-hero h2 { max-width:900px; font-size:clamp(56px,6.7vw,84px); line-height:.94; }
+.app-home-hero > #resultDates { margin-top:17px; color:rgba(255,255,255,.92); font-size:18px; font-weight:700; }
+.app-home-hero .trip-stats { gap:10px; margin-top:22px; }
+.app-home-hero .trip-stat { padding:9px 14px; background:rgba(255,255,255,.18); font-size:12px; font-weight:700; backdrop-filter:blur(7px); }
+.hero-export-button {
+  position:relative;
+  z-index:2;
+  display:inline-flex;
+  width:fit-content;
+  min-height:46px;
+  align-items:center;
+  justify-content:center;
+  margin-top:22px;
+  padding:11px 19px;
+  border:1px solid rgba(255,255,255,.7);
+  border-radius:999px;
+  color:#17231f;
+  background:#f5c84b;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:800;
+  box-shadow:0 10px 24px rgba(0,0,0,.22);
+  transition:transform .2s ease,background .2s ease;
+}
+.hero-export-button:hover { background:#ffe17c; transform:translateY(-2px); }
+@media(max-width:620px) {
+  .app-home-hero { min-height:350px; padding:40px 20px 34px; }
+  .app-home-hero .eyebrow { font-size:10px; }
+  .app-home-hero h2 { font-size:clamp(46px,14vw,62px); }
+  .app-home-hero > #resultDates { margin-top:13px; font-size:14px; }
+  .app-home-hero .trip-stats { gap:6px; margin-top:16px; }
+  .app-home-hero .trip-stat { padding:7px 10px; font-size:9px; }
+  .hero-export-button { min-height:42px; margin-top:17px; padding:9px 15px; font-size:10px; }
+}
+
+/* Known-destination autocomplete */
+.destination-help { display:block; margin-top:7px; color:var(--muted); font-size:9px; line-height:1.4; }
+.destination-error { min-height:15px; margin:5px 0 0; color:#9b3428; font-size:9px; font-weight:700; }
+#destination:invalid:not(:placeholder-shown) { border-color:#bb5b50; box-shadow:0 0 0 3px rgba(187,91,80,.1); }

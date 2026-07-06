@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 240 240" role="img" aria-labelledby="title desc">
+  <title id="title">x-Travel Agent compass needles spin then form X icon</title>
+  <desc id="desc">A centered light blue circular icon where red and blue compass needles spin three times, compass markings fade away, then the same colors resolve into an X.</desc>
+  <defs>
+    <radialGradient id="bg" cx="38%" cy="25%" r="82%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="48%" stop-color="#e7f9ff"/>
+      <stop offset="100%" stop-color="#9cdfff"/>
+    </radialGradient>
+    <linearGradient id="rim" x1="34" y1="14" x2="205" y2="186" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="55%" stop-color="#cdefff"/>
+      <stop offset="100%" stop-color="#69bde8"/>
+    </linearGradient>
+    <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="7" stdDeviation="7" flood-color="#123447" flood-opacity="0.18"/>
+    </filter>
+    <filter id="lineShadow" x="-45%" y="-45%" width="190%" height="190%">
+      <feDropShadow dx="0" dy="2" stdDeviation="1.8" flood-color="#061827" flood-opacity="0.24"/>
+    </filter>
+    <style>
+      .circle-base{filter:url(#softShadow)}
+      .compass-details{animation:detailsOut 4s ease forwards;transform-origin:120px 100px;transform-box:view-box;}
+      .hub{animation:hubOut 4s ease forwards;transform-origin:120px 100px;transform-box:view-box;}
+      .spin-needles{animation:spinFade 4s ease forwards;}
+      .final-x{opacity:0;animation:xShow 1.05s cubic-bezier(.16,.82,.2,1) 2.92s forwards;filter:url(#lineShadow)}
+      @keyframes detailsOut{0%,58%{opacity:1}78%{opacity:.18}100%{opacity:0}}
+      @keyframes hubOut{0%,60%{opacity:1;transform:scale(1)}80%{opacity:.12;transform:scale(.42)}100%{opacity:0;transform:scale(.08)}}
+      @keyframes spinFade{0%,72%{opacity:1}88%,100%{opacity:0}}
+      @keyframes xShow{0%{opacity:0}10%{opacity:1}100%{opacity:1}}
+      @media (prefers-reduced-motion: reduce){
+        .compass-details,.hub,.spin-needles{animation:none;opacity:0}.final-x{animation:none;opacity:1}
+      }
+    </style>
+  </defs>
+
+  <g transform="translate(0 20)">
+  <!-- Background circle is centered at 120,100 and remains behind the compass and final X. -->
+  <circle class="circle-base" cx="120" cy="100" r="88" fill="url(#bg)" stroke="url(#rim)" stroke-width="7"/>
+  <circle cx="120" cy="100" r="78" fill="none" stroke="#ffffff" stroke-opacity=".75" stroke-width="1.5"/>
+
+  <!-- Compass markings fade out while the needles are still spinning. -->
+  <g class="compass-details">
+    <circle cx="120" cy="100" r="69" fill="none" stroke="#123447" stroke-opacity=".23" stroke-width="1.3"/>
+    <circle cx="120" cy="100" r="61" fill="none" stroke="#123447" stroke-opacity=".10" stroke-width="1"/>
+    <g stroke="#123447" stroke-linecap="round" opacity=".46">
+      <line x1="120" y1="22" x2="120" y2="33" stroke-width="2"/>
+      <line x1="120" y1="167" x2="120" y2="178" stroke-width="2"/>
+      <line x1="42" y1="100" x2="53" y2="100" stroke-width="2"/>
+      <line x1="187" y1="100" x2="198" y2="100" stroke-width="2"/>
+      <line x1="65" y1="45" x2="72" y2="52" stroke-width="1.25"/>
+      <line x1="175" y1="45" x2="168" y2="52" stroke-width="1.25"/>
+      <line x1="65" y1="155" x2="72" y2="148" stroke-width="1.25"/>
+      <line x1="175" y1="155" x2="168" y2="148" stroke-width="1.25"/>
+    </g>
+    <g font-family="Georgia, 'Times New Roman', serif" font-size="24" font-weight="700" fill="#111827" text-anchor="middle" dominant-baseline="middle">
+      <text x="120" y="43">N</text>
+      <text x="180" y="103">E</text>
+      <text x="120" y="158">S</text>
+      <text x="60" y="103">W</text>
+    </g>
+  </g>
+
+  <!-- These are the actual compass needles. SMIL animateTransform is used so the spin works in SVG/img/inline contexts. -->
+  <g class="spin-needles" filter="url(#lineShadow)">
+    <g>
+      <line x1="120" y1="100" x2="120" y2="29" stroke="#111827" stroke-width="15" stroke-linecap="round" opacity=".23"/>
+      <line x1="120" y1="100" x2="120" y2="29" stroke="#e63b35" stroke-width="9" stroke-linecap="round"/>
+      <line x1="120" y1="100" x2="120" y2="171" stroke="#111827" stroke-width="15" stroke-linecap="round" opacity=".23"/>
+      <line x1="120" y1="100" x2="120" y2="171" stroke="#2e6fb7" stroke-width="9" stroke-linecap="round"/>
+      <animateTransform attributeName="transform" type="rotate" from="0 120 100" to="1080 120 100" dur="3s" begin="0s" fill="freeze" calcMode="spline" keyTimes="0;1" keySplines=".32 0 .18 1"/>
+    </g>
+  </g>
+
+  <!-- Final X grows from the same center point, using the compass red and blue colors. -->
+  <g class="final-x" stroke-linecap="round">
+    <line x1="120" y1="100" x2="120" y2="100" stroke="#111827" stroke-width="18" opacity=".22">
+      <animate attributeName="x1" from="120" to="68" dur=".95s" begin="3s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="y1" from="100" to="48" dur=".95s" begin="3s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="x2" from="120" to="172" dur=".95s" begin="3s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="y2" from="100" to="152" dur=".95s" begin="3s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+    </line>
+    <line x1="120" y1="100" x2="120" y2="100" stroke="#e63b35" stroke-width="11">
+      <animate attributeName="x1" from="120" to="68" dur=".95s" begin="3s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="y1" from="100" to="48" dur=".95s" begin="3s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="x2" from="120" to="172" dur=".95s" begin="3s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="y2" from="100" to="152" dur=".95s" begin="3s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+    </line>
+    <line x1="120" y1="100" x2="120" y2="100" stroke="#111827" stroke-width="18" opacity=".22">
+      <animate attributeName="x1" from="120" to="68" dur=".95s" begin="3.05s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="y1" from="100" to="152" dur=".95s" begin="3.05s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="x2" from="120" to="172" dur=".95s" begin="3.05s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="y2" from="100" to="48" dur=".95s" begin="3.05s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+    </line>
+    <line x1="120" y1="100" x2="120" y2="100" stroke="#2e6fb7" stroke-width="11">
+      <animate attributeName="x1" from="120" to="68" dur=".95s" begin="3.05s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="y1" from="100" to="152" dur=".95s" begin="3.05s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="x2" from="120" to="172" dur=".95s" begin="3.05s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+      <animate attributeName="y2" from="100" to="48" dur=".95s" begin="3.05s" fill="freeze" calcMode="spline" keySplines=".16 .82 .2 1"/>
+    </line>
+  </g>
+
+  <g class="hub">
+    <circle cx="120" cy="100" r="14" fill="#ffffff" stroke="#111827" stroke-opacity=".18" stroke-width="3"/>
+    <circle cx="120" cy="100" r="6" fill="#111827" opacity=".45"/>
+  </g>
+  </g>
+</svg>

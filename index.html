@@ -9,13 +9,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260705-v2-mobile-1">
+  <link rel="icon" href="x-travel-agent-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20260705-destination-1">
 </head>
 <body>
   <main class="page-shell">
     <header class="topbar">
       <a class="brand" href="#" aria-label="x-Travel Agent home">
-        <span class="brand-mark" aria-hidden="true">↗</span>
+        <span class="brand-mark" aria-hidden="true"><img src="x-travel-agent-icon.svg" alt=""></span>
         <span>x-Travel Agent</span>
       </a>
       <p>Popular places, personalized around you.</p>
@@ -24,10 +25,10 @@
 
     <section class="builder" id="builder" aria-labelledby="builderTitle">
       <div class="builder-copy">
-        <a class="builder-brand" href="#" aria-label="x-Travel Agent home"><span aria-hidden="true">↗</span><strong>x-Travel Agent</strong></a>
+        <a class="builder-brand home-brand-lockup" href="#" aria-label="x-Travel Agent home"><span aria-hidden="true"><img src="x-travel-agent-icon.svg" alt=""></span><strong>x-Travel Agent</strong></a>
         <p class="eyebrow">Trip website builder · Free browser mode</p>
-        <h1 id="builderTitle">Create a shareable trip website and <em>AI-ready planning file</em> in minutes.</h1>
-        <p class="lede">Answer a few questions, then generate a polished travel website, a day-by-day itinerary, and a Markdown source-of-truth file you can reuse in ChatGPT, Claude, Notion, or GitHub.</p>
+        <h1 id="builderTitle">Create a trip website and<br><em>AI-ready planning file in minutes</em></h1>
+        <p class="lede homepage-tagline">Answer a few questions, then generate a polished travel website, a day-by-day itinerary, and a file you can reuse in ChatGPT, Claude, or your favorite AI tools.</p>
         <div class="demo-showcase"><strong>Example: Tokyo 2026 Family Trip</strong><span>Locked bookings, route flow, food, shopping, maps, weather, photos, and AI-ready planning structure.</span><a href="../Codex/2026-05-28/tokyo-2026-photo-version/index.html">View demo trip →</a></div>
         <div class="journey-line" aria-hidden="true">
           <span class="journey-dot start"></span>
@@ -47,7 +48,13 @@
           <span id="formStepTitle">Trip basics</span>
           <span class="step-count" id="formStepCount">Step 1 of 5</span>
         </div>
-        <div class="form-progress" aria-hidden="true"><span class="active"></span><span></span><span></span><span></span><span></span></div>
+        <div class="form-progress" aria-label="Trip creation progress">
+          <span class="active current" aria-current="step"><b>1</b><small><strong>Trip basics</strong><em>Destination &amp; dates</em></small></span>
+          <span><b>2</b><small><strong>Adventure</strong><em>See, eat &amp; shop</em></small></span>
+          <span><b>3</b><small><strong>Travel style</strong><em>Pace &amp; preferences</em></small></span>
+          <span><b>4</b><small><strong>Constraints</strong><em>Bookings &amp; needs</em></small></span>
+          <span><b>5</b><small><strong>Create</strong><em>Build &amp; export</em></small></span>
+        </div>
         <div class="security-note" role="note">
           <span aria-hidden="true">✓</span>
           <p><strong>Public-safe demo</strong> Runs entirely in your browser with no API key, account, or usage charges.</p>
@@ -60,8 +67,11 @@
               <p>One city, a whole country, or anywhere in between.</p>
               <div class="input-wrap">
                 <span aria-hidden="true">⌖</span>
-                <input id="destination" name="destination" type="text" placeholder="e.g. Lisbon, Portugal" autocomplete="off" required>
+                <input id="destination" name="destination" type="text" list="knownDestinationList" placeholder="Start typing a supported destination" autocomplete="off" aria-describedby="destinationHelp destinationError" required>
+                <datalist id="knownDestinationList"></datalist>
               </div>
+              <small class="destination-help" id="destinationHelp">Select a location from the suggestions so the app can build a detailed local guide.</small>
+              <p class="destination-error" id="destinationError" role="alert"></p>
             </div>
           </div>
 
@@ -146,15 +156,15 @@
           <div class="wizard-actions final-actions"><button class="secondary-button" id="constraintsBackButton" type="button">← Back</button><button class="primary-button final-create-button" id="outputStepButton" type="button">Choose output →</button></div>
         </section>
         <section class="form-step" data-form-step="5" hidden>
-          <div class="suggestion-intro"><p class="eyebrow">Choose the finished experience</p><h2>Output style</h2><p>The Tokyo-inspired Mobile Trip App is the flagship template. Every option also creates an AI source-of-truth Markdown file.</p></div>
-          <div class="template-picker">
-            <label><input type="radio" name="outputTemplate" value="mobile" checked><strong>📱 Mobile Trip App</strong><span>Best during the trip · Tokyo gold-standard format</span></label>
-            <label><input type="radio" name="outputTemplate" value="executive"><strong>📄 Printable Executive Guide</strong><span>Best for planning and sharing</span></label>
-            <label><input type="radio" name="outputTemplate" value="simple"><strong>🌐 Simple Website</strong><span>Best for friends and family</span></label>
-            <label><input type="radio" name="outputTemplate" value="photo"><strong>📷 Photo Journal</strong><span>Best for a post-trip recap</span></label>
+          <div class="suggestion-intro"><p class="eyebrow">Choose the finished experience</p><h2>Everything your adventure creates</h2><p>Press Create my trip adventure to generate every output below—no template decision required.</p></div>
+          <div class="template-picker output-created-list">
+            <article><strong>📱 Mobile Trip App</strong><span>Tokyo gold-standard format for use during the trip</span></article>
+            <article><strong>📄 Printable Executive Guide</strong><span>A clear planning and sharing view</span></article>
+            <article><strong>🌐 Shareable Website</strong><span>A polished overview for friends and family</span></article>
+            <article><strong>✦ AI Source-of-Truth File</strong><span>Reusable planning context for ChatGPT, Claude, or other AI tools</span></article>
+            <article><strong>📷 Photo Journal</strong><span>A place for the post-trip story and memories</span></article>
           </div>
-          <div class="mode-picker"><label><input type="radio" name="appMode" value="free" checked><strong>Free browser mode</strong><span>Static starter website, intake summary, AI prompts, and Markdown—no key or usage charges.</span></label><label><input type="radio" name="appMode" value="ai"><strong>AI-powered mode handoff</strong><span>Creates configuration guidance for richer generation; no private key is stored in this public page.</span></label></div>
-          <div class="wizard-actions final-actions"><button class="secondary-button" id="outputBackButton" type="button">← Back</button><button class="primary-button final-create-button" type="submit">Create my trip website →</button></div>
+          <div class="wizard-actions final-actions"><button class="secondary-button" id="outputBackButton" type="button">← Back</button><button class="primary-button final-create-button" type="submit">Create my trip adventure →</button></div>
         </section>
         <p class="form-footnote">No account needed. Your draft stays in this browser.</p>
       </form>
@@ -163,7 +173,7 @@
     <section class="result" id="result" aria-live="polite" hidden>
       <div class="trip-app">
         <header class="trip-app-header">
-          <a class="brand app-brand" href="#" aria-label="x-Travel Agent trip home"><span class="brand-mark">↗</span><span>x-Travel Agent</span></a>
+          <a class="brand app-brand" href="#" aria-label="x-Travel Agent trip home"><span class="brand-mark"><img src="x-travel-agent-icon.svg" alt=""></span><span>x-Travel Agent</span></a>
           <span class="app-destination" id="appDestination">Your trip</span>
           <div class="trip-header-actions">
             <button class="export-button" id="exportTripButton" type="button">Export</button>
@@ -188,6 +198,7 @@
               <h2 id="resultTitle">A few beautiful days away</h2>
               <p id="resultDates"></p>
               <div class="trip-stats" id="tripStats"></div>
+              <button class="hero-export-button" id="heroExportTripButton" type="button">Export complete trip →</button>
             </div>
             <div class="home-weather-wrap">
               <section class="trip-weather-card" id="tripWeatherCard" aria-labelledby="weatherLocation">
@@ -316,7 +327,8 @@
     </article>
   </template>
 
-  <script src="export-styles.js?v=20260705-v2-mobile-1"></script>
-  <script src="app.js?v=20260703-v2-1"></script>
+  <script src="export-styles.js?v=20260705-destination-1"></script>
+  <script src="icon-source.js?v=20260705-no-text-icon-1"></script>
+  <script src="app.js?v=20260705-destination-1"></script>
 </body>
 </html>

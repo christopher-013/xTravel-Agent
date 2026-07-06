@@ -2,6 +2,8 @@ const form = document.querySelector("#tripForm");
 const builder = document.querySelector("#builder");
 const result = document.querySelector("#result");
 const destinationInput = document.querySelector("#destination");
+const destinationError = document.querySelector("#destinationError");
+const knownDestinationList = document.querySelector("#knownDestinationList");
 const startDateInput = document.querySelector("#startDate");
 const endDateInput = document.querySelector("#endDate");
 const wishListInput = document.querySelector("#wishList");
@@ -153,7 +155,103 @@ const destinationCatalogs = [
       dinner: [place("Taberna da Rua das Flores", "Chiado", "Creative Portuguese small plates with limited seating."), place("Prado", "Baixa", "Seasonal Portuguese cooking in a stylish room."), place("A Cevicheria", "Príncipe Real", "Popular seafood-focused menu with Portuguese-Peruvian influence.")]
     },
     shopping: [place("A Vida Portuguesa", "Chiado", "Well-designed traditional Portuguese household goods and gifts."), place("Feira da Ladra", "Alfama", "Lisbon’s famous flea market for antiques and curiosities."), place("Embaixada", "Príncipe Real", "Portuguese designers and concept stores inside a landmark palace.")]
+  },
+  {
+    match: /honolulu|oahu|hawaii/i,
+    banner: "https://images.unsplash.com/photo-1507876466758-bc54f384809c?auto=format&fit=crop&w=1800&q=82",
+    zones: [
+      { name: "Waikiki & Diamond Head", icon: "\uD83C\uDF0A", keywords: ["waikiki", "diamond head", "kapahulu"] },
+      { name: "Downtown Honolulu", icon: "\uD83C\uDFDB\uFE0F", keywords: ["downtown", "iolani", "chinatown", "kakaako"] },
+      { name: "East Oahu", icon: "\uD83C\uDF34", keywords: ["hanauma", "koko", "lanikai", "kailua"] },
+      { name: "North Shore", icon: "\uD83C\uDFC4", keywords: ["haleiwa", "north shore", "waimea", "sunset beach"] }
+    ],
+    attractions: [
+      place("Waikiki Beach", "Waikiki", "Walk the beachfront, take a surf lesson, and stay for sunset near Kuhio Beach."),
+      place("Diamond Head State Monument", "Diamond Head", "Reserve the required entry window and hike early for cooler weather and coastal views."),
+      place("Pearl Harbor National Memorial", "Pearl Harbor", "Reserve the USS Arizona program and allow time for the visitor center exhibits."),
+      place("Iolani Palace and Historic Honolulu", "Downtown", "Tour the royal residence, then walk to the State Capitol and Kawaiahao Church."),
+      place("Hanauma Bay Nature Preserve", "East Oahu", "Book the required reservation and arrive early for snorkeling and reef education."),
+      place("Manoa Falls Trail", "Manoa", "Follow a lush valley trail to the waterfall and expect muddy conditions after rain."),
+      place("Kakaako murals and waterfront", "Kakaako", "Explore public art, local cafes, and the nearby waterfront parks."),
+      place("Haleiwa and the North Shore", "North Shore", "Plan a full-day loop for surf beaches, food trucks, and historic Haleiwa town.")
+    ],
+    food: {
+      breakfast: [place("Koko Head Cafe", "Kaimuki", "Island-inspired brunch plates in a lively neighborhood setting."), place("Island Vintage Coffee", "Waikiki", "Coffee, acai bowls, and convenient breakfast near the beach."), place("Liliha Bakery", "Honolulu", "A local institution known for coco puffs and classic diner breakfasts.")],
+      lunch: [place("Ono Seafood", "Kapahulu", "A compact neighborhood stop known for fresh poke bowls."), place("Helena's Hawaiian Food", "Kalihi", "Traditional Hawaiian dishes including pipikaula, kalua pig, and poi."), place("Rainbow Drive-In", "Kapahulu", "A classic plate-lunch counter near Waikiki.")],
+      dinner: [place("The Pig and the Lady", "Chinatown", "Modern Vietnamese-influenced cooking in Honolulu's arts district."), place("House Without a Key", "Waikiki", "Sunset dining with Hawaiian music and ocean views."), place("Mud Hen Water", "Kaimuki", "Creative local cooking designed for sharing.")]
+    },
+    shopping: [place("Ala Moana Center", "Ala Moana", "A major open-air shopping center with local brands, luxury stores, and extensive dining."), place("International Market Place", "Waikiki", "Central Waikiki shopping with a historic banyan tree and evening dining."), place("Haleiwa town", "North Shore", "Browse surf shops, galleries, local gifts, and small boutiques.")]
+  },
+  {
+    match: /vancouver|british columbia|\bbc\b/i,
+    banner: "https://images.unsplash.com/photo-1559511260-66a654ae982a?auto=format&fit=crop&w=1800&q=82",
+    zones: [
+      { name: "Downtown & Stanley Park", icon: "\uD83C\uDF32", keywords: ["downtown", "stanley", "coal harbour", "west end"] },
+      { name: "Gastown & Chinatown", icon: "\uD83D\uDD70\uFE0F", keywords: ["gastown", "chinatown", "water street"] },
+      { name: "Granville Island & Kitsilano", icon: "\uD83C\uDFA8", keywords: ["granville", "kitsilano", "false creek"] },
+      { name: "North Shore", icon: "\u26F0\uFE0F", keywords: ["grouse", "capilano", "north vancouver", "lynn canyon"] }
+    ],
+    attractions: [
+      place("Stanley Park Seawall", "West End", "Walk or cycle the waterfront loop with stops at Totem Poles and Prospect Point."),
+      place("Granville Island Public Market", "False Creek", "Browse market stalls, artisan studios, and waterfront dining."),
+      place("Gastown and the waterfront", "Gastown", "Explore Water Street, heritage architecture, and the harbor edge."),
+      place("Capilano Suspension Bridge Park", "North Vancouver", "Cross the suspension bridge and explore elevated forest walkways; book ahead in busy periods."),
+      place("Grouse Mountain", "North Vancouver", "Ride the gondola for city views, seasonal trails, and mountain activities."),
+      place("Museum of Anthropology at UBC", "University Endowment Lands", "See Indigenous art and architecture in a striking coastal setting."),
+      place("Queen Elizabeth Park", "Little Mountain", "Visit landscaped gardens and one of the best elevated city viewpoints."),
+      place("English Bay and Kitsilano Beach", "West Side", "Link two popular waterfront areas for sunset and skyline views.")
+    ],
+    food: {
+      breakfast: [place("Cafe Medina", "Downtown", "Mediterranean-inspired brunch and signature waffles."), place("Jam Cafe", "Downtown", "Generous comfort-food breakfasts; expect a queue."), place("49th Parallel Cafe", "Mount Pleasant", "Vancouver-roasted coffee, pastries, and breakfast sandwiches.")],
+      lunch: [place("Granville Island Public Market", "False Creek", "Build a casual lunch from seafood, bakery, and produce vendors."), place("Japadog", "Downtown", "Japanese-inspired hot dogs and a quick Vancouver classic."), place("Phnom Penh", "Chinatown", "Popular Cambodian-Vietnamese dishes including chicken wings and butter beef.")],
+      dinner: [place("Miku", "Coal Harbour", "Aburi sushi with waterfront views; reservations recommended."), place("Vij's", "Cambie Village", "Celebrated Indian cooking and warm hospitality."), place("Kissa Tanto", "Chinatown", "Italian-Japanese dishes in an atmospheric room; reserve well ahead.")]
+    },
+    shopping: [place("Robson Street", "Downtown", "Major brands, Canadian retailers, and easy access to central Vancouver."), place("Main Street", "Mount Pleasant", "Independent fashion, vintage shops, records, and local design."), place("Granville Island artisan studios", "False Creek", "Locally made art, jewelry, food gifts, and crafts.")]
+  },
+  {
+    match: /seattle|washington state|puget sound/i,
+    banner: "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1800&q=82",
+    zones: [
+      { name: "Downtown & Pike Place", icon: "\uD83D\uDC1F", keywords: ["pike", "downtown", "waterfront", "belltown"] },
+      { name: "Seattle Center & Queen Anne", icon: "\uD83D\uDDFC\uFE0F", keywords: ["space needle", "seattle center", "queen anne", "chihuly"] },
+      { name: "Capitol Hill & Central District", icon: "\uD83C\uDFB6", keywords: ["capitol hill", "central district", "volunteer park"] },
+      { name: "Ballard & Fremont", icon: "\u26F5", keywords: ["ballard", "fremont", "locks", "gas works"] }
+    ],
+    attractions: [
+      place("Pike Place Market", "Downtown", "Explore produce stalls, specialty shops, crafts, and the waterfront-facing market levels."),
+      place("Space Needle and Chihuly Garden and Glass", "Seattle Center", "Reserve timed entry and combine both landmarks in one visit."),
+      place("Museum of Pop Culture", "Seattle Center", "Explore music, film, games, and Pacific Northwest creative culture."),
+      place("Seattle Waterfront and ferry ride", "Elliott Bay", "Walk the renovated waterfront and take a ferry for skyline views from the water."),
+      place("Ballard Locks and fish ladder", "Ballard", "Watch boats pass between lake and sound and check for seasonal salmon."),
+      place("Museum of Flight", "Georgetown", "Allow several hours for historic aircraft, space exhibits, and aviation stories."),
+      place("Kerry Park", "Queen Anne", "Visit near sunset for a classic skyline view with Mount Rainier on clear days."),
+      place("Gas Works Park and Fremont", "Lake Union", "Pair industrial park scenery with Fremont's public art and neighborhood shops.")
+    ],
+    food: {
+      breakfast: [place("Storyville Coffee", "Pike Place", "Coffee and pastries overlooking the market."), place("Tilikum Place Cafe", "Belltown", "European-style brunch known for Dutch babies."), place("Portage Bay Cafe", "South Lake Union", "Hearty breakfast plates and a popular toppings bar.")],
+      lunch: [place("Pike Place Chowder", "Pike Place", "Award-winning chowders in the market; lines move quickly."), place("Un Bien", "Ballard", "Caribbean sandwiches with slow-roasted pork and bright sauces."), place("Marination Ma Kai", "West Seattle", "Hawaiian-Korean plates with skyline views across Elliott Bay.")],
+      dinner: [place("The Pink Door", "Pike Place", "Italian-American dining hidden along Post Alley; reserve ahead."), place("Walrus and the Carpenter", "Ballard", "Oysters and seasonal small plates in a compact space."), place("Canlis", "Queen Anne", "A landmark fine-dining experience with views; reservations required.")]
+    },
+    shopping: [place("Pike Place Market craft stalls", "Downtown", "Local makers, specialty foods, flowers, and Seattle gifts."), place("Ballard Avenue", "Ballard", "Independent boutiques, outdoor brands, records, and home goods."), place("Capitol Hill shops", "Capitol Hill", "Books, music, vintage fashion, and locally owned specialty stores.")]
   }
+];
+
+const knownDestinations = [
+  { label: "Tokyo, Japan", aliases: ["tokyo", "tokyo japan"] },
+  { label: "Japan", aliases: ["japan"] },
+  { label: "Paris, France", aliases: ["paris", "paris france"] },
+  { label: "France", aliases: ["france"] },
+  { label: "London, United Kingdom", aliases: ["london", "london uk", "london england", "london united kingdom"] },
+  { label: "United Kingdom", aliases: ["uk", "united kingdom", "england", "great britain"] },
+  { label: "New York City, United States", aliases: ["new york", "new york city", "nyc", "new york usa", "new york united states", "manhattan"] },
+  { label: "Rome, Italy", aliases: ["rome", "rome italy"] },
+  { label: "Italy", aliases: ["italy"] },
+  { label: "Lisbon, Portugal", aliases: ["lisbon", "lisbon portugal"] },
+  { label: "Portugal", aliases: ["portugal"] },
+  { label: "Honolulu, Hawaii", aliases: ["honolulu", "honolulu hawaii", "waikiki"] },
+  { label: "Oahu, Hawaii", aliases: ["oahu", "oahu hawaii"] },
+  { label: "Vancouver, Canada", aliases: ["vancouver", "vancouver canada", "vancouver british columbia", "vancouver bc"] },
+  { label: "Seattle, Washington", aliases: ["seattle", "seattle washington", "seattle wa"] }
 ];
 
 let trip = null;
@@ -177,11 +275,52 @@ const defaultEnd = new Date(today.getFullYear(), today.getMonth() + 1, 13);
 startDateInput.value = toInputDate(defaultStart);
 endDateInput.value = toInputDate(defaultEnd);
 
+knownDestinationList.innerHTML = knownDestinations.map((destination) => `<option value="${destination.label}"></option>`).join("");
+destinationInput.addEventListener("input", () => {
+  destinationInput.setCustomValidity("");
+  destinationError.textContent = "";
+});
+destinationInput.addEventListener("change", normalizeSelectedDestination);
+destinationInput.addEventListener("blur", () => {
+  if (destinationInput.value.trim() && !resolveKnownDestination(destinationInput.value)) {
+    destinationError.textContent = "Choose a supported destination from the autocomplete list.";
+  }
+});
+
+function normalizeDestinationName(value) {
+  return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function resolveKnownDestination(value) {
+  const normalized = normalizeDestinationName(value);
+  return knownDestinations.find((destination) => normalizeDestinationName(destination.label) === normalized || destination.aliases.some((alias) => normalizeDestinationName(alias) === normalized));
+}
+
+function normalizeSelectedDestination() {
+  const match = resolveKnownDestination(destinationInput.value);
+  if (!match) return false;
+  destinationInput.value = match.label;
+  destinationInput.setCustomValidity("");
+  destinationError.textContent = "";
+  return true;
+}
+
 function goToPreferencesStep() {
   if (!destinationInput.value.trim()) {
     destinationInput.reportValidity();
     return;
   }
+  const knownDestination = resolveKnownDestination(destinationInput.value);
+  if (!knownDestination) {
+    destinationInput.setCustomValidity("Choose a supported destination from the autocomplete list.");
+    destinationError.textContent = "That location is not currently in the destination catalog. Choose one of the suggested locations.";
+    destinationInput.reportValidity();
+    destinationInput.focus();
+    return;
+  }
+  destinationInput.value = knownDestination.label;
+  destinationInput.setCustomValidity("");
+  destinationError.textContent = "";
   if (!startDateInput.value || !endDateInput.value) {
     (startDateInput.value ? endDateInput : startDateInput).reportValidity();
     return;
@@ -296,7 +435,7 @@ form.addEventListener("submit", (event) => {
   const preferences = getTripPreferences();
   trip = buildTrip(destinationInput.value.trim(), start, end, wishListInput.value.trim(), selections, preferences);
   activeDay = 0;
-  activeTab = preferences.outputTemplate === "photo" ? "photos" : "home";
+  activeTab = "home";
   builder.hidden = true;
   result.hidden = false;
   document.body.classList.add("trip-mode");
@@ -321,6 +460,7 @@ document.querySelector("#newTripButton").addEventListener("click", () => {
 });
 document.querySelector("#printButton").addEventListener("click", () => window.print());
 document.querySelector("#exportTripButton").addEventListener("click", exportTripPackage);
+document.querySelector("#heroExportTripButton").addEventListener("click", exportTripPackage);
 document.querySelector("#exportDialogClose").addEventListener("click", closeExportDialog);
 document.querySelector("#exportDialogDone").addEventListener("click", closeExportDialog);
 document.querySelector("#exportDownloadMarkdown").addEventListener("click", downloadTripMarkdown);
@@ -342,7 +482,7 @@ function showBuilder() {
   builder.hidden = false;
   document.body.classList.remove("trip-mode");
   showFormStep(1);
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
 function closeExportDialog() {
@@ -356,7 +496,8 @@ async function exportTripPackage() {
   const exportButton = document.querySelector("#exportTripButton");
   const originalLabel = exportButton.textContent;
   exportButton.disabled = true;
-  exportButton.textContent = "Preparing…";
+  exportButton.classList.add("loading");
+  exportButton.innerHTML = `<img src="x-travel-agent-icon.svg" alt="">Preparing…`;
   const slug = trip.destination.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
   const savedDay = activeDay;
   const savedTab = activeTab;
@@ -368,7 +509,7 @@ async function exportTripPackage() {
       renderTrip();
       await waitForHydratedImages(document.querySelector(".trip-app"));
       const clone = document.querySelector(".trip-app").cloneNode(true);
-      clone.querySelectorAll("#exportTripButton,#editTripButton,.activity-menu,#printButton").forEach((element) => element.remove());
+      clone.querySelectorAll("#exportTripButton,#editTripButton,.hero-export-button,.activity-menu,#printButton").forEach((element) => element.remove());
       clone.querySelectorAll(".day-button").forEach((button, index) => button.dataset.exportDay = index);
       clone.querySelectorAll("[data-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === "home"));
       clone.querySelectorAll("[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === "home"));
@@ -382,7 +523,8 @@ async function exportTripPackage() {
     websiteHtml = bundled.html;
     const markdown = createTripMarkdown();
     const runtime = createExportRuntime();
-    lastStandaloneHtml = websiteHtml.replace('<link rel="stylesheet" href="styles.css">', `<style>${websiteCss}</style>`).replace('<script src="app.js"><\/script>', `<script>${runtime}<\/script>`);
+    const inlineIcon = `data:image/svg+xml;base64,${window.XTRAVEL_ICON_BASE64 || ""}`;
+    lastStandaloneHtml = websiteHtml.replaceAll("x-travel-agent-icon.svg", inlineIcon).replace('<link rel="stylesheet" href="styles.css">', `<style>${websiteCss}</style>`).replace('<script src="app.js"><\/script>', `<script>${runtime}<\/script>`);
     const readme = `# ${trip.destination} x-Travel Agent Website\n\nThis package is a complete visual export of the generated x-Travel Agent report. It includes every date, section, navigation control, map, recommendation, and available bundled image.\n\n## Files\n\n- \`index.html\` — complete report website\n- \`styles.css\` — the report’s visual styling\n- \`app.js\` — offline date/tab navigation\n- \`assets/\` — successfully downloaded banners and place images\n- \`TRIP-PLAN.md\` — full AI planning handoff\n\nOpen \`index.html\` locally or upload the package to any static host. Google Maps embeds and links still require an internet connection. Images that could not be legally downloaded remain linked to their original public source.\n`;
     const zip = createZip([
       { name: "index.html", content: websiteHtml },
@@ -390,6 +532,7 @@ async function exportTripPackage() {
       { name: "app.js", content: runtime },
       { name: "TRIP-PLAN.md", content: markdown },
       { name: "README.md", content: readme },
+      { name: "x-travel-agent-icon.svg", content: base64ToBytes(window.XTRAVEL_ICON_BASE64 || "") },
       ...bundled.files
     ]);
     const url = URL.createObjectURL(zip);
@@ -411,6 +554,7 @@ async function exportTripPackage() {
     activeTab = savedTab;
     renderTrip();
     exportButton.disabled = false;
+    exportButton.classList.remove("loading");
     exportButton.textContent = originalLabel;
   }
 }
@@ -469,6 +613,8 @@ async function decompressBase64Gzip(value) {
   const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
   return new Response(stream).text();
 }
+
+function base64ToBytes(value) { return Uint8Array.from(atob(value), (character) => character.charCodeAt(0)); }
 
 function readLocalTextAsset(url) {
   return new Promise((resolve, reject) => {
@@ -613,10 +759,15 @@ function showFormStep(stepNumber) {
     step.classList.toggle("active", active);
   });
   const displayedStep = stepNumber;
-  document.querySelectorAll(".form-progress span").forEach((bar, index) => bar.classList.toggle("active", index < displayedStep));
+  document.querySelectorAll(".form-progress span").forEach((bar, index) => {
+    bar.classList.toggle("active", index < displayedStep);
+    bar.classList.toggle("current", index === displayedStep - 1);
+    if (index === displayedStep - 1) bar.setAttribute("aria-current", "step");
+    else bar.removeAttribute("aria-current");
+  });
   document.querySelector("#formStepTitle").textContent = ["", "Trip basics", "Choose your adventure", "Travelers & style", "Bookings & constraints", "Output style"][stepNumber];
   document.querySelector("#formStepCount").textContent = `Step ${displayedStep} of 5`;
-  if (stepNumber === 2) document.querySelector(".suggestion-intro").scrollIntoView({ block: "nearest" });
+  requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
 function getTripPreferences() {
@@ -637,16 +788,14 @@ function getTripPreferences() {
     mustDos: document.querySelector("#mustDos").value.trim(),
     avoid: document.querySelector("#avoidList").value.trim(),
     bookedItems: document.querySelector("#bookedItems").value.trim(),
-    outputTemplate: document.querySelector('[name="outputTemplate"]:checked')?.value || "mobile",
-    appMode: document.querySelector('[name="appMode"]:checked')?.value || "free"
+    outputTemplate: "complete",
+    appMode: "free"
   };
 }
 
 function setTripPreferences(preferences = {}) {
   const fields = { tripPace: "pace", tripParty: "party", dayStart: "start", eveningStyle: "evening", transportStyle: "transport", tripBudget: "budget", mobilityNotes: "notes", homeBase: "homeBase", groupSize: "groupSize", travelerAges: "travelerAges", tripPurpose: "purpose", foodRestrictions: "foodRestrictions", mobilityNeeds: "mobilityNeeds", mustDos: "mustDos", avoidList: "avoid", bookedItems: "bookedItems" };
   Object.entries(fields).forEach(([id, key]) => { if (preferences[key]) document.querySelector(`#${id}`).value = preferences[key]; });
-  if (preferences.outputTemplate) document.querySelector(`[name="outputTemplate"][value="${preferences.outputTemplate}"]`)?.click();
-  if (preferences.appMode) document.querySelector(`[name="appMode"][value="${preferences.appMode}"]`)?.click();
 }
 
 function renderSuggestionPicker(destination) {
@@ -675,7 +824,7 @@ function renderSuggestionPicker(destination) {
         : suggestion.category === "shop"
           ? [suggestion.area, suggestion.bestFor || "Popular local shopping"]
           : [suggestion.area, "Popular place to see"];
-      button.innerHTML = `<img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="${escapeHtml(`${suggestion.name} in ${destination}`)}" loading="lazy"><span class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong><span class="suggestion-check">✓</span></span><span class="suggestion-transparency"><b>Sample suggestion</b><i>Needs verification</i></span><span class="suggestion-card-meta">${meta.filter(Boolean).map(escapeHtml).join(" · ")}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span><a class="suggestion-map-link" href="${googleMapsSearchUrl(`${suggestion.name} ${destination}`)}" target="_blank" rel="noopener noreferrer">Live data unavailable in browser-only mode · verify on Google Maps ↗</a></span>`;
+      button.innerHTML = `<img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="${escapeHtml(`${suggestion.name} in ${destination}`)}" loading="lazy"><span class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong><span class="suggestion-check">✓</span></span><span class="suggestion-card-meta">${meta.filter(Boolean).map(escapeHtml).join(" · ")}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span><a class="suggestion-map-link" href="${googleMapsSearchUrl(`${suggestion.name} ${destination}`)}" target="_blank" rel="noopener noreferrer">Live data unavailable in browser-only mode · verify on Google Maps ↗</a></span>`;
       hydrateSuggestionImage(button.querySelector(".suggestion-card-image"), suggestion, destination);
       button.dataset.suggestionKey = suggestion.key;
       button.setAttribute("aria-pressed", selectedSuggestions.has(suggestion.key) ? "true" : "false");
@@ -835,6 +984,7 @@ function switchAppTab(tabName) {
   document.querySelectorAll("[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === tabName));
   const activePanel = document.querySelector(`[data-panel="${tabName}"]`);
   if (activePanel) activePanel.scrollTop = 0;
+  requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
 function buildTrip(destination, start, end, wishes, selections = [], preferences = {}) {
@@ -1076,7 +1226,7 @@ function getDestinationGuide(destination) {
 }
 
 function renderTrip() {
-  document.querySelector(".trip-app").dataset.template = trip.preferences.outputTemplate || "mobile";
+  document.querySelector(".trip-app").dataset.template = "complete";
   document.querySelector(".trip-app").dataset.mode = trip.preferences.appMode || "free";
   document.querySelector("#appDestination").textContent = "";
   document.querySelector("#resultTitle").textContent = trip.destination;
@@ -1101,7 +1251,11 @@ function renderTrip() {
     button.className = `day-button${index === activeDay ? " active" : ""}`;
     button.setAttribute("aria-label", `${formatDate(day.date, false)} — ${day.title}`);
     button.innerHTML = `<span class="day-nav-icon" aria-hidden="true">${getDayIcon(day, index)}</span><span class="day-nav-copy"><span class="day-nav-date">${formatDate(day.date, false)}</span><span class="day-nav-title">${escapeHtml(shortDayTitle(day.title))}</span></span>`;
-    button.addEventListener("click", () => { activeDay = index; renderTrip(); });
+    button.addEventListener("click", () => {
+      activeDay = index;
+      renderTrip();
+      requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+    });
     nav.appendChild(button);
   });
 
