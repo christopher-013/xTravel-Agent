@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="x-travel-agent-icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260705-destination-1">
+  <link rel="stylesheet" href="styles.css?v=20260705-starter-mode-1">
 </head>
 <body>
   <main class="page-shell">
@@ -70,7 +70,7 @@
                 <input id="destination" name="destination" type="text" list="knownDestinationList" placeholder="Start typing a supported destination" autocomplete="off" aria-describedby="destinationHelp destinationError" required>
                 <datalist id="knownDestinationList"></datalist>
               </div>
-              <small class="destination-help" id="destinationHelp">Select a location from the suggestions so the app can build a detailed local guide.</small>
+              <small class="destination-help" id="destinationHelp">Choose a catalog suggestion for richer local detail, or enter any destination to create a starter plan and AI-ready research file.</small>
               <p class="destination-error" id="destinationError" role="alert"></p>
             </div>
           </div>
@@ -224,6 +224,12 @@
                 <div><p class="eyebrow">Ready when you are</p><h3>Your trip at a glance</h3></div>
                 <span class="saved-pill">Draft saved</span>
               </div>
+              <section class="research-mode-notice" id="researchModeNotice" hidden>
+                <p class="eyebrow">Starter research mode</p>
+                <h3>Local details need research</h3>
+                <p>This destination is not in the detailed browser catalog yet. Your site preserves your must-dos and bookings while providing an AI-ready planning structure.</p>
+                <ul><li>Verify landmark names, hours, closures, and ticket requirements</li><li>Research neighborhoods and optimize each day geographically</li><li>Confirm restaurant cuisine, ratings, dietary fit, and reservations</li><li>Replace placeholder shopping and activity cards with verified choices</li><li>Check transit times, weather, accessibility, and seasonal conditions</li></ul>
+              </section>
               <div class="today-card" id="todayCard"></div>
               <div class="during-trip-grid" id="duringTripTools"></div>
               <div class="refine-panel"><div><p class="eyebrow">Refine this plan</p><h3>One-click improvements</h3></div><div id="refineActions" class="refine-actions"></div></div>
@@ -327,8 +333,8 @@
     </article>
   </template>
 
-  <script src="export-styles.js?v=20260705-destination-1"></script>
+  <script src="export-styles.js?v=20260705-starter-mode-1"></script>
   <script src="icon-source.js?v=20260705-no-text-icon-1"></script>
-  <script src="app.js?v=20260705-destination-1"></script>
+  <script src="app.js?v=20260705-starter-mode-1"></script>
 </body>
 </html>

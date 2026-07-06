@@ -2069,5 +2069,11 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
 
 /* Known-destination autocomplete */
 .destination-help { display:block; margin-top:7px; color:var(--muted); font-size:9px; line-height:1.4; }
-.destination-error { min-height:15px; margin:5px 0 0; color:#9b3428; font-size:9px; font-weight:700; }
+.destination-error { min-height:15px; margin:5px 0 0; color:#76570b; font-size:9px; font-weight:700; }
 #destination:invalid:not(:placeholder-shown) { border-color:#bb5b50; box-shadow:0 0 0 3px rgba(187,91,80,.1); }
+.research-mode-notice { margin:0 0 18px; padding:18px 20px; border:1px solid #dfbd62; border-radius:12px; background:#fff5d8; box-shadow:0 8px 22px rgba(74,54,6,.08); }
+.research-mode-notice[hidden] { display:none; }
+.research-mode-notice h3 { margin:3px 0 7px; color:#24272a; font-size:18px; }
+.research-mode-notice > p:not(.eyebrow) { margin:0; color:#565149; font-size:10px; line-height:1.55; }
+.research-mode-notice ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 24px; margin:14px 0 0; padding-left:18px; color:#3e4144; font-size:9px; line-height:1.45; }
+@media(max-width:620px) { .research-mode-notice ul { grid-template-columns:1fr; } }

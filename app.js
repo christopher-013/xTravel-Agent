@@ -283,7 +283,7 @@ destinationInput.addEventListener("input", () => {
 destinationInput.addEventListener("change", normalizeSelectedDestination);
 destinationInput.addEventListener("blur", () => {
   if (destinationInput.value.trim() && !resolveKnownDestination(destinationInput.value)) {
-    destinationError.textContent = "Choose a supported destination from the autocomplete list.";
+    destinationError.textContent = "This destination is not in the detailed browser catalog yet. We can still create an AI-ready planning file and starter website.";
   }
 });
 
@@ -311,16 +311,13 @@ function goToPreferencesStep() {
     return;
   }
   const knownDestination = resolveKnownDestination(destinationInput.value);
-  if (!knownDestination) {
-    destinationInput.setCustomValidity("Choose a supported destination from the autocomplete list.");
-    destinationError.textContent = "That location is not currently in the destination catalog. Choose one of the suggested locations.";
-    destinationInput.reportValidity();
-    destinationInput.focus();
-    return;
+  if (knownDestination) {
+    destinationInput.value = knownDestination.label;
+    destinationError.textContent = "";
+  } else {
+    destinationError.textContent = "This destination is not in the detailed browser catalog yet. We can still create an AI-ready planning file and starter website.";
   }
-  destinationInput.value = knownDestination.label;
   destinationInput.setCustomValidity("");
-  destinationError.textContent = "";
   if (!startDateInput.value || !endDateInput.value) {
     (startDateInput.value ? endDateInput : startDateInput).reportValidity();
     return;
@@ -678,7 +675,9 @@ function createExportStyles() {
 }
 
 function createTripMarkdown() {
-  const preferenceLines = Object.entries(trip.preferences).filter(([, value]) => value).map(([key, value]) => `- **${titleCase(key)}:** ${value}`).join("\n");
+  const preferenceDetails = Object.entries(trip.preferences).filter(([, value]) => value).map(([key, value]) => `- **${titleCase(key)}:** ${value}`).join("\n");
+  const researchChecklist = trip.researchMode ? `## Research Needed\n\n- Verify landmark names, current hours, closures, prices, and ticket requirements.\n- Research neighborhoods and optimize each day geographically.\n- Confirm restaurant cuisine, ratings, dietary fit, and reservation requirements.\n- Replace placeholder shopping and activity cards with verified choices.\n- Check transit times, weather, accessibility, and seasonal conditions.\n- Preserve all traveler-entered must-dos and confirmed bookings while refining the plan.` : "";
+  const preferenceLines = [preferenceDetails, researchChecklist].filter(Boolean).join("\n\n");
   const selected = trip.selections.length ? trip.selections.map((item) => `- ${item.name}${item.area ? ` — ${item.area}` : ""}: ${item.detail}`).join("\n") : "- No manually selected places.";
   const locked = trip.bookings.length ? trip.bookings.map((item) => `- **${item.name}** — ${item.date || "date flexible"} — ${item.time || "time TBD"} — ${titleCase(item.status)}`).join("\n") : "- No locked bookings supplied.";
   const optional = trip.days.flatMap((day) => day.activities.filter((item) => /optional|backup/i.test(item.status || "")).map((item) => `- ${formatDate(day.date, false)} — ${item.title} — ${item.status}`)).join("\n") || "- No optional items marked.";
@@ -1008,7 +1007,7 @@ function buildTrip(destination, start, end, wishes, selections = [], preferences
     );
     activities = fillFullDay(activities, { relaxed: 6, balanced: 8, packed: 10 }[preferences.pace] || 8, seenRecommendations, destination, date, preferences, dayZones[index]).sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
     activities = assignDistinctActivityIcons(activities, index);
-    activities.forEach((item) => { item.status = "Recommended"; });
+    activities.forEach((item) => { item.status = guide.researchMode ? "Needs verification" : "Recommended"; });
     return {
       date,
       zone: dayZones[index],
@@ -1043,6 +1042,7 @@ function buildTrip(destination, start, end, wishes, selections = [], preferences
     preferences,
     bookings,
     guide,
+    researchMode: Boolean(guide.researchMode),
     days: itineraryDays
   };
 }
@@ -1205,6 +1205,7 @@ function getDestinationGuide(destination) {
   const known = destinationCatalogs.find((catalog) => catalog.match.test(destination));
   if (known) return known;
   return {
+    researchMode: true,
     banner: "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=1800&q=82",
     attractions: [
       place(`${destination} historic center`, "Central district", "Start with the best-known civic square, landmark streets, and a visitor-information stop."),
@@ -1236,6 +1237,8 @@ function renderTrip() {
     `${trip.days.reduce((sum, day) => sum + day.activities.length, 0)} thoughtful stops`,
     `${titleCase(trip.preferences.pace)} pace · ${titleCase(trip.preferences.party)}`
   ].map((text) => `<span class="trip-stat">${escapeHtml(text)}</span>`).join("");
+  const researchModeNotice = document.querySelector("#researchModeNotice");
+  researchModeNotice.hidden = !trip.researchMode;
 
   const dayBar = document.querySelector(".report-day-bar");
   dayBar.style.setProperty("--destination-banner", `url("${trip.guide.banner}")`);
