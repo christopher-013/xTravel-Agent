@@ -266,6 +266,7 @@ let suggestionDestination = "";
 let dayBannerRenderVersion = 0;
 let suggestionGroups = [];
 let activeSuggestionCategory = 0;
+let currentFormStep = 1;
 let lastExportHtml = "";
 let lastStandaloneHtml = "";
 
@@ -276,6 +277,16 @@ startDateInput.value = toInputDate(defaultStart);
 endDateInput.value = toInputDate(defaultEnd);
 
 knownDestinationList.innerHTML = knownDestinations.map((destination) => `<option value="${destination.label}"></option>`).join("");
+document.querySelectorAll(".form-progress [data-go-step]").forEach((stage) => {
+  const openStage = () => navigateToWizardStep(Number(stage.dataset.goStep));
+  stage.addEventListener("click", openStage);
+  stage.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      openStage();
+    }
+  });
+});
 destinationInput.addEventListener("input", () => {
   destinationInput.setCustomValidity("");
   destinationError.textContent = "";
@@ -412,7 +423,7 @@ document.querySelector("#surpriseMeButton").addEventListener("click", () => {
   showFormStep(3);
 });
 
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const start = parseDate(startDateInput.value);
   const end = parseDate(endDateInput.value);
@@ -424,7 +435,8 @@ form.addEventListener("submit", (event) => {
   dateError.textContent = "";
   if (!selectedSuggestions.size && !wishListInput.value.trim()) {
     preferenceError.textContent = "Choose at least one suggestion or tell us what interests you.";
-    wishListInput.focus();
+    showFormStep(2);
+    document.querySelector(".suggestion-bubble")?.focus();
     return;
   }
   preferenceError.textContent = "";
@@ -433,6 +445,7 @@ form.addEventListener("submit", (event) => {
   trip = buildTrip(destinationInput.value.trim(), start, end, wishListInput.value.trim(), selections, preferences);
   activeDay = 0;
   activeTab = "home";
+  await showTripCreationTransition();
   builder.hidden = true;
   result.hidden = false;
   document.body.classList.add("trip-mode");
@@ -455,7 +468,7 @@ document.querySelector("#newTripButton").addEventListener("click", () => {
   showBuilder();
   destinationInput.focus();
 });
-document.querySelector("#printButton").addEventListener("click", () => window.print());
+document.querySelector("#printButton").addEventListener("click", printSelectedDayItinerary);
 document.querySelector("#exportTripButton").addEventListener("click", exportTripPackage);
 document.querySelector("#heroExportTripButton").addEventListener("click", exportTripPackage);
 document.querySelector("#exportDialogClose").addEventListener("click", closeExportDialog);
@@ -506,7 +519,7 @@ async function exportTripPackage() {
       renderTrip();
       await waitForHydratedImages(document.querySelector(".trip-app"));
       const clone = document.querySelector(".trip-app").cloneNode(true);
-      clone.querySelectorAll("#exportTripButton,#editTripButton,.hero-export-button,.activity-menu,#printButton").forEach((element) => element.remove());
+      clone.querySelectorAll("#exportTripButton,#editTripButton,.hero-export-button,.activity-menu").forEach((element) => element.remove());
       clone.querySelectorAll(".day-button").forEach((button, index) => button.dataset.exportDay = index);
       clone.querySelectorAll("[data-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === "home"));
       clone.querySelectorAll("[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === "home"));
@@ -751,6 +764,7 @@ function crc32(bytes) {
 }
 
 function showFormStep(stepNumber) {
+  currentFormStep = stepNumber;
   builder.classList.toggle("builder-wide", stepNumber > 1);
   document.querySelectorAll("[data-form-step]").forEach((step) => {
     const active = Number(step.dataset.formStep) === stepNumber;
@@ -767,6 +781,38 @@ function showFormStep(stepNumber) {
   document.querySelector("#formStepTitle").textContent = ["", "Trip basics", "Choose your adventure", "Travelers & style", "Bookings & constraints", "Output style"][stepNumber];
   document.querySelector("#formStepCount").textContent = `Step ${displayedStep} of 5`;
   requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+}
+
+function navigateToWizardStep(stepNumber) {
+  if (!Number.isInteger(stepNumber) || stepNumber < 1 || stepNumber > 5) return;
+  if (stepNumber === currentFormStep) {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  if (stepNumber > 1 && currentFormStep === 1) {
+    goToPreferencesStep();
+    if (currentFormStep !== 2) return;
+  }
+  showFormStep(stepNumber);
+}
+
+async function showTripCreationTransition() {
+  const overlay = document.querySelector("#tripCreationTransition");
+  const logo = document.querySelector("#tripCreationLogo");
+  overlay.hidden = false;
+  overlay.classList.remove("finishing");
+  document.body.classList.add("creating-trip");
+  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  logo.removeAttribute("src");
+  void logo.offsetWidth;
+  await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  logo.src = `x-travel-agent-icon.svg?transition=${Date.now()}`;
+  await new Promise((resolve) => setTimeout(resolve, reducedMotion ? 650 : 4300));
+  overlay.classList.add("finishing");
+  await new Promise((resolve) => setTimeout(resolve, 280));
+  overlay.hidden = true;
+  overlay.classList.remove("finishing");
+  document.body.classList.remove("creating-trip");
 }
 
 function getTripPreferences() {
@@ -1261,6 +1307,12 @@ function renderTrip() {
     });
     nav.appendChild(button);
   });
+  requestAnimationFrame(() => {
+    const selectedDateButton = nav.querySelector(".day-button.active");
+    if (selectedDateButton && window.matchMedia("(max-width: 760px)").matches) {
+      selectedDateButton.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+    }
+  });
 
   const day = trip.days[activeDay];
   document.querySelector("#reportTripName").textContent = formatDate(day.date, true);
@@ -1268,6 +1320,8 @@ function renderTrip() {
   updateSelectedDayBanner(day, activeDay);
   document.querySelector("#activeDayLabel").textContent = formatDate(day.date, false);
   document.querySelector("#activeDayTitle").textContent = day.title;
+  document.querySelector("#printDayLabel").textContent = `${trip.destination} · ${formatDate(day.date, true)}`;
+  document.querySelector("#printDayTitle").textContent = day.title;
   const content = document.querySelector("#dayContent");
   content.innerHTML = "";
   day.activities.forEach((activity) => content.appendChild(renderActivity(activity)));
@@ -1296,6 +1350,7 @@ async function updateSelectedDayBanner(day, index) {
   if (!image || !highlight) return;
   image.src = trip.guide.banner;
   dayBar.style.setProperty("--destination-banner", `url("${trip.guide.banner}")`);
+  document.querySelector(".itinerary-day-hero")?.style.setProperty("--destination-banner", `url("${trip.guide.banner}")`);
   await hydrateSuggestionImage(image, {
     name: cleanActivityTitle(highlight.title),
     category: highlight.type === "Eat" ? "eat" : highlight.type === "Shop" ? "shop" : "see",
@@ -1303,7 +1358,10 @@ async function updateSelectedDayBanner(day, index) {
   }, trip.destination);
   if (version !== dayBannerRenderVersion || index !== activeDay) return;
   const source = image.currentSrc || image.src;
-  if (source && !source.startsWith("data:")) dayBar.style.setProperty("--destination-banner", `url("${source}")`);
+  if (source && !source.startsWith("data:")) {
+    dayBar.style.setProperty("--destination-banner", `url("${source}")`);
+    document.querySelector(".itinerary-day-hero")?.style.setProperty("--destination-banner", `url("${source}")`);
+  }
 }
 
 function renderHomePanel() {
@@ -1388,16 +1446,54 @@ function renderWeatherPanel() {
   ].join("");
   document.querySelector("#weatherDisclaimer").textContent = "Seasonal fallback—live conditions will replace this estimate when available.";
 
+  syncItineraryWeatherCard();
   getLiveWeather(requestedDestination).then((live) => {
     if (!trip || trip.destination !== requestedDestination || requestVersion !== weatherRenderVersion) return;
     applyLiveWeather(live);
+    syncItineraryWeatherCard();
   }).catch(() => {
     if (!trip || trip.destination !== requestedDestination || requestVersion !== weatherRenderVersion) return;
     document.querySelector("#weatherKicker").textContent = "Seasonal planning estimate";
     document.querySelector("#weatherDate").textContent = formatDate(trip.start, true);
     document.querySelector("#weatherSummary").textContent = `${weather.summary} Typical ${weather.season.toLowerCase()} conditions for planning.`;
     document.querySelector("#weatherDisclaimer").textContent = "Live forecast unavailable—verify conditions closer to departure.";
-  });
+  }).finally(syncItineraryWeatherCard);
+}
+
+function syncItineraryWeatherCard() {
+  const source = document.querySelector("#tripWeatherCard");
+  const target = document.querySelector("#itineraryWeatherCard");
+  if (!source || !target) return;
+  target.innerHTML = source.innerHTML;
+  target.querySelectorAll("[id]").forEach((element) => element.removeAttribute("id"));
+  const selectedDay = trip?.days?.[activeDay];
+  if (!selectedDay) return;
+  const weather = createSeasonalWeather(trip.destination, selectedDay.date);
+  target.querySelector(".weather-location").textContent = trip.destination;
+  target.querySelector(".weather-kicker").textContent = "Selected-day planning estimate";
+  target.querySelector(".weather-date").textContent = formatDate(selectedDay.date, true);
+  target.querySelector(".weather-icon").textContent = weather.icon;
+  target.querySelector(".trip-weather-bg").textContent = weather.icon;
+  target.querySelector(".weather-main strong").textContent = `${weather.tempF}\u00B0F`;
+  target.querySelector(".weather-condition").textContent = `${weather.season} estimate`;
+  target.querySelector(".weather-summary").textContent = `${weather.summary} Use this seasonal estimate for planning and verify the forecast closer to the selected date.`;
+  target.querySelector(".weather-metrics-row").innerHTML = [
+    `<span><small>High / low</small><strong>${weather.highF}\u00B0 / ${weather.lowF}\u00B0</strong></span>`,
+    `<span><small>Feels like</small><strong>${weather.tempF}\u00B0F est.</strong></span>`,
+    `<span><small>Humidity</small><strong>${weather.humidity}% est.</strong></span>`,
+    `<span><small>Wind</small><strong>${weather.windMph} mph est.</strong></span>`,
+    `<span><small>Rain chance</small><strong>${weather.rainChance}% est.</strong></span>`,
+    `<span><small>Pack</small><strong>${escapeHtml(weather.pack)}</strong></span>`
+  ].join("");
+  target.querySelector(".weather-disclaimer").textContent = "Seasonal planning estimate for the selected itinerary date; verify closer to departure.";
+}
+
+function printSelectedDayItinerary() {
+  if (!trip?.days?.[activeDay]) return;
+  const previousTitle = document.title;
+  document.title = `${trip.destination} - ${formatDate(trip.days[activeDay].date, true)} itinerary`;
+  window.print();
+  setTimeout(() => { document.title = previousTitle; }, 500);
 }
 
 async function getLiveWeather(destination) {

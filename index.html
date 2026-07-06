@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="icon" href="x-travel-agent-icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260705-starter-mode-1">
+  <link rel="stylesheet" href="styles.css?v=20260706-single-animation-1">
 </head>
 <body>
   <main class="page-shell">
@@ -49,11 +49,11 @@
           <span class="step-count" id="formStepCount">Step 1 of 5</span>
         </div>
         <div class="form-progress" aria-label="Trip creation progress">
-          <span class="active current" aria-current="step"><b>1</b><small><strong>Trip basics</strong><em>Destination &amp; dates</em></small></span>
-          <span><b>2</b><small><strong>Adventure</strong><em>See, eat &amp; shop</em></small></span>
-          <span><b>3</b><small><strong>Travel style</strong><em>Pace &amp; preferences</em></small></span>
-          <span><b>4</b><small><strong>Constraints</strong><em>Bookings &amp; needs</em></small></span>
-          <span><b>5</b><small><strong>Create</strong><em>Build &amp; export</em></small></span>
+          <span class="active current" data-go-step="1" role="button" tabindex="0" aria-label="Go to Trip basics" aria-current="step"><b>1</b><small><strong>Trip basics</strong><em>Destination &amp; dates</em></small></span>
+          <span data-go-step="2" role="button" tabindex="0" aria-label="Go to Adventure"><b>2</b><small><strong>Adventure</strong><em>See, eat &amp; shop</em></small></span>
+          <span data-go-step="3" role="button" tabindex="0" aria-label="Go to Travel style"><b>3</b><small><strong>Travel style</strong><em>Pace &amp; preferences</em></small></span>
+          <span data-go-step="4" role="button" tabindex="0" aria-label="Go to Constraints"><b>4</b><small><strong>Constraints</strong><em>Bookings &amp; needs</em></small></span>
+          <span data-go-step="5" role="button" tabindex="0" aria-label="Go to Create"><b>5</b><small><strong>Create</strong><em>Build &amp; export</em></small></span>
         </div>
         <div class="security-note" role="note">
           <span aria-hidden="true">✓</span>
@@ -192,6 +192,7 @@
 
         <div class="trip-app-views">
           <section class="app-panel active" data-panel="home" aria-label="Trip home">
+            <div class="home-overview-grid">
             <div class="app-home-hero">
               <div class="hero-orbit" aria-hidden="true"></div>
               <p class="eyebrow light">Your personal itinerary</p>
@@ -219,6 +220,7 @@
                 <small class="weather-disclaimer" id="weatherDisclaimer">Loading live conditions. Seasonal planning guidance is used when the forecast is unavailable.</small>
               </section>
             </div>
+            </div>
             <div class="app-panel-body home-panel-body">
               <div class="welcome-row">
                 <div><p class="eyebrow">Ready when you are</p><h3>Your trip at a glance</h3></div>
@@ -241,14 +243,14 @@
           </section>
 
           <section class="app-panel" data-panel="itinerary" aria-label="Day-by-day itinerary">
-            <div class="compact-app-hero">
-              <div><p class="eyebrow light">Day by day</p><h2>Your itinerary</h2></div>
-              <button class="print-button" id="printButton" type="button">Print</button>
+            <div class="itinerary-overview-grid">
+              <div class="compact-app-hero itinerary-day-hero">
+                <div><p class="eyebrow light">Day by day</p><p class="itinerary-hero-date" id="activeDayLabel">Trip date</p><h2 id="activeDayTitle">Settle in &amp; wander</h2><button class="print-button itinerary-print-button" id="printButton" type="button">Print This Day Itinerary</button></div>
+              </div>
+              <div class="itinerary-weather-wrap"><section class="trip-weather-card" id="itineraryWeatherCard" aria-label="Weather for the selected itinerary day"></section></div>
             </div>
             <div class="itinerary-panel app-panel-body">
-              <div class="panel-heading">
-                <div><p class="eyebrow" id="activeDayLabel">Trip date</p><h3 id="activeDayTitle">Settle in & wander</h3></div>
-              </div>
+              <header class="print-day-heading"><p id="printDayLabel">Trip date</p><h1 id="printDayTitle">Selected day itinerary</h1></header>
               <section class="route-flow-widget" id="routeFlowWidget" aria-label="Route flow for selected day"></section>
               <div class="day-content" id="dayContent"></div>
             </div>
@@ -299,6 +301,16 @@
     </section>
   </main>
 
+  <div class="trip-creation-transition" id="tripCreationTransition" role="status" aria-live="polite" hidden>
+    <div class="trip-creation-transition-card">
+      <img id="tripCreationLogo" src="x-travel-agent-icon.svg" alt="x-Travel Agent">
+      <p class="eyebrow">Building your adventure</p>
+      <h2>x-Travel Agent</h2>
+      <p>Turning your choices, bookings, and travel style into a complete trip website.</p>
+      <span class="creation-progress" aria-hidden="true"><i></i><i></i><i></i></span>
+    </div>
+  </div>
+
   <dialog class="export-dialog" id="exportDialog" aria-labelledby="exportDialogTitle">
     <button class="export-dialog-close" id="exportDialogClose" type="button" aria-label="Close">×</button>
     <span class="export-dialog-icon" aria-hidden="true">✓</span>
@@ -333,8 +345,8 @@
     </article>
   </template>
 
-  <script src="export-styles.js?v=20260705-starter-mode-1"></script>
+  <script src="export-styles.js?v=20260706-single-animation-1"></script>
   <script src="icon-source.js?v=20260705-no-text-icon-1"></script>
-  <script src="app.js?v=20260705-starter-mode-1"></script>
+  <script src="app.js?v=20260706-single-animation-1"></script>
 </body>
 </html>

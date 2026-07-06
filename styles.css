@@ -186,6 +186,99 @@ textarea { width: 100%; resize: vertical; padding: 13px 14px; border: 1px solid 
   .activity-card { break-inside: avoid; }
 }
 
+/* Final mobile swipe behavior for daily itinerary navigation */
+@media(max-width:760px) {
+  .report-day-bar { min-width:0; overflow:hidden; }
+  .report-day-bar #dayNav.day-strip {
+    display:flex !important;
+    width:100% !important;
+    max-width:100% !important;
+    min-width:0 !important;
+    flex-wrap:nowrap !important;
+    justify-content:flex-start !important;
+    gap:8px;
+    padding:3px 12px 9px !important;
+    overflow-x:auto !important;
+    overflow-y:hidden !important;
+    scroll-snap-type:x proximity;
+    scroll-padding-inline:12px;
+    scrollbar-width:thin;
+    touch-action:pan-x pinch-zoom;
+    overscroll-behavior-x:contain;
+    -webkit-overflow-scrolling:touch;
+  }
+  .report-day-bar #dayNav.day-strip::-webkit-scrollbar { height:3px; }
+  .report-day-bar #dayNav.day-strip::-webkit-scrollbar-thumb { border-radius:99px; background:rgba(255,255,255,.55); }
+  .report-day-bar #dayNav.day-strip .day-button {
+    flex:0 0 118px !important;
+    width:118px !important;
+    min-width:118px !important;
+    scroll-snap-align:center;
+    scroll-snap-stop:normal;
+  }
+}
+
+/* Clickable workflow stages and branded creation transition */
+.trip-form .form-progress span[role="button"] { cursor:pointer; user-select:none; }
+.trip-form .form-progress span[role="button"]:hover { filter:brightness(.97) drop-shadow(0 4px 6px rgba(77,57,12,.12)); }
+.trip-form .form-progress span[role="button"]:focus-visible { outline:none; }
+.trip-form .form-progress span[role="button"]:focus-visible b { box-shadow:0 0 0 4px rgba(74,106,134,.3); }
+.trip-creation-transition {
+  position:fixed;
+  z-index:10000;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  color:#17231f;
+  background:radial-gradient(circle at 50% 38%,#fffdf6 0,#f5efe0 48%,#dfe9e6 100%);
+  opacity:1;
+  transition:opacity .28s ease;
+}
+.trip-creation-transition[hidden] { display:none; }
+.trip-creation-transition.finishing { opacity:0; }
+.trip-creation-transition-card { display:grid; width:min(100%,560px); justify-items:center; text-align:center; }
+.trip-creation-transition-card img { width:clamp(180px,27vw,280px); height:clamp(180px,27vw,280px); object-fit:contain; filter:drop-shadow(0 18px 25px rgba(18,52,71,.16)); }
+.trip-creation-transition-card .eyebrow { margin:9px 0 7px; color:#8a6500; font-size:10px; letter-spacing:.18em; }
+.trip-creation-transition-card h2 { margin:0; color:#173e35; font-size:clamp(32px,6vw,52px); line-height:1; }
+.trip-creation-transition-card > p:not(.eyebrow) { max-width:440px; margin:13px 0 0; color:#59645f; font-size:12px; line-height:1.55; }
+.creation-progress { display:flex; gap:7px; margin-top:22px; }
+.creation-progress i { width:8px; height:8px; border-radius:50%; background:#d3a62d; animation:creationDot 1.05s ease-in-out infinite; }
+.creation-progress i:nth-child(2) { animation-delay:.14s; }
+.creation-progress i:nth-child(3) { animation-delay:.28s; }
+@keyframes creationDot { 0%,100%{transform:translateY(0);opacity:.35} 50%{transform:translateY(-7px);opacity:1} }
+body.creating-trip { overflow:hidden !important; }
+@media(prefers-reduced-motion:reduce) { .creation-progress i { animation:none; opacity:.75; } }
+
+.print-day-heading { display:none; }
+
+/* Final minimal print output: selected day only */
+@media print {
+  body.trip-mode .builder,
+  body.trip-mode .topbar,
+  body.trip-mode .trip-app-header,
+  body.trip-mode .report-day-bar,
+  body.trip-mode .app-nav,
+  body.trip-mode .itinerary-overview-grid,
+  body.trip-mode .home-overview-grid,
+  body.trip-mode .trip-weather-card,
+  body.trip-mode dialog,
+  body.trip-mode .app-panel:not([data-panel="itinerary"]) { display:none !important; }
+  body.trip-mode .page-shell,
+  body.trip-mode .result,
+  body.trip-mode .trip-app,
+  body.trip-mode .trip-app-views,
+  body.trip-mode .app-panel[data-panel="itinerary"],
+  body.trip-mode .itinerary-panel,
+  body.trip-mode .day-content { position:static !important; display:block !important; width:100% !important; max-width:none !important; height:auto !important; min-height:0 !important; overflow:visible !important; margin:0 !important; padding:0 !important; background:#fff !important; box-shadow:none !important; }
+  .print-day-heading { display:block !important; margin:0 0 16px; padding:0 0 12px; border-bottom:2px solid #222; }
+  .print-day-heading p { margin:0 0 5px; color:#555; font-size:10pt; font-weight:700; text-transform:uppercase; letter-spacing:.08em; }
+  .print-day-heading h1 { margin:0; color:#111; font-size:22pt; line-height:1.15; }
+  .route-flow-widget { margin:0 0 18px !important; }
+  .route-flow-widget .widget-title { margin-bottom:10px; }
+  .route-flow-widget .widget-title > span { display:none; }
+}
+
 /* Reference-theme pass: matches the original phone-first Tokyo planner */
 :root {
   --ink: #1c1f26;
@@ -2077,3 +2170,190 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
 .research-mode-notice > p:not(.eyebrow) { margin:0; color:#565149; font-size:10px; line-height:1.55; }
 .research-mode-notice ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 24px; margin:14px 0 0; padding-left:18px; color:#3e4144; font-size:9px; line-height:1.45; }
 @media(max-width:620px) { .research-mode-notice ul { grid-template-columns:1fr; } }
+
+/* Trip-home overview: itinerary beside weather */
+.home-overview-grid {
+  display:grid;
+  grid-template-columns:minmax(0,1.65fr) minmax(330px,.85fr);
+  gap:14px;
+  align-items:stretch;
+  padding:16px clamp(16px,3vw,38px);
+  background:linear-gradient(180deg,#e9e3d6 0%,var(--panel) 100%);
+}
+.home-overview-grid .app-home-hero {
+  min-height:340px;
+  height:100%;
+  padding:38px clamp(26px,4vw,52px) 34px;
+  border-radius:14px;
+}
+.home-overview-grid .app-home-hero h2 { font-size:clamp(50px,5.5vw,74px); }
+.home-overview-grid .app-home-hero > #resultDates { margin-top:13px; font-size:16px; }
+.home-overview-grid .app-home-hero .trip-stats { margin-top:17px; }
+.home-overview-grid .hero-export-button { margin-top:17px; }
+.home-overview-grid .home-weather-wrap { width:auto; height:100%; padding:0; background:transparent; }
+.home-overview-grid .home-weather-wrap .trip-weather-card {
+  display:flex;
+  width:100%;
+  height:100%;
+  min-height:340px;
+  flex-direction:column;
+  margin:0;
+  padding:22px 20px 17px;
+}
+.home-overview-grid .weather-summary { margin-bottom:10px; font-size:10px; }
+.home-overview-grid .weather-metrics-row { grid-template-columns:repeat(2,minmax(0,1fr)); margin-top:auto; }
+.home-overview-grid .weather-metrics-row > span { padding:9px 8px; }
+.home-overview-grid .weather-metrics-row > span:nth-child(odd) { border-right:1px solid rgba(255,255,255,.17); }
+.home-overview-grid .weather-metrics-row > span:nth-child(even) { border-right:0; }
+.home-overview-grid .weather-metrics-row > span:nth-child(-n+4) { border-bottom:1px solid rgba(255,255,255,.17); }
+@media(max-width:980px) {
+  .home-overview-grid { grid-template-columns:1fr; }
+  .home-overview-grid .app-home-hero { min-height:320px; }
+  .home-overview-grid .home-weather-wrap .trip-weather-card { min-height:0; }
+  .home-overview-grid .weather-metrics-row { grid-template-columns:repeat(3,minmax(0,1fr)); }
+}
+@media(max-width:620px) {
+  .home-overview-grid { gap:10px; padding:10px; }
+  .home-overview-grid .app-home-hero { min-height:300px; padding:31px 20px 27px; }
+  .home-overview-grid .app-home-hero h2 { font-size:clamp(42px,13vw,56px); }
+  .home-overview-grid .home-weather-wrap .trip-weather-card { padding:20px 16px 16px; }
+  .home-overview-grid .weather-metrics-row { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+
+/* Glass weather overlays for Home and Itinerary */
+.home-overview-grid,
+.itinerary-overview-grid {
+  position:relative;
+  display:block;
+  padding:14px clamp(14px,3vw,38px);
+  background:linear-gradient(180deg,#e9e3d6 0%,var(--panel) 100%);
+}
+.home-overview-grid .app-home-hero {
+  min-height:330px;
+  padding:38px clamp(390px,38vw,510px) 34px clamp(26px,4vw,52px);
+}
+.home-overview-grid .home-weather-wrap,
+.itinerary-weather-wrap {
+  position:absolute;
+  z-index:4;
+  top:30px;
+  right:clamp(28px,4.5vw,70px);
+  width:min(34vw,410px);
+  height:auto;
+  padding:0;
+  background:transparent;
+}
+.home-overview-grid .home-weather-wrap .trip-weather-card,
+.itinerary-weather-wrap .trip-weather-card {
+  display:flex;
+  width:100%;
+  min-height:0;
+  height:auto;
+  flex-direction:column;
+  margin:0;
+  padding:16px 17px 13px;
+  border:1px solid rgba(255,255,255,.34);
+  border-radius:14px;
+  background:linear-gradient(135deg,rgba(11,42,60,.68),rgba(24,81,91,.48));
+  box-shadow:0 14px 30px rgba(6,24,34,.22);
+  backdrop-filter:blur(12px) saturate(1.15);
+}
+.home-overview-grid .weather-location,
+.itinerary-weather-wrap .weather-location { font-size:14px; }
+.home-overview-grid .weather-main,
+.itinerary-weather-wrap .weather-main { margin-top:8px; }
+.home-overview-grid .weather-icon,
+.itinerary-weather-wrap .weather-icon { font-size:27px; }
+.home-overview-grid .weather-main strong,
+.itinerary-weather-wrap .weather-main strong { font-size:27px; }
+.home-overview-grid .weather-summary,
+.itinerary-weather-wrap .weather-summary { margin:7px 0 9px; font-size:9px; line-height:1.4; }
+.home-overview-grid .weather-metrics-row,
+.itinerary-weather-wrap .weather-metrics-row { grid-template-columns:repeat(3,minmax(0,1fr)); margin-top:0; }
+.home-overview-grid .weather-metrics-row > span,
+.itinerary-weather-wrap .weather-metrics-row > span { padding:7px 5px; }
+.home-overview-grid .weather-metrics-row small,
+.itinerary-weather-wrap .weather-metrics-row small { font-size:6px; }
+.home-overview-grid .weather-metrics-row strong,
+.itinerary-weather-wrap .weather-metrics-row strong { font-size:8px; }
+.home-overview-grid .weather-disclaimer,
+.itinerary-weather-wrap .weather-disclaimer { margin-top:7px; font-size:6px; }
+.itinerary-day-hero {
+  display:block;
+  min-height:300px;
+  padding:40px clamp(390px,38vw,510px) 34px clamp(26px,4vw,52px);
+  border-radius:14px;
+  background-image:linear-gradient(115deg,rgba(14,35,31,.9),rgba(20,51,72,.42)),var(--destination-banner);
+  background-position:center;
+  background-size:cover;
+}
+.itinerary-day-hero > div { position:relative; z-index:2; }
+.itinerary-day-hero .itinerary-hero-date { margin:7px 0 5px; color:rgba(255,255,255,.9); font-size:15px; font-weight:800; }
+.itinerary-day-hero h2 { max-width:720px; margin:0; color:#fff; font-size:clamp(34px,4vw,52px); line-height:1.02; }
+.itinerary-print-button {
+  position:relative;
+  z-index:5;
+  display:inline-flex;
+  width:fit-content;
+  min-height:46px;
+  align-items:center;
+  justify-content:center;
+  margin-top:20px;
+  padding:11px 19px;
+  border:1px solid rgba(255,255,255,.7);
+  border-radius:999px;
+  color:#17231f;
+  background:#f5c84b;
+  font-size:12px;
+  font-weight:800;
+  box-shadow:0 10px 24px rgba(0,0,0,.22);
+}
+.itinerary-print-button:hover { color:#17231f; background:#ffe17c; transform:translateY(-2px); }
+@media(max-width:900px) {
+  .home-overview-grid .app-home-hero,
+  .itinerary-day-hero { min-height:500px; padding:32px 24px 235px; }
+  .home-overview-grid .home-weather-wrap,
+  .itinerary-weather-wrap { top:auto; right:26px; bottom:28px; left:26px; width:auto; }
+}
+@media(max-width:620px) {
+  .home-overview-grid,
+  .itinerary-overview-grid { padding:10px; }
+  .home-overview-grid .app-home-hero,
+  .itinerary-day-hero { min-height:500px; padding:28px 18px 230px; }
+  .home-overview-grid .home-weather-wrap,
+  .itinerary-weather-wrap { right:20px; bottom:20px; left:20px; }
+  .itinerary-day-hero h2 { font-size:34px; }
+  .itinerary-print-button { min-height:42px; margin-top:15px; padding:9px 15px; font-size:10px; }
+  .home-overview-grid .weather-summary,
+  .itinerary-weather-wrap .weather-summary,
+  .home-overview-grid .weather-disclaimer,
+  .itinerary-weather-wrap .weather-disclaimer { display:none; }
+}
+
+/* Printer-friendly selected-day itinerary */
+@media print {
+  @page { margin:12mm; }
+  html,body,body.trip-mode,body.trip-mode .page-shell,body.trip-mode .result,.trip-app,.trip-app-views { height:auto !important; min-height:0 !important; overflow:visible !important; background:#fff !important; }
+  .trip-app-header,.report-day-bar,.app-nav,.app-panel:not([data-panel="itinerary"]),.itinerary-print-button { display:none !important; }
+  .app-panel[data-panel="itinerary"] { display:block !important; height:auto !important; overflow:visible !important; }
+  .itinerary-overview-grid { position:static !important; display:block !important; padding:0 0 16px; background:#fff !important; }
+  .itinerary-day-hero { min-height:0 !important; padding:18px 20px !important; border:1px solid #bbb; border-radius:8px; color:#111 !important; background:#f4f1e8 !important; box-shadow:none !important; }
+  .itinerary-day-hero .eyebrow,.itinerary-day-hero .itinerary-hero-date,.itinerary-day-hero h2 { color:#111 !important; text-shadow:none !important; }
+  .itinerary-day-hero h2 { font-size:28px !important; }
+  .itinerary-weather-wrap { position:static !important; display:block !important; width:auto !important; height:auto !important; margin-top:10px !important; }
+  .itinerary-weather-wrap .trip-weather-card { position:static !important; display:block !important; width:100% !important; min-height:0 !important; height:auto !important; padding:13px !important; border:1px solid #bbb !important; color:#111 !important; background:#f7f7f7 !important; box-shadow:none !important; backdrop-filter:none !important; }
+  .itinerary-weather-wrap .trip-weather-bg { display:none; }
+  .itinerary-weather-wrap .weather-kicker,.itinerary-weather-wrap .weather-date,.itinerary-weather-wrap .weather-condition,.itinerary-weather-wrap .weather-summary,.itinerary-weather-wrap .weather-disclaimer,.itinerary-weather-wrap .weather-metrics-row small { color:#444 !important; }
+  .itinerary-weather-wrap .weather-metrics-row { grid-template-columns:repeat(2,minmax(0,1fr)); border-color:#bbb; }
+  .itinerary-weather-wrap .weather-metrics-row > span { border-color:#ccc !important; }
+  .itinerary-panel.app-panel-body { max-width:none !important; padding:0 !important; }
+  .route-flow-widget { display:block !important; height:auto !important; overflow:visible !important; break-inside:auto !important; page-break-inside:auto !important; box-shadow:none !important; }
+  .route-flow-list { display:block !important; }
+  .route-flow-stop { display:grid !important; grid-template-columns:34px minmax(0,1fr) !important; width:100% !important; margin:0 0 7px !important; break-inside:avoid !important; page-break-inside:avoid !important; }
+  .day-content { display:block !important; height:auto !important; overflow:visible !important; }
+  .activity-card { position:relative !important; display:grid !important; grid-template-columns:58px 110px minmax(0,1fr) !important; width:100% !important; height:auto !important; min-height:0 !important; margin:0 0 10px !important; overflow:visible !important; break-inside:avoid !important; page-break-inside:avoid !important; box-shadow:none !important; transform:none !important; }
+  .activity-photo { width:110px !important; height:78px !important; object-fit:cover; }
+  .activity-copy,.activity-copy p,.activity-copy a { min-width:0 !important; overflow-wrap:anywhere; }
+  .app-panel.active,.activity-card,.route-flow-widget { animation:none !important; }
+  .activity-menu { display:none !important; }
+}
