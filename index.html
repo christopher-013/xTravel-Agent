@@ -5,19 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f1e8">
   <meta name="referrer" content="no-referrer">
-  <title>xTravel Agent — Your trip, thoughtfully planned</title>
+  <title>PlanToGuide — Turn your trip plan into a mobile travel guide</title>
+  <meta name="description" content="Create a shareable trip website, mobile travel guide, and AI-ready planning file.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="x-travel-agent-icon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260707-user-cards-1">
+  <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css?v=20260707-plantoguide-1">
 </head>
 <body>
   <main class="page-shell">
     <header class="topbar">
-      <a class="brand" href="#" aria-label="xTravel Agent home">
-        <span class="brand-mark" aria-hidden="true"><img src="x-travel-agent-icon.svg" alt=""></span>
-        <span>xTravel Agent</span>
+      <a class="brand" href="#" aria-label="Plan × Guide home">
+        <span class="brand-mark" aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span>
+        <span class="brand-wordmark">Plan <span class="brand-x">×</span> Guide</span>
       </a>
       <p>Popular places, personalized around you.</p>
       <button class="text-button" id="newTripButton" type="button">New trip</button>
@@ -25,10 +26,10 @@
 
     <section class="builder" id="builder" aria-labelledby="builderTitle">
       <div class="builder-copy">
-        <a class="builder-brand home-brand-lockup" href="#" aria-label="xTravel Agent home"><span aria-hidden="true"><img src="x-travel-agent-icon.svg" alt=""></span><strong>xTravel Agent</strong></a>
+        <a class="builder-brand home-brand-lockup" href="#" aria-label="Plan × Guide home"><span aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><strong>Plan <span class="brand-x">×</span> Guide</strong></a>
         <p class="eyebrow">Trip website builder · Free browser mode</p>
-        <h1 id="builderTitle">Create a trip website and<br><em>AI-ready planning file in minutes</em></h1>
-        <p class="lede homepage-tagline">Answer a few questions, then generate a polished travel website, a day-by-day itinerary, and a file you can reuse in ChatGPT, Claude, or your favorite AI tools.</p>
+        <h1 id="builderTitle">Turn your trip plan into a<br><em>mobile travel guide.</em></h1>
+        <p class="lede homepage-tagline">Create a shareable trip website, printable itinerary, and AI-ready planning file for your next trip.</p>
         <div class="demo-showcase"><strong>Example: Tokyo 2026 Family Trip</strong><span>Locked bookings, route flow, food, shopping, maps, weather, photos, and AI-ready planning structure.</span><a href="https://christopher-013.github.io/Tokyo2026/" target="_blank" rel="noopener">View demo trip →</a></div>
         <div class="import-callout"><strong>Already have an AI-updated plan?</strong><span>Paste the TRIP-PLAN.md your AI returned and re-render your trip website instantly.</span><button type="button" class="text-button" data-open-import>Import updated plan →</button></div>
         <div class="journey-line" aria-hidden="true">
@@ -174,7 +175,7 @@
     <section class="result" id="result" aria-live="polite" hidden>
       <div class="trip-app">
         <header class="trip-app-header">
-          <a class="brand app-brand" href="#" aria-label="xTravel Agent trip home"><span class="brand-mark"><img src="x-travel-agent-icon.svg" alt=""></span><span>xTravel Agent</span></a>
+          <a class="brand app-brand" href="#" aria-label="Plan × Guide trip home"><span class="brand-mark"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><span class="brand-wordmark">Plan <span class="brand-x">×</span> Guide</span></a>
           <span class="app-destination" id="appDestination">Your trip</span>
           <div class="trip-header-actions">
             <button class="export-button" id="exportTripButton" type="button">Export</button>
@@ -285,7 +286,7 @@
             <div class="compact-app-hero photos-hero"><div><p class="eyebrow light">Remember</p><h2>Photos</h2><p>Your trip gallery and visual journal.</p></div></div>
             <div class="app-panel-body photo-journal-panel">
               <section class="photo-manager" aria-labelledby="photoManagerTitle">
-                <div><p class="eyebrow">Build your journal</p><h3 id="photoManagerTitle">Add trip photos</h3><p>Upload images for the selected date. When a photo contains matching capture-date or GPS metadata, xTravel Agent files it under the corresponding trip day and plots its location.</p></div>
+                <div><p class="eyebrow">Build your journal</p><h3 id="photoManagerTitle">Add trip photos</h3><p>Upload images for the selected date. When a photo contains matching capture-date or GPS metadata, Plan × Guide files it under the corresponding trip day and plots its location.</p></div>
                 <div class="photo-manager-actions">
                   <label class="photo-upload-button">Upload photos<input id="photoUploadInput" type="file" accept="image/*" multiple hidden></label>
                   <label class="photo-caption-field"><span>Caption</span><input id="photoCaptionInput" type="text" maxlength="120" placeholder="Optional caption for this upload"></label>
@@ -321,9 +322,9 @@
 
   <div class="trip-creation-transition" id="tripCreationTransition" role="status" aria-live="polite" hidden>
     <div class="trip-creation-transition-card">
-      <img id="tripCreationLogo" src="x-travel-agent-icon.svg" alt="xTravel Agent">
+      <img id="tripCreationLogo" src="plan-x-guide-centered-compass-morph-clean-x.svg" alt="Plan × Guide">
       <p class="eyebrow">Building your adventure</p>
-      <h2>xTravel Agent</h2>
+      <h2>Plan <span class="brand-x">×</span> Guide</h2>
       <p>Turning your choices, bookings, and travel style into a complete trip website.</p>
       <span class="creation-progress" aria-hidden="true"><i></i><i></i><i></i></span>
     </div>
@@ -345,7 +346,7 @@
     <span class="export-dialog-icon" aria-hidden="true">⤵</span>
     <p class="eyebrow">Close the loop</p>
     <h2 id="importDialogTitle">Import an AI-updated plan</h2>
-    <p>Paste the complete TRIP-PLAN.md your AI assistant returned (or just its <code>json xtravel-trip</code> block), or choose the file. xTravel Agent reads the Machine-Readable Trip Data section and re-renders your trip website.</p>
+    <p>Paste the complete TRIP-PLAN.md your AI assistant returned (or just its <code>json xtravel-trip</code> block), or choose the file. Plan × Guide reads the Machine-Readable Trip Data section and re-renders your trip website.</p>
     <textarea id="importPlanText" rows="9" placeholder="Paste the full TRIP-PLAN.md returned by Claude, ChatGPT, or another AI…" aria-label="Updated plan content"></textarea>
     <div class="import-error" id="importError" role="alert" hidden></div>
     <div class="import-actions">
@@ -379,8 +380,8 @@
   </template>
 
   <script src="export-styles.js?v=20260707-photo-controls-logo-2"></script>
-  <script src="icon-source.js?v=20260706-brand-name-1"></script>
+  <script src="icon-source.js?v=20260707-centered-logo-1"></script>
   <script src="trip-schema.js?v=20260706-round-trip-1"></script>
-  <script src="app.js?v=20260707-publish-logo-map-1"></script>
+  <script src="app.js?v=20260707-centered-logo-1"></script>
 </body>
 </html>

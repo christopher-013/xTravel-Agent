@@ -1,4 +1,4 @@
-name: Deploy standalone x-Travel Guide
+name: Deploy PlanToGuide
 
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
       - name: Assemble standalone site
         run: |
           mkdir _site
-          cp index.html app.js styles.css export-styles.js icon-source.js trip-schema.js x-travel-agent-icon.svg _site/
+          cp index.html app.js styles.css export-styles.js icon-source.js trip-schema.js plan-x-guide-centered-compass-morph-clean-x.svg _site/
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

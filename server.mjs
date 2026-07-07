@@ -99,9 +99,9 @@ function createTravelServer() {
     server,
     "render_travel_itinerary",
     {
-      title: "Create xTravel Agent itinerary",
+      title: "Create PlanToGuide itinerary",
       description: [
-        "Create and display a detailed xTravel Agent itinerary.",
+        "Create and display a detailed PlanToGuide itinerary.",
         "Before calling this tool, make sure the conversation provides exactly three essentials: destination, arrival/departure dates, and the user's places or interests for sightseeing, food, and shopping.",
         "Ask only for essentials that are missing. Then use your travel knowledge to produce a practical plan for every calendar date in the range.",
         "Honor every explicit request, group stops geographically, use realistic meal times, include exactly three distinct breakfast, lunch, and dinner choices and three shopping choices per day, and do not repeat a venue anywhere in the itinerary unless the user explicitly requests it.",
@@ -112,8 +112,8 @@ function createTravelServer() {
       _meta: {
         ui: { resourceUri: WIDGET_URI },
         "openai/outputTemplate": WIDGET_URI,
-        "openai/toolInvocation/invoking": "Building your xTravel Agent…",
-        "openai/toolInvocation/invoked": "Your xTravel Agent is ready.",
+        "openai/toolInvocation/invoking": "Building your PlanToGuide…",
+        "openai/toolInvocation/invoked": "Your PlanToGuide is ready.",
       },
     },
     async (itinerary) => {
@@ -144,7 +144,7 @@ function createTravelServer() {
         structuredContent: itinerary,
         content: [{
           type: "text",
-          text: `Created a ${itinerary.days.length}-day xTravel Agent for ${itinerary.destination}. The interactive guide includes daily routes, dining choices, shopping, weather guidance, and planning notes.`,
+          text: `Created a ${itinerary.days.length}-day PlanToGuide for ${itinerary.destination}. The interactive guide includes daily routes, dining choices, shopping, weather guidance, and planning notes.`,
         }],
       };
     },
@@ -181,7 +181,7 @@ const httpServer = createServer(async (req, res) => {
 
   if (req.method === "GET" && url.pathname === "/") {
     res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-    res.end(JSON.stringify({ name: "xTravel Agent", status: "ok", mcp: MCP_PATH, preview: "/preview" }));
+    res.end(JSON.stringify({ name: "PlanToGuide", status: "ok", mcp: MCP_PATH, preview: "/preview" }));
     return;
   }
 
@@ -221,6 +221,6 @@ const httpServer = createServer(async (req, res) => {
 });
 
 httpServer.listen(port, () => {
-  console.log(`xTravel Agent MCP server listening on http://localhost:${port}${MCP_PATH}`);
+  console.log(`PlanToGuide MCP server listening on http://localhost:${port}${MCP_PATH}`);
   console.log(`Widget preview: http://localhost:${port}/preview`);
 });

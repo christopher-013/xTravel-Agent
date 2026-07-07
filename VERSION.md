@@ -1,6 +1,6 @@
-# xTravel Agent — Version 2 working copy
+# PlanToGuide — Version 2 working copy
 
-This folder is the v2 fork of `xTravel Agent`, created 2026-07-06.
+This folder is the v2 fork of `PlanToGuide`, created 2026-07-06.
 
 ## v2 changes
 
@@ -10,5 +10,5 @@ This folder is the v2 fork of `xTravel Agent`, created 2026-07-06.
 - **AGENT-INSTRUCTIONS.md** is now included in every exported website ZIP.
 - **Docs**: README rewritten around the generate → enrich → import → publish workflow; added `SCHEMA.md`; landing-page demo link now points to the public Tokyo 2026 site.
 
-The approved Version 1 snapshot remains in the original `xTravel Agent` folder.
+The approved Version 1 snapshot remains in the original `PlanToGuide` folder.
 

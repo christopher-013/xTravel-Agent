@@ -1,4 +1,4 @@
-# Standalone x-Travel Agent
+# Standalone PlanToGuide
 
 The standalone edition is a static browser application. It does not use OpenAI, ChatGPT, an API key, Node.js, a database, or a backend server. It optionally reads current conditions from Open-Meteo's keyless public weather and geocoding endpoints; the bundled seasonal estimate remains available if that request fails.
 

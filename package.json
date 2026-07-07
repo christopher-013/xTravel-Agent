@@ -1,9 +1,9 @@
 {
-  "name": "x-travel-agent-chatgpt-app",
+  "name": "plantoguide-chatgpt-app",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "A ChatGPT Apps SDK version of x-Travel Agent.",
+  "description": "A ChatGPT Apps SDK version of PlanToGuide.",
   "scripts": {
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",

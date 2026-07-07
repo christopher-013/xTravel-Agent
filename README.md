@@ -1,4 +1,4 @@
-# xTravel Agent
+# PlanToGuide
 
 Create a polished trip website, then keep improving it with ChatGPT, Claude, Codex, or another AI assistant.
 
@@ -7,7 +7,7 @@ Create a polished trip website, then keep improving it with ChatGPT, Claude, Cod
 1. **Generate:** Complete the five-step wizard. The browser builds a day-by-day trip website with bookings and constraints preserved.
 2. **Export:** Download the website ZIP or `TRIP-PLAN.md`. The planning file includes versioned, machine-readable trip data.
 3. **Enrich:** Give the planning file to your preferred AI assistant. It is instructed to preserve confirmed items and return the complete updated file.
-4. **Import:** Choose **Import updated plan** in xTravel Agent. Paste or upload the returned file to re-render the website.
+4. **Import:** Choose **Import updated plan** in PlanToGuide. Paste or upload the returned file to re-render the website.
 5. **Publish:** Export again and host the static files on GitHub Pages, Netlify Drop, or another static host.
 
 See [SCHEMA.md](SCHEMA.md) for the `xtravel-trip` schema and import rules.

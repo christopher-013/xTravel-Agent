@@ -630,9 +630,12 @@ body.trip-mode { display: block; }
   .app-nav-button small { font-size: 7px; }
 }
 
-/* Animated xTravel Agent compass-X branding */
+/* Animated Plan × Guide compass-X branding */
 .brand-mark, .builder-brand > span { overflow:visible; padding:0; border:0; background:transparent !important; }
 .brand-mark img, .builder-brand img { display:block; width:100%; height:100%; object-fit:contain; }
+.brand-wordmark { font-weight:850; letter-spacing:-.035em; white-space:nowrap; }
+.brand-x { display:inline-block; padding:0 .08em; color:#0e8fc3; animation:brandXPop .65s cubic-bezier(.2,.8,.2,1) 2.2s both; }
+@keyframes brandXPop { 0%{transform:scale(.75) rotate(-18deg);opacity:.55} 70%{transform:scale(1.16) rotate(4deg);opacity:1} 100%{transform:scale(1) rotate(0);opacity:1} }
 .builder-brand > span { width:38px; height:38px; }
 .trip-header-actions .export-button.loading { display:inline-flex; align-items:center; gap:6px; }
 .trip-header-actions .export-button.loading img { width:22px; height:22px; margin:-4px 0; }
@@ -641,7 +644,7 @@ body.trip-mode { display: block; }
 .output-created-list article strong { font-size:14px; }
 .output-created-list article span { color:var(--muted); font-size:10px; line-height:1.45; }
 
-/* Animated xTravel Agent identity */
+/* Animated Plan × Guide identity */
 .builder:not(.builder-wide) .builder-copy::after {
   content:"✈️";
   right:clamp(24px,7vw,112px);
@@ -656,14 +659,16 @@ body.trip-mode { display: block; }
 .builder:not(.builder-wide) .builder-brand { gap:14px; font-size:clamp(20px,2vw,30px); }
 .builder:not(.builder-wide) .builder-brand > span { flex:0 0 clamp(82px,9vw,128px); width:clamp(82px,9vw,128px); height:clamp(92px,10vw,142px); }
 .builder:not(.builder-wide) .builder-brand strong { font-size:inherit; }
-.topbar .brand-mark { width:40px; height:45px; }
-.trip-app-header .brand-mark { width:38px; height:43px; }
+.topbar .brand-mark { width:52px; height:52px; }
+.trip-app-header .brand-mark { width:48px; height:48px; }
 .brand-mark img,.builder-brand img { object-fit:contain; }
 .trip-header-actions .export-button.loading img { width:30px; height:34px; margin:-7px 0; }
 @media(max-width:780px) {
   .builder:not(.builder-wide) .builder-copy::after { right:10px; width:auto; height:auto; font-size:110px; opacity:.48; }
   .builder:not(.builder-wide) .builder-brand > span { flex-basis:74px; width:74px; height:84px; }
   .builder:not(.builder-wide) .builder-brand { gap:10px; font-size:20px; }
+  .topbar .brand-mark,.trip-app-header .brand-mark { width:42px; height:42px; }
+  .brand-wordmark { font-size:clamp(14px,4.2vw,19px); }
 }
 
 /* Definitive five-stage arrow flowchart */

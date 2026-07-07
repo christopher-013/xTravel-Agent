@@ -13,12 +13,12 @@ const suggestionBoard = document.querySelector("#suggestionBoard");
 const selectionCount = document.querySelector("#selectionCount");
 
 function brandIconSource() {
-  return window.XTRAVEL_ICON_BASE64 ? `data:image/svg+xml;base64,${window.XTRAVEL_ICON_BASE64}` : "x-travel-agent-icon.svg";
+  return window.PLANTOGUIDE_ICON_BASE64 ? `data:image/svg+xml;base64,${window.PLANTOGUIDE_ICON_BASE64}` : "plan-x-guide-centered-compass-morph-clean-x.svg";
 }
 
 function brandIconAnimationSource() {
-  if (!window.XTRAVEL_ICON_BASE64) return `x-travel-agent-icon.svg?animation=${Date.now()}-${Math.random()}`;
-  return URL.createObjectURL(new Blob([base64ToBytes(window.XTRAVEL_ICON_BASE64)], { type: "image/svg+xml" }));
+  if (!window.PLANTOGUIDE_ICON_BASE64) return `plan-x-guide-centered-compass-morph-clean-x.svg?animation=${Date.now()}-${Math.random()}`;
+  return URL.createObjectURL(new Blob([base64ToBytes(window.PLANTOGUIDE_ICON_BASE64)], { type: "image/svg+xml" }));
 }
 
 function releaseBrandIconSource(source, delay = 6000) {
@@ -26,7 +26,7 @@ function releaseBrandIconSource(source, delay = 6000) {
 }
 
 function hydrateBrandIcons() {
-  document.querySelectorAll('img[src^="x-travel-agent-icon.svg"]').forEach((image) => {
+  document.querySelectorAll('img[src^="plan-x-guide-centered-compass-morph-clean-x.svg"]').forEach((image) => {
     const source = brandIconAnimationSource();
     image.src = source;
     releaseBrandIconSource(source);
@@ -568,14 +568,14 @@ async function exportTripPackage() {
     let websiteHtml = createCapturedExportWebsite(captures);
     lastExportHtml = websiteHtml;
     const websiteCss = await collectExportStyles();
-    if (!websiteCss.includes(".trip-app") || websiteCss.length < 10000) throw new Error("The complete report stylesheet could not be read. Please reload xTravel Agent and export again.");
+    if (!websiteCss.includes(".trip-app") || websiteCss.length < 10000) throw new Error("The complete report stylesheet could not be read. Please reload PlanToGuide and export again.");
     const bundled = await bundleExportImages(websiteHtml);
     websiteHtml = bundled.html;
     const markdown = createTripMarkdown();
     const runtime = createExportRuntime();
-    const inlineIcon = `data:image/svg+xml;base64,${window.XTRAVEL_ICON_BASE64 || ""}`;
-    lastStandaloneHtml = websiteHtml.replaceAll("x-travel-agent-icon.svg", inlineIcon).replace('<link rel="stylesheet" href="styles.css">', `<style>${websiteCss}</style>`).replace('<script src="app.js"><\/script>', `<script>${runtime}<\/script>`);
-    const readme = `# ${trip.destination} xTravel Agent Website\n\nThis package contains the complete visual trip website and a round-trip AI planning workflow.\n\n## Keep planning\n\n1. Give \`TRIP-PLAN.md\` to ChatGPT, Claude, or another AI assistant.\n2. Ask it to return the complete updated file, including the \`json xtravel-trip\` block.\n3. In xTravel Agent, choose **Import updated plan** to re-render the website.\n4. Export a fresh package.\n\n## Publishing\n\nOpen \`index.html\` locally, drag the folder to Netlify Drop, or upload it to any static host such as GitHub Pages. Google Maps and remote images require an internet connection.\n`;
+    const inlineIcon = `data:image/svg+xml;base64,${window.PLANTOGUIDE_ICON_BASE64 || ""}`;
+    lastStandaloneHtml = websiteHtml.replaceAll("plan-x-guide-centered-compass-morph-clean-x.svg", inlineIcon).replace('<link rel="stylesheet" href="styles.css">', `<style>${websiteCss}</style>`).replace('<script src="app.js"><\/script>', `<script>${runtime}<\/script>`);
+    const readme = `# ${trip.destination} PlanToGuide Website\n\nThis package contains the complete visual trip website and a round-trip AI planning workflow.\n\n## Keep planning\n\n1. Give \`TRIP-PLAN.md\` to ChatGPT, Claude, or another AI assistant.\n2. Ask it to return the complete updated file, including the \`json xtravel-trip\` block.\n3. In PlanToGuide, choose **Import updated plan** to re-render the website.\n4. Export a fresh package.\n\n## Publishing\n\nOpen \`index.html\` locally, drag the folder to Netlify Drop, or upload it to any static host such as GitHub Pages. Google Maps and remote images require an internet connection.\n`;
     const zip = createZip([
       { name: "index.html", content: websiteHtml },
       { name: "styles.css", content: websiteCss },
@@ -584,7 +584,7 @@ async function exportTripPackage() {
       { name: "TRIP-DATA.json", content: serializeTripJson(trip) },
       { name: "AGENT-INSTRUCTIONS.md", content: createAgentInstructions(trip) },
       { name: "README.md", content: readme },
-      { name: "x-travel-agent-icon.svg", content: base64ToBytes(window.XTRAVEL_ICON_BASE64 || "") },
+      { name: "plan-x-guide-centered-compass-morph-clean-x.svg", content: base64ToBytes(window.PLANTOGUIDE_ICON_BASE64 || "") },
       ...bundled.files
     ]);
     const url = URL.createObjectURL(zip);
@@ -613,7 +613,7 @@ async function exportTripPackage() {
 
 function createCapturedExportWebsite(capturedViews) {
   const templates = capturedViews.map((view, index) => `<template data-export-template="${index}">${view}</template>`).join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101412"><title>${escapeHtml(trip.destination)} · xTravel Agent</title><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body class="trip-mode"><main class="page-shell"><section class="result">${capturedViews[0] || ""}</section></main>${templates}<script src="app.js"><\/script></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#101412"><title>${escapeHtml(trip.destination)} · PlanToGuide</title><link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet"><link rel="stylesheet" href="styles.css"></head><body class="trip-mode"><main class="page-shell"><section class="result">${capturedViews[0] || ""}</section></main>${templates}<script src="app.js"><\/script></body></html>`;
 }
 
 function waitForHydratedImages(root, timeout = 1800) {
@@ -722,7 +722,7 @@ async function bundleExportImages(html) {
 function createExportWebsite() {
   const dayNav = trip.days.map((day, index) => `<a href="#day-${index + 1}">${escapeHtml(formatDate(day.date, false))}</a>`).join("");
   const days = trip.days.map((day, dayIndex) => `<section class="day" id="day-${dayIndex + 1}"><header><p>${escapeHtml(formatDate(day.date, true))}</p><h2>${escapeHtml(day.title)}</h2></header>${day.activities.map((item) => `<article class="stop"><time>${escapeHtml(item.time)}</time><div><span>${escapeHtml(item.type)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p><a href="${googleMapsSearchUrl(cleanActivityTitle(item.title))}" target="_blank" rel="noopener">Google Maps details ↗</a></div></article>`).join("")}</section>`).join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(trip.destination)} Travel Guide</title><link rel="stylesheet" href="styles.css"></head><body><header class="hero" style="--banner:url('${trip.guide.banner}')"><p>xTravel Agent</p><h1>${escapeHtml(trip.destination)}</h1><span>${escapeHtml(formatDate(trip.start, true))} — ${escapeHtml(formatDate(trip.end, true))}</span></header><nav>${dayNav}</nav><main>${days}</main><footer>Exported from xTravel Agent · Verify live details before traveling.</footer></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(trip.destination)} Travel Guide · PlanToGuide</title><link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"></head><body><header class="hero" style="--banner:url('${trip.guide.banner}')"><p>Plan × Guide</p><h1>${escapeHtml(trip.destination)}</h1><span>${escapeHtml(formatDate(trip.start, true))} — ${escapeHtml(formatDate(trip.end, true))}</span></header><nav>${dayNav}</nav><main>${days}</main><footer>Exported from Plan × Guide · Verify live details before traveling.</footer></body></html>`;
 }
 
 function createExportStyles() {
@@ -748,7 +748,7 @@ function createTripMarkdown() {
     practical.keyPhrases && practical.keyPhrases.length ? `- **Key phrases:** ${practical.keyPhrases.join("; ")}` : "- **Key phrases:** Needs verification — a few useful local phrases",
     practical.notes ? `- **Notes:** ${practical.notes}` : ""
   ].filter(Boolean).join("\n");
-  return `# Trip Source of Truth\n\n> Exported from xTravel Agent. Use this as the authoritative planning context.\n\n## Trip Overview\n\n- **Destination:** ${trip.destination}\n- **Dates:** ${formatDate(trip.start, true)} through ${formatDate(trip.end, true)}\n- **Duration:** ${trip.days.length} days\n- **Travelers:** ${trip.preferences.groupSize || "Not specified"} · ages ${trip.preferences.travelerAges || "not specified"}\n- **Home base:** ${trip.preferences.homeBase || "Not specified"}\n- **Trip purpose:** ${trip.preferences.purpose || "Not specified"}\n- **Trip style:** ${trip.preferences.outputTemplate || "Mobile Trip App"}\n\n## Locked Bookings\n\nDo not move or remove confirmed items unless explicitly requested.\n\n${locked}\n\n## Optional Items\n\n${optional}\n\n## Food Preferences & Restrictions\n\n${trip.preferences.foodRestrictions || "None supplied."}\n\n## Mobility & Walking Constraints\n\n${trip.preferences.mobilityNeeds || "None supplied."}\n\n## Things to Avoid\n\n${trip.preferences.avoid || "None supplied."}\n\n## Traveler Preferences\n\n${preferenceLines || "- No additional preferences."}\n\n## Selected Priorities\n\n${selected}\n\n## Practical Info (verify and fill in)\n\nThe AI assistant should research and replace every "Needs verification" value below with verified, current details.\n\n${practicalLines}\n\n## AI Instructions\n\n1. Use this file as the source of truth.\n2. Preserve confirmed bookings and traveler-designated must-do activities.\n3. Optimize each day geographically around its stated area and home base.\n4. Warn when an activity adds unnecessary travel time.\n5. Verify current hours, prices, closures, ratings, reservations, and availability.\n6. Label uncertain browser-only suggestions as Needs verification.\n7. Never invent live facts.\n8. Research and fill the Practical Info section with verified details.\n9. **Return format (required):** reply with the COMPLETE updated version of this file — every heading above, your improved day-by-day plan, and an updated "Machine-Readable Trip Data" JSON block that exactly matches your revised plan (same schema, same field names, dates as YYYY-MM-DD).\n10. The traveler will import your JSON block back into xTravel Agent to re-render their trip website, so the JSON block must be complete and valid.\n\n---\n\n${days}\n\n---\n\n## Machine-Readable Trip Data\n\nDo not remove this section. Update it to match any changes you make above. xTravel Agent's "Import updated plan" feature reads this block.\n\n${TRIP_JSON_FENCE_OPEN}\n${serializeTripJson(trip)}\n\`\`\`\n`;
+  return `# Trip Source of Truth\n\n> Exported from PlanToGuide. Use this as the authoritative planning context.\n\n## Trip Overview\n\n- **Destination:** ${trip.destination}\n- **Dates:** ${formatDate(trip.start, true)} through ${formatDate(trip.end, true)}\n- **Duration:** ${trip.days.length} days\n- **Travelers:** ${trip.preferences.groupSize || "Not specified"} · ages ${trip.preferences.travelerAges || "not specified"}\n- **Home base:** ${trip.preferences.homeBase || "Not specified"}\n- **Trip purpose:** ${trip.preferences.purpose || "Not specified"}\n- **Trip style:** ${trip.preferences.outputTemplate || "Mobile Trip App"}\n\n## Locked Bookings\n\nDo not move or remove confirmed items unless explicitly requested.\n\n${locked}\n\n## Optional Items\n\n${optional}\n\n## Food Preferences & Restrictions\n\n${trip.preferences.foodRestrictions || "None supplied."}\n\n## Mobility & Walking Constraints\n\n${trip.preferences.mobilityNeeds || "None supplied."}\n\n## Things to Avoid\n\n${trip.preferences.avoid || "None supplied."}\n\n## Traveler Preferences\n\n${preferenceLines || "- No additional preferences."}\n\n## Selected Priorities\n\n${selected}\n\n## Practical Info (verify and fill in)\n\nThe AI assistant should research and replace every "Needs verification" value below with verified, current details.\n\n${practicalLines}\n\n## AI Instructions\n\n1. Use this file as the source of truth.\n2. Preserve confirmed bookings and traveler-designated must-do activities.\n3. Optimize each day geographically around its stated area and home base.\n4. Warn when an activity adds unnecessary travel time.\n5. Verify current hours, prices, closures, ratings, reservations, and availability.\n6. Label uncertain browser-only suggestions as Needs verification.\n7. Never invent live facts.\n8. Research and fill the Practical Info section with verified details.\n9. **Return format (required):** reply with the COMPLETE updated version of this file — every heading above, your improved day-by-day plan, and an updated "Machine-Readable Trip Data" JSON block that exactly matches your revised plan (same schema, same field names, dates as YYYY-MM-DD).\n10. The traveler will import your JSON block back into PlanToGuide to re-render their trip website, so the JSON block must be complete and valid.\n\n---\n\n${days}\n\n---\n\n## Machine-Readable Trip Data\n\nDo not remove this section. Update it to match any changes you make above. PlanToGuide's "Import updated plan" feature reads this block.\n\n${TRIP_JSON_FENCE_OPEN}\n${serializeTripJson(trip)}\n\`\`\`\n`;
 }
 
 function downloadTripMarkdown() {
@@ -760,7 +760,7 @@ function downloadTripMarkdown() {
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
-function aiPrompt(platform) { return `Continue planning this trip in ${platform}. Treat the Markdown below as the source of truth. Preserve confirmed bookings, optimize geographically, research and verify live facts (hours, prices, closures, reservations, emergency and practical info), and ask before changing locked items.\n\nIMPORTANT — return format: reply with the COMPLETE updated TRIP-PLAN.md file, keeping every heading, and update the fenced \`\`\`json xtravel-trip block at the end so it exactly matches your revised plan (same schema and field names, dates as YYYY-MM-DD). I will import that JSON block back into xTravel Agent to re-render my trip website, so it must be complete and valid.\n\n${createTripMarkdown()}`; }
+function aiPrompt(platform) { return `Continue planning this trip in ${platform}. Treat the Markdown below as the source of truth. Preserve confirmed bookings, optimize geographically, research and verify live facts (hours, prices, closures, reservations, emergency and practical info), and ask before changing locked items.\n\nIMPORTANT — return format: reply with the COMPLETE updated TRIP-PLAN.md file, keeping every heading, and update the fenced \`\`\`json xtravel-trip block at the end so it exactly matches your revised plan (same schema and field names, dates as YYYY-MM-DD). I will import that JSON block back into PlanToGuide to re-render my trip website, so it must be complete and valid.\n\n${createTripMarkdown()}`; }
 async function copyText(text, confirmation = "Copied") { try { await navigator.clipboard.writeText(text); window.alert(confirmation); } catch (_) { window.prompt("Copy this text:", text); } }
 function copyAiPrompt(platform) { if (trip) copyText(aiPrompt(platform), `${platform} prompt copied`); }
 function previewExportWebsite() {

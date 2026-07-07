@@ -1,10 +1,10 @@
-# xTravel Agent trip schema (`xtravel-trip`, version 2)
+# PlanToGuide trip schema (`xtravel-trip`, version 2)
 
 Every exported `TRIP-PLAN.md` ends with a **Machine-Readable Trip Data** section containing a fenced block that opens with:
 
     ```json xtravel-trip
 
-The block holds one JSON object describing the entire trip. xTravel Agent's **Import updated plan** feature reads this block (from a pasted file, a pasted AI reply, or a bare JSON paste) and re-renders the trip website from it.
+The block holds one JSON object describing the entire trip. PlanToGuide's **Import updated plan** feature reads this block (from a pasted file, a pasted AI reply, or a bare JSON paste) and re-renders the trip website from it.
 
 ## Top-level fields
 
