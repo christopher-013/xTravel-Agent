@@ -2247,10 +2247,12 @@ function hasPhotoCoordinates(photo) {
 function renderPhotoMap(photos) {
   const container = document.querySelector("#photoDayMap");
   const geotagged = photos.filter(hasPhotoCoordinates);
+  container.hidden = geotagged.length === 0;
   if (!geotagged.length) {
     container.innerHTML = `<div class="photo-day-map-head"><div><div class="photo-day-map-title">🗺️ Today’s photo trail</div><div class="photo-day-map-sub">Google Maps locations appear here when uploaded photos contain GPS metadata.</div></div><div class="photo-day-map-count">0 tagged</div></div><div class="photo-map-empty"><strong>No geotagged photos for this date</strong>Photos without GPS still remain in the selected day’s gallery.</div>`;
     return;
   }
+  container.hidden = false;
   const focused = geotagged.find((photo) => photo.id === focusedPhotoId) || geotagged[0];
   focusedPhotoId = focused.id;
   const latitude = Number(focused.latitude);
