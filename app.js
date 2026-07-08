@@ -731,7 +731,7 @@ function createExportStyles() {
   return `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Fraunces:wght@600&display=swap');*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:#1c1f26;background:#f5f1e8;font-family:'DM Sans',sans-serif}.hero{min-height:340px;display:flex;flex-direction:column;justify-content:end;padding:48px max(24px,calc((100% - 1000px)/2));color:white;background:linear-gradient(110deg,rgba(18,45,39,.88),rgba(22,55,48,.42)),var(--banner);background-position:center;background-size:cover}.hero p{margin:0 0 12px;color:#f5c84b;font-weight:700}.hero h1{margin:0;font:600 clamp(48px,8vw,90px)/1 'Fraunces',serif}.hero span{margin-top:14px}nav{position:sticky;top:0;z-index:2;display:flex;gap:8px;overflow:auto;padding:12px max(18px,calc((100% - 1000px)/2));background:#173e35}nav a{flex:none;padding:9px 13px;border-radius:999px;color:white;background:rgba(255,255,255,.12);font-size:12px;text-decoration:none}main{max-width:1000px;margin:auto;padding:36px 22px 70px}.day{margin-bottom:54px}.day>header{padding-bottom:14px;border-bottom:2px solid #24594c}.day>header p{margin:0;color:#8a6500;font-size:12px;font-weight:700}.day h2{margin:4px 0 0;font:600 32px 'Fraunces',serif}.stop{display:grid;grid-template-columns:72px 1fr;gap:18px;padding:22px 0;border-bottom:1px solid #d8d1c3}.stop time{color:#24594c;font-weight:700}.stop span{color:#8a6500;font-size:10px;font-weight:700;text-transform:uppercase}.stop h3{margin:4px 0 7px;color:#254b7a}.stop p{margin:0;color:#626c68;line-height:1.6}.stop a{display:inline-block;margin-top:9px;color:#24594c;font-size:12px;font-weight:700}footer{padding:24px;text-align:center;color:#69716f;background:#ece6da;font-size:12px}@media(max-width:600px){.hero{min-height:280px;padding:32px 20px}.stop{grid-template-columns:1fr;gap:6px}.day h2{font-size:26px}}`;
 }
 
-function createTripMarkdown() {
+function createTripMarkdownBase() {
   const preferenceDetails = Object.entries(trip.preferences).filter(([, value]) => value).map(([key, value]) => `- **${titleCase(key)}:** ${value}`).join("\n");
   const researchChecklist = trip.researchMode ? `## Research Needed\n\n- Verify landmark names, current hours, closures, prices, and ticket requirements.\n- Research neighborhoods and optimize each day geographically.\n- Confirm restaurant cuisine, ratings, dietary fit, and reservation requirements.\n- Replace placeholder shopping and activity cards with verified choices.\n- Check transit times, weather, accessibility, and seasonal conditions.\n- Preserve all traveler-entered must-dos and confirmed bookings while refining the plan.` : "";
   const preferenceLines = [preferenceDetails, researchChecklist].filter(Boolean).join("\n\n");
@@ -750,7 +750,19 @@ function createTripMarkdown() {
     practical.keyPhrases && practical.keyPhrases.length ? `- **Key phrases:** ${practical.keyPhrases.join("; ")}` : "- **Key phrases:** Needs verification — a few useful local phrases",
     practical.notes ? `- **Notes:** ${practical.notes}` : ""
   ].filter(Boolean).join("\n");
+  const refinementLines = Array.isArray(trip.refinementInstructions) && trip.refinementInstructions.length
+    ? trip.refinementInstructions.map((instruction) => `- ${instruction}`).join("\n")
+    : "- No additional refinements selected.";
   return `# Trip Source of Truth\n\n> Exported from PlanToGuide. Use this as the authoritative planning context.\n\n## Trip Overview\n\n- **Destination:** ${trip.destination}\n- **Dates:** ${formatDate(trip.start, true)} through ${formatDate(trip.end, true)}\n- **Duration:** ${trip.days.length} days\n- **Travelers:** ${trip.preferences.groupSize || "Not specified"} · ages ${trip.preferences.travelerAges || "not specified"}\n- **Home base:** ${trip.preferences.homeBase || "Not specified"}\n- **Trip purpose:** ${trip.preferences.purpose || "Not specified"}\n- **Trip style:** ${trip.preferences.outputTemplate || "Mobile Trip App"}\n\n## Locked Bookings\n\nDo not move or remove confirmed items unless explicitly requested.\n\n${locked}\n\n## Optional Items\n\n${optional}\n\n## Food Preferences & Restrictions\n\n${trip.preferences.foodRestrictions || "None supplied."}\n\n## Mobility & Walking Constraints\n\n${trip.preferences.mobilityNeeds || "None supplied."}\n\n## Things to Avoid\n\n${trip.preferences.avoid || "None supplied."}\n\n## Traveler Preferences\n\n${preferenceLines || "- No additional preferences."}\n\n## Selected Priorities\n\n${selected}\n\n## Practical Info (verify and fill in)\n\nThe AI assistant should research and replace every "Needs verification" value below with verified, current details.\n\n${practicalLines}\n\n## AI Instructions\n\n1. Use this file as the source of truth.\n2. Preserve confirmed bookings and traveler-designated must-do activities.\n3. Optimize each day geographically around its stated area and home base.\n4. Warn when an activity adds unnecessary travel time.\n5. Verify current hours, prices, closures, ratings, reservations, and availability.\n6. Label uncertain browser-only suggestions as Needs verification.\n7. Never invent live facts.\n8. Research and fill the Practical Info section with verified details.\n9. **Return format (required):** reply with the COMPLETE updated version of this file — every heading above, your improved day-by-day plan, and an updated "Machine-Readable Trip Data" JSON block that exactly matches your revised plan (same schema, same field names, dates as YYYY-MM-DD).\n10. The traveler will import your JSON block back into PlanToGuide to re-render their trip website, so the JSON block must be complete and valid.\n\n---\n\n${days}\n\n---\n\n## Machine-Readable Trip Data\n\nDo not remove this section. Update it to match any changes you make above. PlanToGuide's "Import updated plan" feature reads this block.\n\n${TRIP_JSON_FENCE_OPEN}\n${serializeTripJson(trip)}\n\`\`\`\n`;
+}
+
+function createTripMarkdown() {
+  const base = createTripMarkdownBase();
+  const refinements = Array.isArray(trip.refinementInstructions) && trip.refinementInstructions.length
+    ? trip.refinementInstructions.map((instruction) => `- ${instruction}`).join("\n")
+    : "- No additional refinements selected.";
+  const section = `## Requested Refinements\n\nApply every selected improvement below while preserving confirmed bookings, must-do items, dates, and traveler constraints.\n\n${refinements}\n\n`;
+  return base.replace("## Practical Info (verify and fill in)", `${section}## Practical Info (verify and fill in)`);
 }
 
 function downloadTripMarkdown() {
@@ -1514,13 +1526,29 @@ function renderBookings() {
 function renderRefinementActions() {
   const actions = ["Make this more relaxed", "Add more food options", "Reduce walking", "Add rainy-day backups", "Add kid-friendly options", "Optimize by geography", "Add shopping", "Add free activities", "Make it more luxury", "Make it cheaper", "Create airport plan", "Create packing list", "Create one-page summary"];
   const container = document.querySelector("#refineActions");
-  container.innerHTML = actions.map((label) => `<button type="button">${escapeHtml(label)}</button>`).join("");
+  if (!container) return;
+  if (!Array.isArray(trip.refinementInstructions)) trip.refinementInstructions = [];
+  container.innerHTML = actions.map((label) => `<button type="button" class="${trip.refinementInstructions.includes(label) ? "selected" : ""}" aria-pressed="${trip.refinementInstructions.includes(label)}">${escapeHtml(label)}</button>`).join("");
   container.querySelectorAll("button").forEach((button) => button.addEventListener("click", () => {
-    const instruction = `${button.textContent}. Preserve confirmed bookings and must-do items. Use the AI Planning File as the source of truth.`;
-    navigator.clipboard?.writeText(`${instruction}\n\n${createTripMarkdown()}`);
-    button.textContent = "Prompt copied ✓";
-    setTimeout(() => { button.textContent = actions[[...container.children].indexOf(button)]; }, 1600);
+    const label = button.textContent;
+    const selected = new Set(trip.refinementInstructions);
+    if (selected.has(label)) selected.delete(label); else selected.add(label);
+    trip.refinementInstructions = actions.filter((action) => selected.has(action));
+    button.classList.toggle("selected", selected.has(label));
+    button.setAttribute("aria-pressed", String(selected.has(label)));
+    document.querySelector("#markdownPreview").textContent = createTripMarkdown();
+    updateRefinementStatus();
   }));
+  updateRefinementStatus();
+}
+
+function updateRefinementStatus() {
+  const status = document.querySelector("#refineStatus");
+  if (!status) return;
+  const count = Array.isArray(trip?.refinementInstructions) ? trip.refinementInstructions.length : 0;
+  status.textContent = count
+    ? `${count} refinement instruction${count === 1 ? "" : "s"} will be included in AI exports.`
+    : "No additional refinement instructions selected.";
 }
 
 function renderWeatherPanel() {

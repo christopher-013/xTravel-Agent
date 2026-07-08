@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260707-plantoguide-1">
+  <link rel="stylesheet" href="styles.css?v=20260708-brand-headline-1">
 </head>
 <body>
   <main class="page-shell">
@@ -29,7 +29,7 @@
       <div class="builder-copy">
         <a class="builder-brand home-brand-lockup" href="#" aria-label="PlanToGuide home"><span aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><strong>PlanToGuide</strong></a>
         <p class="eyebrow">Trip website builder · Free browser mode</p>
-        <h1 id="builderTitle">Turn your trip plan into a<br><em>mobile travel guide.</em></h1>
+        <h1 id="builderTitle">Turn your trip <strong class="hero-brand-word hero-brand-plan">PLAN</strong> <strong class="hero-brand-word hero-brand-to">TO</strong> a<br>mobile travel <strong class="hero-brand-word hero-brand-guide">GUIDE.</strong></h1>
         <p class="lede homepage-tagline">Create a shareable trip website, printable itinerary, and AI-ready planning file for your next trip.</p>
         <div class="demo-showcase"><strong>Example: Tokyo 2026 Family Trip</strong><span>Locked bookings, route flow, food, shopping, maps, weather, photos, and AI-ready planning structure.</span><a href="https://christopher-013.github.io/Tokyo2026/" target="_blank" rel="noopener">View demo trip →</a></div>
         <div class="import-callout"><strong>Already have an AI-updated plan?</strong><span>Paste the TRIP-PLAN.md your AI returned and re-render your trip website instantly.</span><button type="button" class="text-button" data-open-import>Import updated plan →</button></div>
@@ -237,7 +237,6 @@
               </section>
               <div class="today-card" id="todayCard"></div>
               <div class="during-trip-grid" id="duringTripTools"></div>
-              <div class="refine-panel"><div><p class="eyebrow">Refine this plan</p><h3>One-click improvements</h3></div><div id="refineActions" class="refine-actions"></div></div>
               <div class="home-days">
                 <div class="section-heading"><p>Day by day</p><button type="button" data-open-tab="itinerary">View all →</button></div>
                 <div id="homeDayList"></div>
@@ -303,7 +302,10 @@
           </section>
           <section class="app-panel" data-panel="ai" aria-label="AI Planning File">
             <div class="compact-app-hero ai-hero"><div><p class="eyebrow light">Source of truth</p><h2>AI Planning File</h2><p>Preview and reuse the exact context that keeps bookings and constraints intact.</p></div></div>
-            <div class="app-panel-body ai-file-panel"><div class="ai-file-actions"><button type="button" id="copyMarkdownButton">Copy Markdown</button><button type="button" id="downloadMarkdownButton">Download .md</button><button type="button" id="downloadHtmlButton">Download .html</button><button type="button" id="copyChatGptButton">Copy ChatGPT prompt</button><button type="button" id="copyClaudeButton">Copy Claude prompt</button><button type="button" data-open-import>Import updated plan</button></div><pre id="markdownPreview"></pre></div>
+            <div class="app-panel-body ai-file-panel">
+              <div class="refine-panel"><div><p class="eyebrow">Refine this plan</p><h3>One-click improvements</h3><p>Select one or more instructions. They will be included in the AI prompts and planning files you copy, download, or export.</p></div><div id="refineActions" class="refine-actions" aria-label="Refinement instructions"></div><p class="refine-status" id="refineStatus" role="status" aria-live="polite"></p></div>
+              <div class="ai-file-actions"><button type="button" id="copyMarkdownButton">Copy Markdown</button><button type="button" id="downloadMarkdownButton">Download .md</button><button type="button" id="downloadHtmlButton">Download .html</button><button type="button" id="copyChatGptButton">Copy ChatGPT prompt</button><button type="button" id="copyClaudeButton">Copy Claude prompt</button><button type="button" data-open-import>Import updated plan</button></div><pre id="markdownPreview"></pre>
+            </div>
           </section>
         </div>
 
