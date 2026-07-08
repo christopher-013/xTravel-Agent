@@ -12,8 +12,8 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { z } from "zod";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const widgetHtml = readFileSync(join(here, "public", "x-travel-widget.html"), "utf8");
-const WIDGET_URI = "ui://widget/x-travel-agent.html";
+const widgetHtml = readFileSync(join(here, "public", "plantoguide-widget.html"), "utf8");
+const WIDGET_URI = "ui://widget/plantoguide.html";
 const MCP_PATH = "/mcp";
 
 const activitySchema = z.object({
@@ -75,11 +75,11 @@ const itinerarySchema = {
 };
 
 function createTravelServer() {
-  const server = new McpServer({ name: "x-travel-agent", version: "0.1.0" });
+  const server = new McpServer({ name: "plantoguide", version: "0.1.0" });
 
   registerAppResource(
     server,
-    "x-travel-agent-widget",
+    "plantoguide-widget",
     WIDGET_URI,
     {},
     async () => ({

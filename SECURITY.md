@@ -2,7 +2,7 @@
 
 ## Public version
 
-This repository is intentionally a static, client-only demo. It does not call OpenAI or another metered API. Its Content Security Policy allows browser connections only to Open-Meteo's forecast and geocoding endpoints for the live weather card.
+This repository is intentionally a static, client-only demo. It does not call OpenAI or another metered API. Its Content Security Policy allows local application assets, Google Fonts, HTTPS images and local photo `data:`/`blob:` sources, Open-Meteo forecast and geocoding requests, Wikipedia image lookup requests, and Google Maps embeds. Scripts remain limited to same-origin files and embedded objects are blocked.
 
 ## Secret handling
 

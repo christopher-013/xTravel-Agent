@@ -5,28 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f1e8">
   <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://en.wikipedia.org; frame-src 'self' https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>PlanToGuide — Turn your trip plan into a mobile travel guide</title>
   <meta name="description" content="Create a shareable trip website, mobile travel guide, and AI-ready planning file.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css?v=20260707-plantoguide-1">
 </head>
 <body>
   <main class="page-shell">
     <header class="topbar">
-      <a class="brand" href="#" aria-label="Plan × Guide home">
+      <a class="brand" href="#" aria-label="PlanToGuide home">
         <span class="brand-mark" aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span>
-        <span class="brand-wordmark">Plan <span class="brand-x">×</span> Guide</span>
+        <span class="brand-wordmark">PlanToGuide</span>
       </a>
-      <p>Popular places, personalized around you.</p>
+      <p>Build, export, and re-import your travel guide.</p>
       <button class="text-button" id="newTripButton" type="button">New trip</button>
     </header>
 
     <section class="builder" id="builder" aria-labelledby="builderTitle">
       <div class="builder-copy">
-        <a class="builder-brand home-brand-lockup" href="#" aria-label="Plan × Guide home"><span aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><strong>Plan <span class="brand-x">×</span> Guide</strong></a>
+        <a class="builder-brand home-brand-lockup" href="#" aria-label="PlanToGuide home"><span aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><strong>PlanToGuide</strong></a>
         <p class="eyebrow">Trip website builder · Free browser mode</p>
         <h1 id="builderTitle">Turn your trip plan into a<br><em>mobile travel guide.</em></h1>
         <p class="lede homepage-tagline">Create a shareable trip website, printable itinerary, and AI-ready planning file for your next trip.</p>
@@ -175,7 +176,7 @@
     <section class="result" id="result" aria-live="polite" hidden>
       <div class="trip-app">
         <header class="trip-app-header">
-          <a class="brand app-brand" href="#" aria-label="Plan × Guide trip home"><span class="brand-mark"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><span class="brand-wordmark">Plan <span class="brand-x">×</span> Guide</span></a>
+          <a class="brand app-brand" href="#" aria-label="PlanToGuide trip home"><span class="brand-mark"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><span class="brand-wordmark">PlanToGuide</span></a>
           <span class="app-destination" id="appDestination">Your trip</span>
           <div class="trip-header-actions">
             <button class="export-button" id="exportTripButton" type="button">Export</button>
@@ -286,7 +287,7 @@
             <div class="compact-app-hero photos-hero"><div><p class="eyebrow light">Remember</p><h2>Photos</h2><p>Your trip gallery and visual journal.</p></div></div>
             <div class="app-panel-body photo-journal-panel">
               <section class="photo-manager" aria-labelledby="photoManagerTitle">
-                <div><p class="eyebrow">Build your journal</p><h3 id="photoManagerTitle">Add trip photos</h3><p>Upload images for the selected date. When a photo contains matching capture-date or GPS metadata, Plan × Guide files it under the corresponding trip day and plots its location.</p></div>
+                <div><p class="eyebrow">Build your journal</p><h3 id="photoManagerTitle">Add trip photos</h3><p>Upload images for the selected date. When a photo contains matching capture-date or GPS metadata, PlanToGuide files it under the corresponding trip day and plots its location.</p></div>
                 <div class="photo-manager-actions">
                   <label class="photo-upload-button">Upload photos<input id="photoUploadInput" type="file" accept="image/*" multiple hidden></label>
                   <label class="photo-caption-field"><span>Caption</span><input id="photoCaptionInput" type="text" maxlength="120" placeholder="Optional caption for this upload"></label>
@@ -322,7 +323,7 @@
 
   <div class="trip-creation-transition" id="tripCreationTransition" role="status" aria-live="polite" hidden>
     <div class="trip-creation-transition-card">
-      <img id="tripCreationLogo" src="plan-x-guide-centered-compass-morph-clean-x.svg" alt="Plan × Guide">
+      <img id="tripCreationLogo" src="plan-x-guide-centered-compass-morph-clean-x.svg" alt="PlanToGuide">
       <p class="eyebrow">Building your adventure</p>
       <h2>Plan <span class="brand-x">×</span> Guide</h2>
       <p>Turning your choices, bookings, and travel style into a complete trip website.</p>
@@ -336,7 +337,7 @@
     <p class="eyebrow">Export complete</p>
     <h2 id="exportDialogTitle">Website and Markdown files are ready</h2>
     <p>Your ZIP includes the complete interactive report, every date and section, available bundled graphics, and a detailed AI planning handoff.</p>
-    <ul><li><strong>index.html</strong> — complete visual itinerary website</li><li><strong>styles.css + app.js</strong> — report styling and navigation</li><li><strong>assets/</strong> — bundled banners and place graphics</li><li><strong>TRIP-PLAN.md + TRIP-DATA.json</strong> — human- and machine-readable source of truth</li><li><strong>AGENT-INSTRUCTIONS.md</strong> — rules for continued AI planning</li><li><strong>README.md</strong> — publishing instructions</li></ul>
+    <ul><li><strong>index.html</strong> — complete visual itinerary website</li><li><strong>styles.css + app.js</strong> — report styling and navigation</li><li><strong>plan-x-guide-centered-compass-morph-clean-x.svg</strong> — animated PlanToGuide logo</li><li><strong>assets/</strong> — bundled banners and place graphics</li><li><strong>TRIP-PLAN.md + TRIP-DATA.json</strong> — human- and machine-readable source of truth</li><li><strong>AGENT-INSTRUCTIONS.md</strong> — rules for continued AI planning</li><li><strong>README.md</strong> — publishing instructions</li></ul>
     <div class="export-action-grid"><button id="exportDownloadZip" type="button">Download Website ZIP</button><button id="exportDownloadHtml" type="button">Download HTML</button><button id="exportDownloadMarkdown" type="button">Download Markdown</button><button id="exportCopyChatGpt" type="button">Copy ChatGPT Prompt</button><button id="exportCopyClaude" type="button">Copy Claude Prompt</button><button id="exportPreviewWebsite" type="button">Preview Website</button><a href="https://docs.github.com/pages/getting-started-with-github-pages/creating-a-github-pages-site" target="_blank" rel="noopener">Publish to GitHub Pages Guide</a></div>
     <button class="primary-button" id="exportDialogDone" type="button">Done</button>
   </dialog>
@@ -346,7 +347,7 @@
     <span class="export-dialog-icon" aria-hidden="true">⤵</span>
     <p class="eyebrow">Close the loop</p>
     <h2 id="importDialogTitle">Import an AI-updated plan</h2>
-    <p>Paste the complete TRIP-PLAN.md your AI assistant returned (or just its <code>json xtravel-trip</code> block), or choose the file. Plan × Guide reads the Machine-Readable Trip Data section and re-renders your trip website.</p>
+    <p>Paste the complete TRIP-PLAN.md your AI assistant returned (or just its <code>json plantoguide-trip</code> block), or choose the file. PlanToGuide reads the Machine-Readable Trip Data section and re-renders your trip website. Legacy <code>xtravel-trip</code> files remain supported.</p>
     <textarea id="importPlanText" rows="9" placeholder="Paste the full TRIP-PLAN.md returned by Claude, ChatGPT, or another AI…" aria-label="Updated plan content"></textarea>
     <div class="import-error" id="importError" role="alert" hidden></div>
     <div class="import-actions">

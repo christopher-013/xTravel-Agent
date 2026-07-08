@@ -1,5 +1,5 @@
 /*
- * trip-schema.js — PlanToGuide v2
+ * trip-schema.js — PlanToGuide trip schema v3
  *
  * Defines the versioned, machine-readable trip schema, serializes the active
  * trip into it, and imports an AI-updated TRIP-PLAN.md (or bare JSON) back
@@ -10,14 +10,23 @@
  * Loaded after app.js; shares its top-level bindings (trip, renderTrip, etc.).
  */
 
-const TRIP_SCHEMA_NAME = "xtravel-trip";
-const TRIP_SCHEMA_VERSION = 2;
-const TRIP_JSON_FENCE_OPEN = "```json xtravel-trip";
+const TRIP_SCHEMA_NAME = "plantoguide-trip";
+const TRIP_SCHEMA_ALIASES = [TRIP_SCHEMA_NAME, "xtravel-trip"];
+const TRIP_SCHEMA_VERSION = 3;
+const TRIP_JSON_FENCE_OPEN = "```json plantoguide-trip";
 
 /* ---------------------------------------------------------------- serialize */
 
 function serializeTripData(activeTrip = trip) {
   if (!activeTrip) return null;
+  const hasEntryStorage = typeof loadUserEntries === "function";
+  const storedEntries = hasEntryStorage
+    ? { booking: loadUserEntries("booking"), food: loadUserEntries("food"), shop: loadUserEntries("shop") }
+    : { booking: [], food: [], shop: [] };
+  const userEntries = hasEntryStorage ? storedEntries : (activeTrip.userEntries || storedEntries);
+  const hasPhotoStorage = typeof loadStoredTripPhotos === "function";
+  const storedPhotos = hasPhotoStorage ? loadStoredTripPhotos() : [];
+  const photos = (hasPhotoStorage ? storedPhotos : (activeTrip.photos || [])).map(photoMetadataOnly).filter((photo) => photo.id);
   return {
     schema: TRIP_SCHEMA_NAME,
     version: TRIP_SCHEMA_VERSION,
@@ -33,6 +42,12 @@ function serializeTripData(activeTrip = trip) {
       status: item.status || "confirmed"
     })),
     practical: activeTrip.practical || createEmptyPracticalInfo(activeTrip.destination),
+    userEntries: {
+      booking: normalizeUserEntries(userEntries.booking),
+      food: normalizeUserEntries(userEntries.food),
+      shop: normalizeUserEntries(userEntries.shop)
+    },
+    photos,
     days: (activeTrip.days || []).map((day) => ({
       date: toInputDate(day.date),
       title: day.title,
@@ -49,9 +64,36 @@ function serializeTripData(activeTrip = trip) {
   };
 }
 
-function serializeTripJson(activeTrip = trip) {
+function serializeTripJson(activeTrip = trip, options = {}) {
   const data = serializeTripData(activeTrip);
+  if (data && options.includePhotoData) {
+    const hasPhotoStorage = typeof loadStoredTripPhotos === "function";
+    const storedPhotos = hasPhotoStorage ? loadStoredTripPhotos() : [];
+    data.photos = (hasPhotoStorage ? storedPhotos : (activeTrip.photos || [])).map((photo) => ({ ...photo }));
+  }
   return data ? JSON.stringify(data, null, 2) : "";
+}
+
+function normalizeUserEntries(entries) {
+  return (Array.isArray(entries) ? entries : []).map((item) => ({
+    id: String(item?.id || ""),
+    title: String(item?.title || ""),
+    date: String(item?.date || ""),
+    details: String(item?.details || "")
+  })).filter((item) => item.title);
+}
+
+function photoMetadataOnly(photo) {
+  const metadata = {
+    id: String(photo?.id || ""),
+    date: String(photo?.date || ""),
+    caption: String(photo?.caption || ""),
+    capturedAt: String(photo?.capturedAt || ""),
+    source: String(photo?.source || "")
+  };
+  if (Number.isFinite(photo?.latitude)) metadata.latitude = photo.latitude;
+  if (Number.isFinite(photo?.longitude)) metadata.longitude = photo.longitude;
+  return metadata;
 }
 
 function createEmptyPracticalInfo(destination = "") {
@@ -73,25 +115,27 @@ function extractTripJsonBlock(text) {
   if (!text) return null;
   const source = String(text);
 
-  // Preferred: fenced block tagged for this schema.
-  const tagged = source.indexOf(TRIP_JSON_FENCE_OPEN);
-  if (tagged !== -1) {
-    const start = source.indexOf("\n", tagged);
-    const close = source.indexOf("```", start + 1);
-    if (start !== -1 && close !== -1) return source.slice(start + 1, close);
+  // Preferred: fenced block tagged for the current or legacy schema.
+  for (const schema of TRIP_SCHEMA_ALIASES) {
+    const tagged = source.indexOf(`\`\`\`json ${schema}`);
+    if (tagged !== -1) {
+      const start = source.indexOf("\n", tagged);
+      const close = source.indexOf("```", start + 1);
+      if (start !== -1 && close !== -1) return source.slice(start + 1, close);
+    }
   }
 
   // Any fenced json block containing the schema name.
   const fenceRegex = /```(?:json)?\s*\n([\s\S]*?)```/g;
   let match;
   while ((match = fenceRegex.exec(source)) !== null) {
-    if (match[1].includes(`"${TRIP_SCHEMA_NAME}"`)) return match[1];
+    if (TRIP_SCHEMA_ALIASES.some((schema) => match[1].includes(`"${schema}"`))) return match[1];
   }
 
   // Bare JSON paste.
   const firstBrace = source.indexOf("{");
   const lastBrace = source.lastIndexOf("}");
-  if (firstBrace !== -1 && lastBrace > firstBrace && source.includes(`"${TRIP_SCHEMA_NAME}"`)) {
+  if (firstBrace !== -1 && lastBrace > firstBrace && TRIP_SCHEMA_ALIASES.some((schema) => source.includes(`"${schema}"`))) {
     return source.slice(firstBrace, lastBrace + 1);
   }
   return null;
@@ -111,8 +155,8 @@ function tolerantJsonParse(raw) {
 function validateTripData(data) {
   const errors = [];
   if (!data || typeof data !== "object") return ["The pasted content is not a JSON object."];
-  if (data.schema !== TRIP_SCHEMA_NAME) errors.push(`Missing or wrong "schema" field (expected "${TRIP_SCHEMA_NAME}").`);
-  if (typeof data.version !== "number" || data.version > TRIP_SCHEMA_VERSION) errors.push(`Unsupported schema version "${data.version}" (this app supports up to ${TRIP_SCHEMA_VERSION}).`);
+  if (!TRIP_SCHEMA_ALIASES.includes(data.schema)) errors.push(`Missing or wrong "schema" field (expected "${TRIP_SCHEMA_NAME}").`);
+  if (!Number.isInteger(data.version) || data.version < 2 || data.version > TRIP_SCHEMA_VERSION) errors.push(`Unsupported schema version "${data.version}" (this app supports versions 2–${TRIP_SCHEMA_VERSION}).`);
   if (!data.destination || typeof data.destination !== "string") errors.push("Missing destination.");
   const dateOk = (value) => typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(parseDate(value).getTime());
   if (!dateOk(data.start)) errors.push('Missing or invalid "start" date (expected YYYY-MM-DD).');
@@ -131,6 +175,13 @@ function validateTripData(data) {
       if (!item.time) errors.push(`${label}, activity ${itemIndex + 1}: missing time.`);
     });
   });
+  if (data.userEntries !== undefined) {
+    if (!data.userEntries || typeof data.userEntries !== "object") errors.push('"userEntries" must be an object.');
+    else ["booking", "food", "shop"].forEach((kind) => {
+      if (data.userEntries[kind] !== undefined && !Array.isArray(data.userEntries[kind])) errors.push(`"userEntries.${kind}" must be an array.`);
+    });
+  }
+  if (data.photos !== undefined && !Array.isArray(data.photos)) errors.push('"photos" must be an array.');
   return errors;
 }
 
@@ -175,13 +226,39 @@ function buildTripFromData(data) {
     researchMode: false, // an imported plan has been through AI research
     imported: true,
     practical: data.practical && typeof data.practical === "object" ? data.practical : null,
+    userEntries: {
+      booking: normalizeUserEntries(data.userEntries?.booking),
+      food: normalizeUserEntries(data.userEntries?.food),
+      shop: normalizeUserEntries(data.userEntries?.shop)
+    },
+    photos: (Array.isArray(data.photos) ? data.photos : []).map((photo) => ({ ...photoMetadataOnly(photo), ...(photo.src ? { src: photo.src } : {}) })).filter((photo) => photo.id),
     days
   };
 }
 
+function mergeImportedTripSideData(importedTrip) {
+  if (!importedTrip) return;
+  if (typeof loadUserEntries === "function" && typeof saveUserEntries === "function") {
+    ["booking", "food", "shop"].forEach((kind) => {
+      const byId = new Map(loadUserEntries(kind).map((item) => [item.id, item]));
+      (importedTrip.userEntries?.[kind] || []).forEach((item) => byId.set(item.id || `${Date.now()}-${Math.random().toString(36).slice(2)}`, { ...byId.get(item.id), ...item }));
+      saveUserEntries(kind, [...byId.values()]);
+    });
+  }
+  if (typeof loadStoredTripPhotos === "function" && typeof saveTripPhotos === "function") {
+    const existing = loadStoredTripPhotos();
+    const byId = new Map(existing.map((photo) => [photo.id, photo]));
+    (importedTrip.photos || []).forEach((photo) => {
+      const local = byId.get(photo.id);
+      byId.set(photo.id, local ? { ...photo, ...local } : photo);
+    });
+    saveTripPhotos([...byId.values()]);
+  }
+}
+
 function importTripFromText(text) {
   const raw = extractTripJsonBlock(text);
-  if (!raw) return { ok: false, errors: ["No xtravel-trip JSON block found. Paste the complete TRIP-PLAN.md returned by your AI (it must include the \"Machine-Readable Trip Data\" section) or the JSON block itself."] };
+  if (!raw) return { ok: false, errors: ["No plantoguide-trip JSON block found. Paste the complete TRIP-PLAN.md returned by your AI (legacy xtravel-trip blocks are also supported) or the JSON block itself."] };
   let data;
   try {
     data = tolerantJsonParse(raw);
@@ -192,6 +269,7 @@ function importTripFromText(text) {
   if (errors.length) return { ok: false, errors };
 
   trip = buildTripFromData(data);
+  mergeImportedTripSideData(trip);
   activeDay = 0;
   activeTab = "home";
   builder.hidden = true;
@@ -199,7 +277,7 @@ function importTripFromText(text) {
   document.body.classList.add("trip-mode");
   renderTrip();
   switchAppTab("home");
-  safeStorageSet("x-travel-agent-imported-trip", JSON.stringify(data));
+  safeStorageSet("plantoguide-imported-trip", JSON.stringify(data));
   window.scrollTo({ top: 0, behavior: "smooth" });
   return { ok: true, errors: [] };
 }
@@ -300,4 +378,3 @@ document.querySelector("#importPlanFile").addEventListener("change", (event) => 
   reader.readAsText(file);
   event.target.value = "";
 });
-

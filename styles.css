@@ -630,7 +630,7 @@ body.trip-mode { display: block; }
   .app-nav-button small { font-size: 7px; }
 }
 
-/* Animated Plan × Guide compass-X branding */
+/* Animated PlanToGuide compass-X branding */
 .brand-mark, .builder-brand > span { overflow:visible; padding:0; border:0; background:transparent !important; }
 .brand-mark img, .builder-brand img { display:block; width:100%; height:100%; object-fit:contain; }
 .brand-wordmark { font-weight:850; letter-spacing:-.035em; white-space:nowrap; }
@@ -644,7 +644,7 @@ body.trip-mode { display: block; }
 .output-created-list article strong { font-size:14px; }
 .output-created-list article span { color:var(--muted); font-size:10px; line-height:1.45; }
 
-/* Animated Plan × Guide identity */
+/* Animated PlanToGuide identity */
 .builder:not(.builder-wide) .builder-copy::after {
   content:"✈️";
   right:clamp(24px,7vw,112px);
@@ -2445,16 +2445,88 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
 .import-error li { margin:2px 0; }
 .ai-file-actions [data-open-import] { font-weight:700; }
 
-/* Keep all eight trip sections visible in one stable row. */
-.app-nav { display:grid; grid-template-columns:repeat(8,minmax(0,1fr)); justify-content:stretch; overflow-x:hidden; padding-inline:clamp(4px,2vw,36px); }
-.app-nav-button { width:100%; min-width:0; flex:none; padding-inline:2px; }
+/* Bottom trip navigation: readable buttons on desktop, swipeable rail on mobile. */
+.app-nav {
+  display: grid;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  justify-content: stretch;
+  gap: 2px;
+  overflow-x: hidden;
+  padding-inline: clamp(6px, 2vw, 36px);
+}
+.app-nav-button {
+  width: 100%;
+  min-width: 0;
+  flex: none;
+  padding: 6px 4px;
+}
+.app-nav-button > span {
+  width: 54px;
+  height: 54px;
+  min-width: 54px;
+  min-height: 54px;
+  flex: 0 0 54px;
+  font-size: 25px;
+}
+.app-nav-button small {
+  font-size: 10px;
+  line-height: 1.1;
+  white-space: nowrap;
+}
 @media(max-width:760px) {
-  .app-nav { grid-template-columns:repeat(8,minmax(0,1fr)); padding-inline:2px; }
-  .app-nav-button { gap:2px; }
-  .app-nav-button > span { width:clamp(28px,7vw,38px); height:clamp(28px,7vw,38px); font-size:clamp(14px,4vw,19px); }
-  .app-nav-button small { font-size:clamp(6px,1.7vw,8px); letter-spacing:-.02em; white-space:nowrap; }
+  .app-nav {
+    display: flex;
+    min-height: 92px;
+    gap: 8px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    overscroll-behavior-x: contain;
+    padding: 8px 12px max(12px, env(safe-area-inset-bottom));
+    scroll-padding-inline: 12px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+  .app-nav-button {
+    flex: 0 0 82px;
+    min-width: 82px;
+    min-height: 72px;
+    gap: 5px;
+    scroll-snap-align: start;
+  }
+  .app-nav-button > span {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    min-height: 48px;
+    flex-basis: 48px;
+    font-size: 23px;
+  }
+  .app-nav-button small {
+    font-size: 10px;
+    letter-spacing: 0;
+  }
 }
 @media(max-width:390px) {
-  .app-nav-button > span { width:27px; height:27px; font-size:14px; }
-  .app-nav-button small { font-size:6px; }
+  .app-nav {
+    min-height: 88px;
+    gap: 7px;
+    padding-inline: 10px;
+  }
+  .app-nav-button {
+    flex-basis: 78px;
+    min-width: 78px;
+    min-height: 70px;
+  }
+  .app-nav-button > span {
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    min-height: 46px;
+    flex-basis: 46px;
+    font-size: 22px;
+  }
+  .app-nav-button small {
+    font-size: 9px;
+  }
 }

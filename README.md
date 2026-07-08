@@ -10,13 +10,14 @@ Create a polished trip website, then keep improving it with ChatGPT, Claude, Cod
 4. **Import:** Choose **Import updated plan** in PlanToGuide. Paste or upload the returned file to re-render the website.
 5. **Publish:** Export again and host the static files on GitHub Pages, Netlify Drop, or another static host.
 
-See [SCHEMA.md](SCHEMA.md) for the `xtravel-trip` schema and import rules.
+See [SCHEMA.md](SCHEMA.md) for the `plantoguide-trip` v3 schema and legacy v2 import rules.
 
 ## Export contents
 
 - `index.html`, `styles.css`, and `app.js` — complete static trip website
+- `plan-x-guide-centered-compass-morph-clean-x.svg` — animated PlanToGuide logo
 - `TRIP-PLAN.md` — human-readable source of truth with embedded trip JSON
-- `TRIP-DATA.json` — machine-readable trip data
+- `TRIP-DATA.json` — full machine-readable trip data, including local photo data when available
 - `AGENT-INSTRUCTIONS.md` — editing rules for AI agents
 - `assets/` — available bundled banners and place images
 

@@ -1,54 +1,39 @@
-# PlanToGuide trip schema (`xtravel-trip`, version 2)
+# PlanToGuide trip schema (`plantoguide-trip`, version 3)
 
-Every exported `TRIP-PLAN.md` ends with a **Machine-Readable Trip Data** section containing a fenced block that opens with:
+Every exported `TRIP-PLAN.md` ends with a **Machine-Readable Trip Data** section containing:
 
-    ```json xtravel-trip
+    ```json plantoguide-trip
 
-The block holds one JSON object describing the entire trip. PlanToGuide's **Import updated plan** feature reads this block (from a pasted file, a pasted AI reply, or a bare JSON paste) and re-renders the trip website from it.
+PlanToGuide can import the complete Markdown file, a fenced schema block, or the bare JSON object and re-render the trip website.
 
 ## Top-level fields
 
 | Field | Type | Notes |
 |---|---|---|
-| `schema` | string | Always `"xtravel-trip"`. Required. |
-| `version` | number | Currently `2`. Imports reject versions newer than the app supports. |
+| `schema` | string | `"plantoguide-trip"`. The legacy `"xtravel-trip"` alias remains importable. |
+| `version` | number | Currently `3`; versions 2 and 3 are accepted. |
 | `destination` | string | Required. |
 | `start`, `end` | string | `YYYY-MM-DD`. Required. |
 | `wishes` | string | Free-text traveler interests. |
-| `preferences` | object | Pace, party, home base, budget, restrictions, etc. Unknown keys are preserved. |
-| `bookings` | array | `{ name, date, time, status }`. Status: confirmed, needs booking, optional, backup, needs verification. |
-| `practical` | object | See below. |
-| `days` | array | Required, at least one day. |
+| `preferences` | object | Pace, party, home base, budget, restrictions, and related settings. |
+| `bookings` | array | `{ name, date, time, status }`. |
+| `practical` | object | Emergency, embassy, medical, transit, tipping, phrase, and note fields. |
+| `userEntries` | object | Optional v3 object containing `booking`, `food`, and `shop` arrays. |
+| `photos` | array | Optional v3 photo metadata; Markdown exports never contain image data URLs. |
+| `days` | array | Required, with at least one day. |
 
-## `days[]`
+## Version 3 user content
 
-| Field | Type | Notes |
-|---|---|---|
-| `date` | string | `YYYY-MM-DD`. Required. |
-| `title` | string | Day headline. |
-| `zone` | object or null | `{ name, icon }` — the day's geographic focus. |
-| `activities` | array | Required, at least one. |
+Each `userEntries` item uses `{ id, title, date, details }`. Photo metadata uses `{ id, date, caption, capturedAt, latitude?, longitude?, source }`. `TRIP-PLAN.md` contains metadata only so it stays lightweight. `TRIP-DATA.json` may contain complete photo objects, including local `src` data URLs, for a full-fidelity archive.
 
-### `activities[]`
+On import, entries and photo metadata are merged by `id`. Existing browser photo records keep their local image data when the imported planning file contains metadata only.
 
-`{ time, title, type, icon, status, description }` — `time` and `title` are required. Activities are re-sorted by time on import.
+## Days and activities
 
-## `practical`
+Each day uses `{ date, title, zone, activities }`. A zone is `{ name, icon }` or `null`. Each activity uses `{ time, title, type, icon, status, description }`; `time` and `title` are required and activities are sorted by time on import.
 
-Verified on-the-ground details an AI assistant should research and fill:
+## Compatibility and import tolerance
 
-`emergencyNumbers`, `touristHotline`, `nearestEmbassy`, `hospitalOrClinic`, `transitTips`, `tipping`, `keyPhrases` (array of strings), `notes`.
+Version 2 exports using `schema: "xtravel-trip"` and the old `json xtravel-trip` fence remain supported. Version 2 files may omit `userEntries` and `photos`. The importer repairs trailing commas, smart quotes, and stray control characters, then reports per-field validation errors for invalid data.
 
-Values still containing the phrase "Needs verification" are treated as unfilled and are not shown as verified in the trip website.
-
-## Rules for AI assistants
-
-1. Preserve confirmed bookings and traveler must-dos unless explicitly asked to change them.
-2. Keep the JSON block and the human-readable sections in sync.
-3. Return the **complete** updated `TRIP-PLAN.md` — all headings plus the updated JSON block — so the traveler can import it.
-4. Never invent live facts; mark unverified items with status "Needs verification".
-
-## Import tolerance
-
-The importer accepts the full markdown file, any fenced JSON block containing `"xtravel-trip"`, or a bare JSON object. It repairs trailing commas, smart quotes, and stray control characters, and reports friendly per-field validation errors for anything else.
-
+AI assistants should preserve confirmed bookings and traveler must-dos, keep prose and JSON synchronized, return the complete updated file, and label unverified live facts rather than inventing them.

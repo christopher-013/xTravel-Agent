@@ -388,7 +388,6 @@ function goToPreferencesStep() {
   renderSuggestionPicker(nextDestination);
   showFormStep(2);
 }
-window.xTravelNextStep = goToPreferencesStep;
 document.querySelector("#nextStepButton").addEventListener("click", goToPreferencesStep);
 
 document.querySelector("#backStepButton").addEventListener("click", () => {
@@ -487,12 +486,13 @@ form.addEventListener("submit", async (event) => {
   document.body.classList.add("trip-mode");
   renderTrip();
   switchAppTab("home");
-  safeStorageSet("x-travel-agent-trip", JSON.stringify({ destination: destinationInput.value, start: startDateInput.value, end: endDateInput.value, wishes: wishListInput.value, selections, preferences }));
+  safeStorageSet("plantoguide-trip", JSON.stringify({ destination: destinationInput.value, start: startDateInput.value, end: endDateInput.value, wishes: wishListInput.value, selections, preferences }));
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
 document.querySelector("#editTripButton").addEventListener("click", showBuilder);
 document.querySelector("#newTripButton").addEventListener("click", () => {
+  safeStorageRemove("plantoguide-trip");
   safeStorageRemove("x-travel-agent-trip");
   safeStorageRemove("x-travel-guide-trip");
   safeStorageRemove("roam-trip");
@@ -559,7 +559,9 @@ async function exportTripPackage() {
       renderTrip();
       await waitForHydratedImages(document.querySelector(".trip-app"));
       const clone = document.querySelector(".trip-app").cloneNode(true);
-      clone.querySelectorAll("#exportTripButton,#editTripButton,.hero-export-button,.activity-menu,.photo-manager,.photo-remove-button,.photo-bottom-upload,.user-entry-manager").forEach((element) => element.remove());
+      clone.querySelectorAll(
+        "#exportTripButton,#editTripButton,.hero-export-button,.activity-menu,.photo-manager,.photo-remove-button,.photo-bottom-upload,.user-entry-manager"
+      ).forEach((element) => element.remove());
       clone.querySelectorAll(".day-button").forEach((button, index) => button.dataset.exportDay = index);
       clone.querySelectorAll("[data-panel]").forEach((panel) => panel.classList.toggle("active", panel.dataset.panel === "home"));
       clone.querySelectorAll("[data-tab]").forEach((button) => button.classList.toggle("active", button.dataset.tab === "home"));
@@ -575,13 +577,13 @@ async function exportTripPackage() {
     const runtime = createExportRuntime();
     const inlineIcon = `data:image/svg+xml;base64,${window.PLANTOGUIDE_ICON_BASE64 || ""}`;
     lastStandaloneHtml = websiteHtml.replaceAll("plan-x-guide-centered-compass-morph-clean-x.svg", inlineIcon).replace('<link rel="stylesheet" href="styles.css">', `<style>${websiteCss}</style>`).replace('<script src="app.js"><\/script>', `<script>${runtime}<\/script>`);
-    const readme = `# ${trip.destination} PlanToGuide Website\n\nThis package contains the complete visual trip website and a round-trip AI planning workflow.\n\n## Keep planning\n\n1. Give \`TRIP-PLAN.md\` to ChatGPT, Claude, or another AI assistant.\n2. Ask it to return the complete updated file, including the \`json xtravel-trip\` block.\n3. In PlanToGuide, choose **Import updated plan** to re-render the website.\n4. Export a fresh package.\n\n## Publishing\n\nOpen \`index.html\` locally, drag the folder to Netlify Drop, or upload it to any static host such as GitHub Pages. Google Maps and remote images require an internet connection.\n`;
+    const readme = `# ${trip.destination} PlanToGuide Website\n\nThis package contains the complete visual trip website and a round-trip AI planning workflow.\n\n## Files\n\n- \`index.html\` — complete visual itinerary website\n- \`styles.css\` — website presentation\n- \`app.js\` — exported navigation runtime\n- \`plan-x-guide-centered-compass-morph-clean-x.svg\` — animated PlanToGuide logo\n- \`assets/\` — bundled banners and place graphics, when available\n- \`TRIP-PLAN.md\` — lightweight human-readable plan plus photo metadata\n- \`TRIP-DATA.json\` — complete machine-readable trip, including local photo data\n- \`AGENT-INSTRUCTIONS.md\` — rules for continued AI planning\n- \`README.md\` — this publishing guide\n\n## Keep planning\n\n1. Give \`TRIP-PLAN.md\` to ChatGPT, Claude, or another AI assistant.\n2. Ask it to return the complete updated file, including the \`json plantoguide-trip\` block.\n3. In PlanToGuide, choose **Import updated plan** to re-render the website.\n4. Export a fresh package.\n\n## Publishing\n\nOpen \`index.html\` locally, drag the folder to Netlify Drop, or upload it to any static host such as GitHub Pages. Google Maps and remote images require an internet connection.\n`;
     const zip = createZip([
       { name: "index.html", content: websiteHtml },
       { name: "styles.css", content: websiteCss },
       { name: "app.js", content: runtime },
       { name: "TRIP-PLAN.md", content: markdown },
-      { name: "TRIP-DATA.json", content: serializeTripJson(trip) },
+      { name: "TRIP-DATA.json", content: serializeTripJson(trip, { includePhotoData: true }) },
       { name: "AGENT-INSTRUCTIONS.md", content: createAgentInstructions(trip) },
       { name: "README.md", content: readme },
       { name: "plan-x-guide-centered-compass-morph-clean-x.svg", content: base64ToBytes(window.PLANTOGUIDE_ICON_BASE64 || "") },
@@ -722,7 +724,7 @@ async function bundleExportImages(html) {
 function createExportWebsite() {
   const dayNav = trip.days.map((day, index) => `<a href="#day-${index + 1}">${escapeHtml(formatDate(day.date, false))}</a>`).join("");
   const days = trip.days.map((day, dayIndex) => `<section class="day" id="day-${dayIndex + 1}"><header><p>${escapeHtml(formatDate(day.date, true))}</p><h2>${escapeHtml(day.title)}</h2></header>${day.activities.map((item) => `<article class="stop"><time>${escapeHtml(item.time)}</time><div><span>${escapeHtml(item.type)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p><a href="${googleMapsSearchUrl(cleanActivityTitle(item.title))}" target="_blank" rel="noopener">Google Maps details ↗</a></div></article>`).join("")}</section>`).join("");
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(trip.destination)} Travel Guide · PlanToGuide</title><link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"></head><body><header class="hero" style="--banner:url('${trip.guide.banner}')"><p>Plan × Guide</p><h1>${escapeHtml(trip.destination)}</h1><span>${escapeHtml(formatDate(trip.start, true))} — ${escapeHtml(formatDate(trip.end, true))}</span></header><nav>${dayNav}</nav><main>${days}</main><footer>Exported from Plan × Guide · Verify live details before traveling.</footer></body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(trip.destination)} Travel Guide · PlanToGuide</title><link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"></head><body><header class="hero" style="--banner:url('${trip.guide.banner}')"><p>PlanToGuide</p><h1>${escapeHtml(trip.destination)}</h1><span>${escapeHtml(formatDate(trip.start, true))} — ${escapeHtml(formatDate(trip.end, true))}</span></header><nav>${dayNav}</nav><main>${days}</main><footer>Exported from PlanToGuide · Verify live details before traveling.</footer></body></html>`;
 }
 
 function createExportStyles() {
@@ -760,7 +762,7 @@ function downloadTripMarkdown() {
   link.click();
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
-function aiPrompt(platform) { return `Continue planning this trip in ${platform}. Treat the Markdown below as the source of truth. Preserve confirmed bookings, optimize geographically, research and verify live facts (hours, prices, closures, reservations, emergency and practical info), and ask before changing locked items.\n\nIMPORTANT — return format: reply with the COMPLETE updated TRIP-PLAN.md file, keeping every heading, and update the fenced \`\`\`json xtravel-trip block at the end so it exactly matches your revised plan (same schema and field names, dates as YYYY-MM-DD). I will import that JSON block back into PlanToGuide to re-render my trip website, so it must be complete and valid.\n\n${createTripMarkdown()}`; }
+function aiPrompt(platform) { return `Continue planning this trip in ${platform}. Treat the Markdown below as the source of truth. Preserve confirmed bookings, optimize geographically, research and verify live facts (hours, prices, closures, reservations, emergency and practical info), and ask before changing locked items.\n\nIMPORTANT — return format: reply with the COMPLETE updated TRIP-PLAN.md file, keeping every heading, and update the fenced \`\`\`json plantoguide-trip block at the end so it exactly matches your revised plan (same schema and field names, dates as YYYY-MM-DD). I will import that JSON block back into PlanToGuide to re-render my trip website, so it must be complete and valid.\n\n${createTripMarkdown()}`; }
 async function copyText(text, confirmation = "Copied") { try { await navigator.clipboard.writeText(text); window.alert(confirmation); } catch (_) { window.prompt("Copy this text:", text); } }
 function copyAiPrompt(platform) { if (trip) copyText(aiPrompt(platform), `${platform} prompt copied`); }
 function previewExportWebsite() {
@@ -1839,13 +1841,36 @@ function renderShoppingOptions() {
 }
 
 function userEntryStorageKey(kind) {
-  const destination = (trip?.destination || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
-  return `x-travel-agent-${kind}-entries-${destination}`;
+  return `plantoguide-${kind}-entries-${tripStorageSlug()}-${tripStorageStartDate()}`;
+}
+
+function legacyUserEntryStorageKey(kind) {
+  return `x-travel-agent-${kind}-entries-${tripStorageSlug()}`;
+}
+
+function tripStorageSlug() {
+  return (trip?.destination || destinationInput?.value || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
+}
+
+function tripStorageStartDate() {
+  if (trip?.start instanceof Date && !Number.isNaN(trip.start.getTime())) return toInputDate(trip.start);
+  return startDateInput?.value || "undated";
+}
+
+function readMigratedArray(newKey, legacyKey) {
+  const current = safeStorageGet(newKey);
+  if (current && current !== "[]") return current;
+  const legacy = safeStorageGet(legacyKey);
+  if (legacy && legacy !== "[]") {
+    safeStorageSet(newKey, legacy);
+    return legacy;
+  }
+  return current || "[]";
 }
 
 function loadUserEntries(kind) {
   try {
-    const entries = JSON.parse(safeStorageGet(userEntryStorageKey(kind)) || "[]");
+    const entries = JSON.parse(readMigratedArray(userEntryStorageKey(kind), legacyUserEntryStorageKey(kind)));
     return Array.isArray(entries) ? entries.filter((item) => item?.title) : [];
   } catch (_) { return []; }
 }
@@ -1995,15 +2020,22 @@ function renderActivity(activity) {
 }
 
 function photoStorageKey() {
-  const destination = (trip?.destination || "trip").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "trip";
-  return `x-travel-agent-photos-${destination}`;
+  return `plantoguide-photos-${tripStorageSlug()}-${tripStorageStartDate()}`;
+}
+
+function legacyPhotoStorageKey() {
+  return `x-travel-agent-photos-${tripStorageSlug()}`;
+}
+
+function loadStoredTripPhotos() {
+  try {
+    const photos = JSON.parse(readMigratedArray(photoStorageKey(), legacyPhotoStorageKey()));
+    return Array.isArray(photos) ? photos.filter((photo) => photo?.id) : [];
+  } catch (_) { return []; }
 }
 
 function loadTripPhotos() {
-  try {
-    const photos = JSON.parse(safeStorageGet(photoStorageKey()) || "[]");
-    return Array.isArray(photos) ? photos.filter((photo) => photo?.src) : [];
-  } catch (_) { return []; }
+  return loadStoredTripPhotos().filter((photo) => photo?.src);
 }
 
 function saveTripPhotos(photos) {
@@ -2032,7 +2064,7 @@ async function handlePhotoUploads(event) {
   event.target.value = "";
   if (!files.length) return setPhotoStatus("Choose one or more image files.", true);
   setPhotoStatus(`Preparing ${files.length} ${files.length === 1 ? "photo" : "photos"}…`);
-  const existing = loadTripPhotos();
+  const existing = loadStoredTripPhotos();
   const additions = [];
   for (const file of files.slice(0, 12)) {
     try {
@@ -2212,7 +2244,7 @@ function renderPhotos() {
     remove.setAttribute("aria-label", `Remove ${photo.caption || "photo"}`);
     remove.textContent = "×";
     remove.addEventListener("click", () => {
-      if (saveTripPhotos(loadTripPhotos().filter((candidate) => candidate.id !== photo.id))) {
+      if (saveTripPhotos(loadStoredTripPhotos().filter((candidate) => candidate.id !== photo.id))) {
         setPhotoStatus("Photo removed.");
         renderPhotos();
       }
@@ -2303,7 +2335,16 @@ function safeStorageRemove(key) {
 
 function restoreSavedTrip() {
   let saved = null;
-  try { saved = JSON.parse(safeStorageGet("x-travel-agent-trip") || safeStorageGet("x-travel-guide-trip") || safeStorageGet("roam-trip") || "null"); } catch (error) { saved = null; }
+  try {
+    const importedCurrent = safeStorageGet("plantoguide-imported-trip");
+    const importedLegacy = safeStorageGet("x-travel-agent-imported-trip");
+    if (!importedCurrent && importedLegacy) safeStorageSet("plantoguide-imported-trip", importedLegacy);
+    const current = safeStorageGet("plantoguide-trip");
+    const legacy = safeStorageGet("x-travel-agent-trip") || safeStorageGet("x-travel-guide-trip") || safeStorageGet("roam-trip");
+    const raw = current || legacy || "null";
+    if (!current && legacy) safeStorageSet("plantoguide-trip", legacy);
+    saved = JSON.parse(raw);
+  } catch (error) { saved = null; }
   if (!saved) return;
 
   destinationInput.value = saved.destination || "";
