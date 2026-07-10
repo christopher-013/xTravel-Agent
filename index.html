@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
@@ -12,7 +12,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css?v=20260708-brand-headline-1">
+  <link rel="stylesheet" href="styles.css?v=20260709-loading-brand-1">
 </head>
 <body>
   <main class="page-shell">
@@ -66,11 +66,12 @@
         <section class="form-step active" data-form-step="1">
           <div class="field-group no-number">
             <div class="field-content">
-              <label for="destination">Where are you going?</label>
+              <label for="destination">Where will your adventure take you?</label>
               <p>One city, a whole country, or anywhere in between.</p>
               <div class="input-wrap">
                 <span aria-hidden="true">⌖</span>
                 <input id="destination" name="destination" type="text" list="knownDestinationList" placeholder="Start typing a supported destination" autocomplete="off" aria-describedby="destinationHelp destinationError" required>
+                <button class="input-clear-button" id="clearDestinationButton" type="button" aria-label="Clear destination" hidden>×</button>
                 <datalist id="knownDestinationList"></datalist>
               </div>
               <small class="destination-help" id="destinationHelp">Choose a catalog suggestion for richer local detail, or enter any destination to create a starter plan and AI-ready research file.</small>
@@ -109,7 +110,7 @@
             <p id="adventureStepCopy">Start with the places you would most like to see. Every selection is prioritized once in your daily itinerary.</p>
           </div>
           <div class="suggestion-toolbar">
-            <div><strong>Not sure where to begin?</strong><span>We’ll make a balanced mix for your trip length.</span></div>
+            <div><strong>Not sure where to begin?</strong><span>We'll make a balanced mix for your trip length.</span></div>
             <button id="surpriseMeButton" type="button">Let Me Choose</button>
           </div>
           <div class="suggestion-board" id="suggestionBoard" aria-label="Popular destination suggestions"></div>
@@ -327,8 +328,8 @@
     <div class="trip-creation-transition-card">
       <img id="tripCreationLogo" src="plan-x-guide-centered-compass-morph-clean-x.svg" alt="PlanToGuide">
       <p class="eyebrow">Building your adventure</p>
-      <h2>Plan <span class="brand-x">×</span> Guide</h2>
-      <p>Turning your choices, bookings, and travel style into a complete trip website.</p>
+      <h2 class="trip-creation-brand-line">Turning your trip <strong class="hero-brand-word hero-brand-plan">PLAN</strong> <strong class="hero-brand-word hero-brand-to">TO</strong> a<br>mobile travel <strong class="hero-brand-word hero-brand-guide">GUIDE.</strong></h2>
+      <p>Building your adventure, itinerary, maps, and AI-ready planning file.</p>
       <span class="creation-progress" aria-hidden="true"><i></i><i></i><i></i></span>
     </div>
   </div>

@@ -4,6 +4,7 @@ const result = document.querySelector("#result");
 const destinationInput = document.querySelector("#destination");
 const destinationError = document.querySelector("#destinationError");
 const knownDestinationList = document.querySelector("#knownDestinationList");
+const clearDestinationButton = document.querySelector("#clearDestinationButton");
 const startDateInput = document.querySelector("#startDate");
 const endDateInput = document.querySelector("#endDate");
 const wishListInput = document.querySelector("#wishList");
@@ -326,13 +327,36 @@ document.querySelectorAll(".form-progress [data-go-step]").forEach((stage) => {
 destinationInput.addEventListener("input", () => {
   destinationInput.setCustomValidity("");
   destinationError.textContent = "";
+  updateDestinationClearButton();
 });
 destinationInput.addEventListener("change", normalizeSelectedDestination);
 destinationInput.addEventListener("blur", () => {
   if (destinationInput.value.trim() && !resolveKnownDestination(destinationInput.value)) {
     destinationError.textContent = "This destination is not in the detailed browser catalog yet. We can still create an AI-ready planning file and starter website.";
   }
+  updateDestinationClearButton();
 });
+clearDestinationButton?.addEventListener("click", () => {
+  destinationInput.value = "";
+  destinationInput.setCustomValidity("");
+  destinationError.textContent = "";
+  selectedSuggestions.clear();
+  suggestionDestination = "";
+  updateDestinationClearButton();
+  destinationInput.focus();
+});
+startDateInput.addEventListener("change", () => {
+  if (!startDateInput.value) return;
+  const arriveDate = parseDate(startDateInput.value);
+  const departDate = addDays(arriveDate, 7);
+  endDateInput.value = toInputDate(departDate);
+  dateError.textContent = "";
+});
+
+function updateDestinationClearButton() {
+  if (!clearDestinationButton) return;
+  clearDestinationButton.hidden = !destinationInput.value.trim();
+}
 
 function normalizeDestinationName(value) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
@@ -2344,6 +2368,7 @@ function parseIdeas(text) {
 }
 function daysBetween(a, b) { return Math.round((b - a) / 86400000); }
 function parseDate(value) { const [year, month, day] = value.split("-").map(Number); return new Date(year, month - 1, day); }
+function addDays(date, days) { const next = new Date(date); next.setDate(next.getDate() + days); return next; }
 function toInputDate(date) { return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`; }
 function formatDate(date, includeYear) { return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", weekday: includeYear ? undefined : "short", year: includeYear ? "numeric" : undefined }).format(date); }
 function titleCase(text) { return text.replace(/\b\w/g, (letter) => letter.toUpperCase()); }
