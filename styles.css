@@ -2888,45 +2888,118 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   .trip-creation-brand-line .hero-brand-guide::after { animation: none; opacity: 1; transform: none; filter: none; }
 }
 
-/* Compact swipeable bottom navigation: keep six buttons visible on phones, with overflow for the remaining tabs. */
+/* Tokyo2026-style bottom navigation dock */
+.app-nav {
+  position: relative;
+  z-index: 100;
+  display: flex;
+  flex: 0 0 auto;
+  min-height: 76px;
+  gap: 0;
+  align-items: flex-start;
+  border-top: 1px solid var(--line);
+  background: rgba(245,242,238,.97);
+  backdrop-filter: blur(12px);
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 6px 0 max(12px, env(safe-area-inset-bottom));
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+.app-nav-button {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: none;
+  min-height: 64px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 4px;
+  padding: 4px 2px 0;
+  border: 0;
+  color: var(--muted);
+  background: transparent;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: color .2s ease, transform .2s ease;
+}
+.app-nav-button > span {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 46px;
+  height: 46px;
+  min-width: 46px;
+  min-height: 46px;
+  flex: 0 0 46px;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 24px;
+  line-height: 1;
+  transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.app-nav-button small {
+  display: block;
+  max-width: 76px;
+  overflow: hidden;
+  color: inherit;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.08;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.app-nav-button:hover > span { transform: translateY(-2px) scale(1.03); }
+.app-nav-button.active {
+  color: var(--ink);
+}
+.app-nav-button.active > span {
+  background: rgba(255,236,153,.55);
+  box-shadow: 0 0 0 2px rgba(255,193,7,.45), 0 6px 16px rgba(245,200,75,.22);
+  transform: scale(1.02);
+}
+.app-nav-button.active small { font-weight: 800; }
+.app-nav-button[data-tab="home"] > span { color: #c0392b; }
+.app-nav-button[data-tab="itinerary"] > span { color: #8a6500; }
+.app-nav-button[data-tab="bookings"] > span { color: #2f7d47; }
+.app-nav-button[data-tab="maps"] > span { color: #254b7a; }
+.app-nav-button[data-tab="food"] > span { color: #9b4f66; }
+.app-nav-button[data-tab="shop"] > span { color: #765f96; }
+.app-nav-button[data-tab="photos"] > span { color: #155f62; }
+.app-nav-button[data-tab="ai"] > span { color: #24748f; }
+
 @media (max-width: 640px) {
   .app-nav {
-    display: flex;
-    flex: 0 0 auto;
-    min-height: 64px;
-    gap: 3px;
-    justify-content: flex-start;
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 4px 12vw max(7px, env(safe-area-inset-bottom)) 6px;
-    scroll-snap-type: x proximity;
-    -webkit-overflow-scrolling: touch;
+    min-height: 75px;
+    gap: 0;
+    padding: 6px 8vw max(11px, env(safe-area-inset-bottom)) 4px;
     scrollbar-width: none;
   }
   .app-nav::-webkit-scrollbar { display: none; }
   .app-nav-button {
-    flex: 0 0 calc((100vw - 34px) / 6);
-    width: calc((100vw - 34px) / 6);
-    min-width: 44px;
-    max-width: 58px;
-    min-height: 54px;
-    gap: 2px;
-    padding: 4px 2px;
-    scroll-snap-align: start;
+    flex: 0 0 calc((100vw - 8vw - 4px) / 6);
+    width: calc((100vw - 8vw - 4px) / 6);
+    min-width: 52px;
+    max-width: 72px;
+    min-height: 62px;
+    gap: 4px;
   }
   .app-nav-button > span {
-    width: 31px;
-    height: 31px;
-    min-width: 31px;
-    min-height: 31px;
-    font-size: 15px;
+    width: 46px;
+    height: 46px;
+    min-width: 46px;
+    min-height: 46px;
+    flex-basis: 46px;
+    font-size: 22px;
   }
   .app-nav-button small {
-    max-width: 52px;
-    overflow: hidden;
-    font-size: 7px;
-    line-height: 1.05;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    max-width: 58px;
+    font-size: 8px;
+    letter-spacing: 0;
   }
 }
