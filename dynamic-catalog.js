@@ -9,6 +9,7 @@
   const WIKIPEDIA_API = "https://en.wikipedia.org/w/api.php";
   const OPEN_METEO_GEOCODE = "https://geocoding-api.open-meteo.com/v1/search";
   const OVERPASS_API = "https://overpass-api.de/api/interpreter";
+  const NEUTRAL_BANNER_PLACEHOLDER = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="800" viewBox="0 0 1800 800"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#244f66"/><stop offset="1" stop-color="#79a6ad"/></linearGradient></defs><rect width="1800" height="800" fill="url(#g)"/></svg>')}`;
 
   function slugify(value = "") {
     return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "destination";
@@ -27,7 +28,7 @@
   }
 
   function cacheKey(slug) {
-    return `ptg:dyncat:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
+    return `ptg:dyncat2:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
   }
 
   const dynamicCatalogCache = {
@@ -245,6 +246,12 @@
     return { title, items: dedupeItems(items) };
   }
 
+  // Tuned to drop Wikipedia geosearch noise that isn't a visitable attraction — transit infrastructure,
+  // schools/faculties, and administrative-boundary articles — while still keeping the single nearest
+  // station (travelers use the main station) and legitimate "University of X" main-campus articles.
+  const NON_ATTRACTION_TITLE_PATTERN = /railway station|train station|metro station|bus station|school|faculty|district of|municipality|province of|county of|\(company\)|corporation/i;
+  const STATION_TITLE_PATTERN = /railway station|train station|metro station|bus station/i;
+
   async function fetchWikipediaGeoPlaces(geocode, signal) {
     if (!geocode?.latitude || !geocode?.longitude) return [];
     const geo = await fetchJson(makeUrl(WIKIPEDIA_API, {
@@ -257,7 +264,22 @@
       action: "query", pageids: ids.join("|"), prop: "pageimages|extracts|info", exintro: "1", explaintext: "1",
       piprop: "thumbnail", pithumbsize: "640", inprop: "url", format: "json", origin: "*"
     }), signal);
-    return Object.values(pages?.query?.pages || {}).map((page) => ({
+    const pageMap = pages?.query?.pages || {};
+    const orderedPages = ids.map((id) => pageMap[id]).filter(Boolean);
+    const destinationName = geocode.name || "";
+    let keptAStation = false;
+    return orderedPages.filter((page) => {
+      const title = String(page.title || "");
+      if (destinationName && (title === destinationName || title.startsWith(`${destinationName},`))) return false;
+      if (NON_ATTRACTION_TITLE_PATTERN.test(title)) {
+        if (STATION_TITLE_PATTERN.test(title) && !keptAStation) {
+          keptAStation = true;
+          return true;
+        }
+        return false;
+      }
+      return true;
+    }).map((page) => ({
       name: page.title,
       type: "see",
       area: geocode.name,
@@ -282,21 +304,22 @@
       admin ? `Museums in ${city}, ${admin}` : "",
       admin ? `Parks in ${city}, ${admin}` : ""
     ].filter(Boolean);
-    const pageIds = new Set();
-    for (const category of categoryNames) {
+    const categoryResults = await Promise.all(categoryNames.map(async (category) => {
       try {
         const data = await fetchJson(makeUrl(WIKIPEDIA_API, {
           action: "query", list: "categorymembers", cmtitle: `Category:${category}`, cmnamespace: "0",
           cmlimit: "18", format: "json", origin: "*"
         }), signal);
-        (data?.query?.categorymembers || []).forEach((item) => {
-          if (item.pageid && !/list of|timeline of|history of/i.test(item.title || "")) pageIds.add(item.pageid);
-        });
+        return data?.query?.categorymembers || [];
       } catch (_) {
         // Many destinations do not have every category. Keep going with the categories that exist.
+        return [];
       }
-      if (pageIds.size >= 45) break;
-    }
+    }));
+    const pageIds = new Set();
+    categoryResults.flat().forEach((item) => {
+      if (item.pageid && !/list of|timeline of|history of/i.test(item.title || "")) pageIds.add(item.pageid);
+    });
     const ids = [...pageIds].slice(0, 45);
     if (!ids.length) return [];
     const pages = await fetchJson(makeUrl(WIKIPEDIA_API, {
@@ -441,18 +464,17 @@ out center tags 80;`;
     {
       match: /\b(san\s*diego|san-diego)\b/i,
       label: "San Diego, California, United States",
-      banner: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1800&q=82",
       items: [
-        { name: "San Diego Zoo", type: "see", area: "Balboa Park", detail: "World-famous zoo in Balboa Park, known for expansive habitats, pandas, koalas, and a full-day family-friendly layout.", image: "https://images.unsplash.com/photo-1546182990-dffeafbe841d?auto=format&fit=crop&w=1200&q=80", seedRank: 100 },
-        { name: "Balboa Park", type: "see", area: "Central San Diego", detail: "San Diego’s signature cultural park, with Spanish Colonial Revival architecture, gardens, museums, walking paths, and the San Diego Zoo.", image: "https://images.unsplash.com/photo-1581965528726-f7299a8a6d5a?auto=format&fit=crop&w=1200&q=80", seedRank: 98 },
-        { name: "La Jolla Cove", type: "see", area: "La Jolla", detail: "Scenic coastal cove famous for sea caves, seals and sea lions, sunset views, snorkeling, and walkable village restaurants.", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", seedRank: 96 },
-        { name: "SeaWorld San Diego", type: "see", area: "Mission Bay", detail: "Large marine theme park with shows, rides, aquariums, and family attractions near Mission Bay.", image: "https://images.unsplash.com/photo-1560275619-4662e36fa65c?auto=format&fit=crop&w=1200&q=80", seedRank: 94 },
-        { name: "USS Midway Museum", type: "see", area: "Embarcadero", detail: "Historic aircraft carrier museum on the waterfront, with flight deck views, restored aircraft, and immersive naval history exhibits.", image: "https://images.unsplash.com/photo-1494412519320-aa613dfb7738?auto=format&fit=crop&w=1200&q=80", seedRank: 92 },
-        { name: "Coronado Beach", type: "see", area: "Coronado", detail: "Wide, classic Southern California beach known for golden sand, views near Hotel del Coronado, and an easy island-town day trip.", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", seedRank: 90 },
-        { name: "Torrey Pines State Natural Reserve", type: "see", area: "La Jolla / Del Mar", detail: "Clifftop hiking reserve with ocean views, rare Torrey pine trees, and trails that work especially well for a scenic morning.", image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80", seedRank: 88 },
-        { name: "Old Town San Diego State Historic Park", type: "see", area: "Old Town", detail: "Historic district with preserved buildings, museums, plazas, Mexican restaurants, and an easy introduction to early California history.", image: "https://images.unsplash.com/photo-1518005020951-eccb494ad742?auto=format&fit=crop&w=1200&q=80", seedRank: 86 },
-        { name: "Cabrillo National Monument", type: "see", area: "Point Loma", detail: "National monument with bay and ocean views, tide pools, lighthouse history, and one of the best panoramas of San Diego.", image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80", seedRank: 84 },
-        { name: "Mission Beach and Belmont Park", type: "see", area: "Mission Beach", detail: "Beach boardwalk, oceanfront food stops, bike paths, and the vintage Giant Dipper coaster at Belmont Park.", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", seedRank: 82 },
+        { name: "San Diego Zoo", type: "see", area: "Balboa Park", detail: "World-famous zoo in Balboa Park, known for expansive habitats, pandas, koalas, and a full-day family-friendly layout.", seedRank: 100 },
+        { name: "Balboa Park", type: "see", area: "Central San Diego", detail: "San Diego’s signature cultural park, with Spanish Colonial Revival architecture, gardens, museums, walking paths, and the San Diego Zoo.", seedRank: 98 },
+        { name: "La Jolla Cove", type: "see", area: "La Jolla", detail: "Scenic coastal cove famous for sea caves, seals and sea lions, sunset views, snorkeling, and walkable village restaurants.", seedRank: 96 },
+        { name: "SeaWorld San Diego", type: "see", area: "Mission Bay", detail: "Large marine theme park with shows, rides, aquariums, and family attractions near Mission Bay.", seedRank: 94 },
+        { name: "USS Midway Museum", type: "see", area: "Embarcadero", detail: "Historic aircraft carrier museum on the waterfront, with flight deck views, restored aircraft, and immersive naval history exhibits.", seedRank: 92 },
+        { name: "Coronado Beach", type: "see", area: "Coronado", detail: "Wide, classic Southern California beach known for golden sand, views near Hotel del Coronado, and an easy island-town day trip.", seedRank: 90 },
+        { name: "Torrey Pines State Natural Reserve", type: "see", area: "La Jolla / Del Mar", detail: "Clifftop hiking reserve with ocean views, rare Torrey pine trees, and trails that work especially well for a scenic morning.", seedRank: 88 },
+        { name: "Old Town San Diego State Historic Park", type: "see", area: "Old Town", detail: "Historic district with preserved buildings, museums, plazas, Mexican restaurants, and an easy introduction to early California history.", seedRank: 86 },
+        { name: "Cabrillo National Monument", type: "see", area: "Point Loma", detail: "National monument with bay and ocean views, tide pools, lighthouse history, and one of the best panoramas of San Diego.", seedRank: 84 },
+        { name: "Mission Beach and Belmont Park", type: "see", area: "Mission Beach", detail: "Beach boardwalk, oceanfront food stops, bike paths, and the vintage Giant Dipper coaster at Belmont Park.", seedRank: 82 },
         { name: "Little Italy Mercato Farmers' Market", type: "buy", area: "Little Italy", detail: "Popular open-air market for local produce, flowers, snacks, artisan foods, and casual browsing.", bestFor: "Food gifts, flowers, local makers, and snacks", seedRank: 76 },
         { name: "Seaport Village", type: "buy", area: "Embarcadero", detail: "Waterfront shopping and dining village with souvenir shops, bay views, and an easy stroll near downtown attractions.", bestFor: "Souvenirs, casual dining, and waterfront browsing", seedRank: 74 },
         { name: "Liberty Public Market", type: "buy", area: "Liberty Station", detail: "Indoor public market with food vendors, local goods, and a relaxed stop that pairs well with Point Loma or airport-area plans.", bestFor: "Local food vendors, gifts, and casual meals", seedRank: 72 },
@@ -467,16 +489,15 @@ out center tags 80;`;
     {
       match: /\b(los\s*angeles|la,\s*california|l\.a\.|hollywood)\b/i,
       label: "Los Angeles, California, United States",
-      banner: "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?auto=format&fit=crop&w=1800&q=82",
       items: [
-        { name: "Griffith Observatory", type: "see", area: "Griffith Park / Los Feliz", detail: "Classic Los Angeles viewpoint with skyline views, astronomy exhibits, hiking nearby, and one of the city’s best sunset angles.", image: "https://images.unsplash.com/photo-1534190760961-74e8c1c5c3da?auto=format&fit=crop&w=1200&q=80", seedRank: 100 },
-        { name: "Santa Monica Pier", type: "see", area: "Santa Monica", detail: "Iconic oceanfront pier with Pacific Park, beach views, casual food, and an easy connection to the beach path.", image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=80", seedRank: 98 },
-        { name: "The Getty Center", type: "see", area: "Brentwood", detail: "Major art museum campus known for architecture, gardens, city views, and a high-impact half-day cultural visit.", image: "https://images.unsplash.com/photo-1524230572899-a752b3835840?auto=format&fit=crop&w=1200&q=80", seedRank: 96 },
-        { name: "Universal Studios Hollywood", type: "see", area: "Universal City", detail: "Film-studio theme park with rides, shows, and the Studio Tour; best planned as a dedicated half or full day.", image: "https://images.unsplash.com/photo-1594736797933-d0501ba2fe65?auto=format&fit=crop&w=1200&q=80", seedRank: 94 },
-        { name: "Hollywood Walk of Fame", type: "see", area: "Hollywood", detail: "Famous Hollywood Boulevard walk near TCL Chinese Theatre and Dolby Theatre; best as a short stop paired with nearby viewpoints or museums.", image: "https://images.unsplash.com/photo-1527903519906-d25a833d7d76?auto=format&fit=crop&w=1200&q=80", seedRank: 92 },
-        { name: "Venice Beach Boardwalk", type: "see", area: "Venice", detail: "Lively beach walk known for murals, skate culture, street performers, Muscle Beach, and access to Venice canals.", image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=80", seedRank: 90 },
-        { name: "The Broad", type: "see", area: "Downtown LA", detail: "Contemporary art museum in Downtown LA, popular for its architecture, collection, and timed-entry planning.", image: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80", seedRank: 88 },
-        { name: "Los Angeles County Museum of Art", type: "see", area: "Museum Row / Miracle Mile", detail: "Large art museum known for Urban Light, broad collections, and easy pairing with the Academy Museum or La Brea Tar Pits.", image: "https://images.unsplash.com/photo-1494526585095-c41746248156?auto=format&fit=crop&w=1200&q=80", seedRank: 86 },
+        { name: "Griffith Observatory", type: "see", area: "Griffith Park / Los Feliz", detail: "Classic Los Angeles viewpoint with skyline views, astronomy exhibits, hiking nearby, and one of the city’s best sunset angles.", seedRank: 100 },
+        { name: "Santa Monica Pier", type: "see", area: "Santa Monica", detail: "Iconic oceanfront pier with Pacific Park, beach views, casual food, and an easy connection to the beach path.", seedRank: 98 },
+        { name: "The Getty Center", type: "see", area: "Brentwood", detail: "Major art museum campus known for architecture, gardens, city views, and a high-impact half-day cultural visit.", seedRank: 96 },
+        { name: "Universal Studios Hollywood", type: "see", area: "Universal City", detail: "Film-studio theme park with rides, shows, and the Studio Tour; best planned as a dedicated half or full day.", seedRank: 94 },
+        { name: "Hollywood Walk of Fame", type: "see", area: "Hollywood", detail: "Famous Hollywood Boulevard walk near TCL Chinese Theatre and Dolby Theatre; best as a short stop paired with nearby viewpoints or museums.", seedRank: 92 },
+        { name: "Venice Beach Boardwalk", type: "see", area: "Venice", detail: "Lively beach walk known for murals, skate culture, street performers, Muscle Beach, and access to Venice canals.", seedRank: 90 },
+        { name: "The Broad", type: "see", area: "Downtown LA", detail: "Contemporary art museum in Downtown LA, popular for its architecture, collection, and timed-entry planning.", seedRank: 88 },
+        { name: "Los Angeles County Museum of Art", type: "see", area: "Museum Row / Miracle Mile", detail: "Large art museum known for Urban Light, broad collections, and easy pairing with the Academy Museum or La Brea Tar Pits.", seedRank: 86 },
         { name: "Grand Central Market", type: "eat", area: "Downtown LA", detail: "Historic food hall with a dense mix of casual vendors, ideal for flexible lunches and group trips with different tastes.", cuisine: "Food hall / multi-cuisine", order: "Choose tacos, egg sandwiches, pupusas, ramen, or a vendor crawl.", seedRank: 84 },
         { name: "Original Farmers Market", type: "eat", area: "Fairfax", detail: "Long-running market with casual food stalls and easy pairing with The Grove, CBS Television City, or Museum Row.", cuisine: "Market / casual dining", order: "Try a classic market counter meal, pastries, or a snack crawl.", seedRank: 82 },
         { name: "République", type: "eat", area: "Mid-Wilshire", detail: "Popular bakery, brunch, and dinner spot in a dramatic historic building, useful near Museum Row or Hollywood-adjacent plans.", cuisine: "French-Californian / bakery", order: "Pastries, shakshuka, kimchi fried rice, or a dinner entrée.", seedRank: 81 },
@@ -490,32 +511,6 @@ out center tags 80;`;
         { name: "Rodeo Drive", type: "buy", area: "Beverly Hills", detail: "Luxury shopping street known for designer storefronts, polished streetscapes, and Beverly Hills sightseeing.", bestFor: "Luxury window shopping, designer brands, and photos", seedRank: 78 },
         { name: "Abbot Kinney Boulevard", type: "buy", area: "Venice", detail: "Walkable boutique street with design shops, coffee, restaurants, and independent fashion near Venice Beach.", bestFor: "Boutiques, design, coffee, and independent finds", seedRank: 76 },
         { name: "Melrose Avenue", type: "buy", area: "West Hollywood / Fairfax", detail: "Shopping corridor known for streetwear, vintage, murals, fashion boutiques, and casual browsing.", bestFor: "Streetwear, vintage, murals, and trend shopping", seedRank: 74 }
-      ]
-    },
-    {
-      match: /\b(new\s*york|new\s*york\s*city|nyc|manhattan)\b/i,
-      label: "New York City, New York, United States",
-      banner: "https://images.unsplash.com/photo-1522083165195-3424ed129620?auto=format&fit=crop&w=1800&q=82",
-      items: [
-        { name: "Statue of Liberty and Ellis Island", type: "see", area: "New York Harbor", detail: "Reserve ferry tickets early and allow enough time for both islands, security, and harbor views.", image: "https://images.unsplash.com/photo-1605130284535-11dd9eedc58a?auto=format&fit=crop&w=1200&q=80", seedRank: 100 },
-        { name: "Central Park", type: "see", area: "Upper Manhattan", detail: "Classic New York green space with Bethesda Terrace, Bow Bridge, The Mall, Sheep Meadow, and museum pairings.", image: "https://images.unsplash.com/photo-1534270804882-6b5048b1c1fc?auto=format&fit=crop&w=1200&q=80", seedRank: 98 },
-        { name: "The Metropolitan Museum of Art", type: "see", area: "Upper East Side", detail: "Major art museum best handled with a focused collection plan and time in nearby Central Park.", image: "https://images.unsplash.com/photo-1569977274213-65dd2f00c3ac?auto=format&fit=crop&w=1200&q=80", seedRank: 96 },
-        { name: "Times Square and Broadway", type: "see", area: "Midtown", detail: "See the lights briefly, then make a Broadway show, theater-area dinner, or night walk the real anchor.", image: "https://images.unsplash.com/photo-1543716091-a840c05249ec?auto=format&fit=crop&w=1200&q=80", seedRank: 94 },
-        { name: "Empire State Building", type: "see", area: "Midtown", detail: "Classic observation deck with timed-entry planning and strong evening skyline appeal.", image: "https://images.unsplash.com/photo-1522083165195-3424ed129620?auto=format&fit=crop&w=1200&q=80", seedRank: 92 },
-        { name: "Rockefeller Center and Top of the Rock", type: "see", area: "Midtown", detail: "Pair the plaza, St. Patrick's Cathedral, Fifth Avenue, and skyline views from Top of the Rock.", image: "https://images.unsplash.com/photo-1499092346589-b9b6be3e94b2?auto=format&fit=crop&w=1200&q=80", seedRank: 90 },
-        { name: "Brooklyn Bridge and DUMBO", type: "see", area: "Brooklyn", detail: "Walk toward Brooklyn for skyline views, waterfront parks, cobblestone streets, and photo stops.", image: "https://images.unsplash.com/photo-1518391846015-55a9cc003b25?auto=format&fit=crop&w=1200&q=80", seedRank: 88 },
-        { name: "9/11 Memorial and One World Observatory", type: "see", area: "Lower Manhattan", detail: "Leave reflective time at the memorial and reserve the observatory if skyline views are a priority.", image: "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1200&q=80", seedRank: 86 },
-        { name: "Grand Central Terminal", type: "see", area: "Midtown East", detail: "See the Main Concourse, Whispering Gallery, and nearby Chrysler Building or Summit One Vanderbilt.", image: "https://images.unsplash.com/photo-1518391846015-55a9cc003b25?auto=format&fit=crop&w=1200&q=80", seedRank: 84 },
-        { name: "High Line and Chelsea Market", type: "see", area: "Chelsea", detail: "Walk the elevated park, stop for food, and continue toward Hudson Yards or the Meatpacking District.", image: "https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?auto=format&fit=crop&w=1200&q=80", seedRank: 82 },
-        { name: "Russ & Daughters Cafe", type: "eat", area: "Lower East Side", detail: "Classic New York appetizing tradition for bagels, smoked fish, eggs, and brunch-style plates.", cuisine: "Jewish appetizing / brunch", order: "Bagels with smoked fish, latkes, or egg dishes.", seedRank: 82 },
-        { name: "Katz's Delicatessen", type: "eat", area: "Lower East Side", detail: "Iconic deli stop known for pastrami sandwiches and old-school New York energy.", cuisine: "Deli", order: "Pastrami on rye, matzo ball soup, or a classic deli plate.", seedRank: 80 },
-        { name: "Los Tacos No. 1", type: "eat", area: "Chelsea Market / Times Square", detail: "Fast, popular taco stop with useful locations near major sightseeing routes.", cuisine: "Mexican / tacos", order: "Adobada, carne asada, or nopal tacos.", seedRank: 78 },
-        { name: "Joe's Pizza", type: "eat", area: "Greenwich Village", detail: "Classic New York slice shop useful as a quick lunch or late-night snack.", cuisine: "Pizza", order: "Plain cheese slice or pepperoni slice.", seedRank: 76 },
-        { name: "Daily Provisions", type: "eat", area: "Multiple locations", detail: "Good breakfast, coffee, sandwiches, and crullers with several convenient locations.", cuisine: "Bakery / cafe", order: "Crullers, breakfast sandwich, or coffee.", seedRank: 74 },
-        { name: "Fifth Avenue", type: "buy", area: "Midtown", detail: "Landmark flagships, luxury retail, department stores, and an easy add-on to Rockefeller Center.", bestFor: "Flagships, luxury retail, and department stores", seedRank: 80 },
-        { name: "SoHo", type: "buy", area: "Lower Manhattan", detail: "Fashion flagships, design shops, cobblestone streets, and strong browsing between downtown neighborhoods.", bestFor: "Fashion, design, and flagship retail", seedRank: 78 },
-        { name: "Chelsea Market and Artists & Fleas", type: "buy", area: "Chelsea", detail: "Food gifts, local makers, art, and independent vendors near the High Line.", bestFor: "Food gifts, local makers, and independent vendors", seedRank: 76 },
-        { name: "Brooklyn Flea", type: "buy", area: "Brooklyn", detail: "Seasonal market for vintage, crafts, design, and local food; check current location and schedule.", bestFor: "Vintage, crafts, design, and local food", seedRank: 74 }
       ]
     }
   ];
@@ -638,17 +633,22 @@ out center tags 80;`;
     const buy = items.filter((item) => item.type === "buy").slice(0, 18).map((item) => ({ ...toPlace(item, fallbackArea), bestFor: item.bestFor || "Local shopping, gifts, and browsing" }));
     const enoughSignal = see.length >= 4 || eatItems.length >= 3 || buy.length >= 2;
     if (!enoughSignal) return null;
-    const fillerImage = seeded.banner || [...see, ...eatItems, ...buy].find((item) => item.image)?.image || "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1800&q=82";
+    const fillerImage = seeded.banner || [...see, ...eatItems, ...buy].find((item) => item.image)?.image || NEUTRAL_BANNER_PLACEHOLDER;
     const food = distributeFoodItems(eatItems, destination, fallbackArea);
     const zones = see.slice(0, 8).map((item, index) => ({
       name: item.area || item.name,
       icon: ["🏛️", "🌿", "🌆", "🎨", "🧭", "📸", "🛍️", "🌉"][index % 8],
       keywords: [item.name, item.area].filter(Boolean)
     }));
+    const slug = slugify([geocode?.name, geocode?.admin1, geocode?.country].filter(Boolean).join(" "));
+    const matchPattern = `\\b(?:${[destination, geocode?.name].filter(Boolean).map(escapeRegExp).join("|")})\\b`;
     return {
       dynamic: true,
       researchMode: true,
-      match: new RegExp([destination, geocode?.name, geocode?.country].filter(Boolean).map(escapeRegExp).join("|"), "i"),
+      slug,
+      matchPattern,
+      matchFlags: "i",
+      match: new RegExp(matchPattern, "i"),
       label: fallbackArea,
       banner: fillerImage,
       zones: zones.length ? zones : [{ name: fallbackArea, icon: "🧭", keywords: [destination] }],
@@ -678,7 +678,7 @@ out center tags 80;`;
       if (!geocode) return null;
       const slug = slugify([geocode.name, geocode.admin1, geocode.country].filter(Boolean).join(" "));
       const cached = dynamicCatalogCache.get(slug);
-      if (cached && catalogHasSeededAnchors(cached, destination, geocode)) return { ...cached, match: new RegExp(cached.matchPattern || escapeRegExp(destination), cached.matchFlags || "i") };
+      if (cached && catalogHasSeededAnchors(cached, destination, geocode)) return { ...cached, match: new RegExp(cached.matchPattern || `\\b(?:${escapeRegExp(destination)})\\b`, cached.matchFlags || "i") };
       const [voyage, wikiGeo, wikiCategory, osm] = await Promise.all([
         fetchWikivoyageListings([geocode.name, geocode.country].filter(Boolean).join(" "), controller.signal).catch(() => ({ title: "", items: [] })),
         fetchWikipediaGeoPlaces(geocode, controller.signal).catch(() => []),
@@ -687,7 +687,7 @@ out center tags 80;`;
       ]);
       const catalog = assembleDynamicCatalog(destination, geocode, { wikivoyageTitle: voyage.title, wikivoyageItems: voyage.items, wikipediaItems: [...wikiGeo, ...wikiCategory], osmItems: osm });
       if (!catalog) return null;
-      const cacheable = { ...catalog, match: undefined, matchPattern: [destination, geocode.name, geocode.country].filter(Boolean).map(escapeRegExp).join("|"), matchFlags: "i" };
+      const cacheable = { ...catalog, match: undefined };
       dynamicCatalogCache.set(slug, cacheable);
       return catalog;
     } catch (_) {
@@ -697,7 +697,7 @@ out center tags 80;`;
     }
   }
 
-  const api = { geocodeDestination, parseWikivoyageListings, stripWikitext, buildDynamicCatalog, dynamicCatalogCache, assembleDynamicCatalog, hasSeededDestinationCatalog, catalogHasSeededAnchors, fetchWikipediaCategoryPlaces, fetchOpenStreetMapRecommendations };
+  const api = { geocodeDestination, parseWikivoyageListings, stripWikitext, buildDynamicCatalog, dynamicCatalogCache, assembleDynamicCatalog, hasSeededDestinationCatalog, catalogHasSeededAnchors, fetchWikipediaCategoryPlaces, fetchOpenStreetMapRecommendations, slugify };
   Object.assign(global, api);
   if (typeof module !== "undefined") module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : window);

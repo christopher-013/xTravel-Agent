@@ -2,7 +2,7 @@
 
 ## Public version
 
-This repository is intentionally a static, client-only demo. It does not call OpenAI or another metered API. Its Content Security Policy allows local application assets, Google Fonts, HTTPS images and local photo `data:`/`blob:` sources, Open-Meteo forecast and geocoding requests, Wikivoyage/Wikipedia public-source lookup requests, and Google Maps embeds. Scripts remain limited to same-origin files and embedded objects are blocked.
+This repository is intentionally a static, client-only demo. It does not call OpenAI or another metered API. Its Content Security Policy allows local application assets, Google Fonts, HTTPS images and local photo `data:`/`blob:` sources, Open-Meteo forecast and geocoding requests, Wikivoyage/Wikipedia public-source lookup requests, OpenStreetMap Overpass lookups, and Google Maps embeds. Scripts remain limited to same-origin files and embedded objects are blocked.
 
 ## Secret handling
 

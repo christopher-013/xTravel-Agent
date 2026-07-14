@@ -39,9 +39,14 @@ Use this workspace for new V3 experiments and larger product changes.
 - Added import-dialog pre-check messaging and capped validation error lists.
 - Sanitized imported/exported icons and hardened remaining icon render paths that use `innerHTML`.
 
+## Phase 4 implemented
+
+- Replaced blocking `alert`/`prompt` dialogs with a non-blocking toast notification system (`showToast`).
+- Added a manual-copy toast fallback with a selectable, read-only textarea when `navigator.clipboard` access is blocked.
+
 ## Phase 5 release procedure
 
-1. Update `APP_VERSION` in `version.js`.
+1. Update the version string in `version.js`.
 2. Update the shared `?v=` value in `index.html` to the same version.
 3. Confirm the service worker creates `plantoguide-<version>` and removes older PlanToGuide caches.
 
@@ -63,3 +68,16 @@ Use this workspace for new V3 experiments and larger product changes.
 - Added a three-tier recommendation flow: curated catalog, live research catalog, then starter fallback.
 - Cached dynamic catalogs in browser `localStorage` with a 30-day TTL and size guard.
 - Added source credit rendering for public-source suggestions while keeping imported text escaped and inert.
+
+## v3.2.0 fixes
+
+- Allowed OpenStreetMap Overpass requests in the CSP so food/shopping OSM results are no longer silently blocked.
+- Made destination research non-blocking: Next advances immediately, research continues in the background, and the suggestion board updates in place when it resolves.
+- Fixed dynamic-catalog city matching to key off destination/geocode name only (never country or admin1), so nearby cities in the same country no longer inherit the wrong catalog; bumped the `localStorage` cache namespace to `ptg:dyncat2:`.
+- Scoped service worker cache deletion so the builder, exported guides, and other apps on the same origin never delete each other's caches.
+- Excluded the large planning files (`TRIP-PLAN.md`, `TRIP-DATA.json`, `AGENT-INSTRUCTIONS.md`, `README.md`) from the exported guide's service worker precache list.
+- Fixed re-encoded mojibake (`â€"`) across tracked docs and added `.gitattributes` line-ending rules.
+- Simplified `version.js` to a single `globalThis.PLANTOGUIDE_VERSION` assignment and bumped the release to 3.2.0.
+- Filtered non-attraction Wikipedia geosearch results (stations beyond the nearest one, schools, faculties, and administrative-boundary articles) out of dynamic catalogs.
+- Removed fabricated per-seed stock photos and the unreachable New York seed catalog; seeded cards now rely on the existing Wikipedia image lookup.
+- Parallelized the Wikipedia category fetches in dynamic catalog research.

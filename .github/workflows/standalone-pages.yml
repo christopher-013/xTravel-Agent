@@ -28,6 +28,18 @@ jobs:
           cp index.html version.js catalogs.json dynamic-catalog.js app.js styles.css export-styles.js icon-source.js photo-store.js trip-schema.js plan-x-guide-centered-compass-morph-clean-x.svg manifest.webmanifest sw.js _site/
           mkdir -p _site/icons
           cp icons/icon-192.png icons/icon-512.png _site/icons/
+      - name: Verify artifact contents
+        run: |
+          missing=0
+          for f in index.html version.js catalogs.json dynamic-catalog.js styles.css app.js trip-schema.js export-styles.js icon-source.js photo-store.js sw.js manifest.webmanifest icons/icon-192.png icons/icon-512.png plan-x-guide-centered-compass-morph-clean-x.svg; do
+            if [ ! -f "_site/$f" ]; then
+              echo "::error::Missing required file in deployment artifact: $f"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

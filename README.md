@@ -1,4 +1,4 @@
-﻿# PlanToGuide
+# PlanToGuide
 
 Create a polished trip website, then keep improving it with ChatGPT, Claude, Codex, or another AI assistant.
 
@@ -14,13 +14,13 @@ See [SCHEMA.md](SCHEMA.md) for the `plantoguide-trip` v3 schema and legacy v2 im
 
 ## Export contents
 
-- `index.html`, `styles.css`, and `app.js` â€” complete static trip website
+- `index.html`, `styles.css`, and `app.js` — complete static trip website
 - `manifest.webmanifest`, `sw.js`, and `icons/` — installable/offline support once hosted over HTTPS and opened once
-- `plan-x-guide-centered-compass-morph-clean-x.svg` â€” animated PlanToGuide logo
-- `TRIP-PLAN.md` â€” human-readable source of truth with embedded trip JSON
-- `TRIP-DATA.json` â€” full machine-readable trip data, including local photo data when available
-- `AGENT-INSTRUCTIONS.md` â€” editing rules for AI agents
-- `assets/` â€” available bundled banners and place images
+- `plan-x-guide-centered-compass-morph-clean-x.svg` — animated PlanToGuide logo
+- `TRIP-PLAN.md` — human-readable source of truth with embedded trip JSON
+- `TRIP-DATA.json` — full machine-readable trip data, including local photo data when available
+- `AGENT-INSTRUCTIONS.md` — editing rules for AI agents
+- `assets/` — available bundled banners and place images
 
 The hosted PlanToGuide builder also ships `catalogs.json` so detailed destination suggestions can be cached offline; direct `file://` use falls back to the embedded Tokyo/Japan starter catalog.
 

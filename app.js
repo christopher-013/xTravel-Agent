@@ -254,6 +254,7 @@ let currentFormStep = 1;
 let destinationResearchTimer = 0;
 let destinationResearchController = null;
 let destinationResearchState = { query: "", geocode: null, status: "idle" };
+let pendingDynamicCatalog = null; // { destination, promise }
 let lastExportHtml = "";
 let lastStandaloneHtml = "";
 let focusedPhotoId = "";
@@ -417,12 +418,9 @@ async function goToPreferencesStep() {
     destinationInput.value = knownDestination.label;
     destinationError.textContent = "";
   } else {
-    const dynamicCatalog = await ensureDynamicCatalog(destinationInput.value.trim());
-    if (dynamicCatalog) {
-      destinationError.textContent = "Live research catalog created from keyless public sources. Verify hours, closures, ratings, tickets, and availability before travel.";
-    } else {
-      destinationError.textContent = "Starter mode is available for this destination: PlanToGuide will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
-    }
+    const researchDestination = destinationInput.value.trim();
+    startOrReuseDynamicCatalogResearch(researchDestination);
+    destinationError.textContent = `Researching real places for ${researchDestination} — you can continue, results will update automatically.`;
   }
   destinationInput.setCustomValidity("");
   updateDestinationModeBadge();
@@ -453,9 +451,13 @@ document.querySelector("#nextStepButton").addEventListener("click", () => { goTo
 
 async function ensureDynamicCatalog(destination) {
   if (!destination || resolveKnownDestination(destination) || typeof buildDynamicCatalog !== "function") return null;
+  const availableGeocode = destinationResearchState.geocode && sameResearchQuery(destination) ? destinationResearchState.geocode : null;
   const existing = destinationCatalogs.find((catalog) => catalog.dynamic && catalog.match.test(destination));
-  if (existing && (typeof catalogHasSeededAnchors !== "function" || catalogHasSeededAnchors(existing, destination))) return existing;
-  let geocode = destinationResearchState.geocode && sameResearchQuery(destination) ? destinationResearchState.geocode : null;
+  if (existing && (typeof catalogHasSeededAnchors !== "function" || catalogHasSeededAnchors(existing, destination))) {
+    const availableSlug = availableGeocode && typeof slugify === "function" ? slugify([availableGeocode.name, availableGeocode.admin1, availableGeocode.country].filter(Boolean).join(" ")) : null;
+    if (!availableSlug || !existing.slug || existing.slug === availableSlug) return existing;
+  }
+  let geocode = availableGeocode;
   if (!geocode && typeof geocodeDestination === "function") {
     try {
       geocode = await geocodeDestination(destination);
@@ -471,7 +473,7 @@ async function ensureDynamicCatalog(destination) {
       console.warn("PlanToGuide dynamic catalog fallback: no usable public-source listings for", destination);
       return null;
     }
-    if (!(catalog.match instanceof RegExp)) catalog.match = new RegExp(catalog.matchPattern || destination.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), catalog.matchFlags || "i");
+    if (!(catalog.match instanceof RegExp)) catalog.match = new RegExp(catalog.matchPattern || `\\b(?:${destination.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")})\\b`, catalog.matchFlags || "i");
     const existingIndex = destinationCatalogs.findIndex((candidate) => candidate.dynamic && candidate.label === catalog.label);
     if (existingIndex >= 0) destinationCatalogs.splice(existingIndex, 1, catalog);
     else destinationCatalogs.push(catalog);
@@ -481,6 +483,24 @@ async function ensureDynamicCatalog(destination) {
     console.warn("PlanToGuide dynamic catalog fallback: public-source research failed for", destination);
     return null;
   }
+}
+
+function startOrReuseDynamicCatalogResearch(destination) {
+  if (pendingDynamicCatalog && pendingDynamicCatalog.destination === destination) return pendingDynamicCatalog.promise;
+  const promise = ensureDynamicCatalog(destination).then((catalog) => {
+    if (pendingDynamicCatalog && pendingDynamicCatalog.promise === promise) pendingDynamicCatalog = null;
+    const stillOnThisDestination = currentFormStep >= 2 && destinationInput.value.trim() === destination;
+    if (stillOnThisDestination) {
+      destinationError.textContent = catalog
+        ? "Live research catalog created from keyless public sources. Verify hours, closures, ratings, tickets, and availability before travel."
+        : "Starter mode is available for this destination: PlanToGuide will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
+      updateDestinationModeBadge();
+      renderSuggestionPicker(destination);
+    }
+    return catalog;
+  });
+  pendingDynamicCatalog = { destination, promise };
+  return promise;
 }
 
 document.querySelector("#backStepButton").addEventListener("click", () => {
@@ -564,12 +584,16 @@ form.addEventListener("submit", async (event) => {
     return;
   }
   preferenceError.textContent = "";
+  const finalDestination = destinationInput.value.trim();
+  const catalogWait = pendingDynamicCatalog && pendingDynamicCatalog.destination === finalDestination ? pendingDynamicCatalog.promise : Promise.resolve(null);
+  const transitionPromise = showTripCreationTransition();
+  await catalogWait;
   const selections = [...selectedSuggestions.values()];
   const preferences = getTripPreferences();
-  trip = buildTrip(destinationInput.value.trim(), start, end, wishListInput.value.trim(), selections, preferences);
+  trip = buildTrip(finalDestination, start, end, wishListInput.value.trim(), selections, preferences);
   activeDay = 0;
   activeTab = "home";
-  await showTripCreationTransition();
+  await transitionPromise;
   builder.hidden = true;
   result.hidden = false;
   document.body.classList.add("trip-mode");
@@ -719,7 +743,8 @@ Open \`index.html\` locally, drag the folder to Netlify Drop, or upload it to an
       { name: "icons/icon-512.png", content: icon512 },
       ...bundled.files
     ];
-    zipFiles.push({ name: "sw.js", content: createExportServiceWorker(zipFiles.map((file) => file.name).concat("sw.js")) });
+    const PRECACHE_EXCLUDE = new Set(["TRIP-PLAN.md", "TRIP-DATA.json", "AGENT-INSTRUCTIONS.md", "README.md"]);
+    zipFiles.push({ name: "sw.js", content: createExportServiceWorker(zipFiles.map((file) => file.name).filter((name) => !PRECACHE_EXCLUDE.has(name)).concat("sw.js"), slug) });
     const zip = createZip(zipFiles);
     const url = URL.createObjectURL(zip);
     const link = document.createElement("a");
@@ -871,9 +896,10 @@ function rasterizeBrandIconPng(size) {
   });
 }
 
-function createExportServiceWorker(fileNames) {
+function createExportServiceWorker(fileNames, slug) {
   const precache = [...new Set(fileNames)].map((name) => `./${name.replace(/^\.\//, "")}`);
-  return `const CACHE_NAME="plantoguide-export-${Date.now()}";\nconst PRECACHE_URLS=${JSON.stringify(precache, null, 2)};\nconst NETWORK_ONLY_HOSTS=new Set(["api.open-meteo.com","geocoding-api.open-meteo.com","en.wikipedia.org","www.google.com","maps.google.com"]);\nself.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(PRECACHE_URLS)).then(()=>self.skipWaiting()))});\nself.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});\nself.addEventListener("fetch",event=>{const{request}=event;if(request.method!=="GET")return;const url=new URL(request.url);if(NETWORK_ONLY_HOSTS.has(url.hostname))return;if(request.mode==="navigate"){event.respondWith(networkFirst(request,"index.html"));return}if(url.origin===self.location.origin)event.respondWith(cacheFirst(request))});\nasync function cacheFirst(request){const cached=await caches.match(request);if(cached)return cached;const response=await fetch(request);if(response&&response.ok){const cache=await caches.open(CACHE_NAME);cache.put(request,response.clone())}return response}\nasync function networkFirst(request,fallbackUrl){try{const response=await fetch(request);if(response&&response.ok){const cache=await caches.open(CACHE_NAME);cache.put(request,response.clone())}return response}catch(_){const cached=await caches.match(request);return cached||caches.match(fallbackUrl)}}\n`;
+  const cachePrefix = `plantoguide-export-${slug}-`;
+  return `const CACHE_NAME="${cachePrefix}${Date.now()}";\nconst PRECACHE_URLS=${JSON.stringify(precache, null, 2)};\nconst NETWORK_ONLY_HOSTS=new Set(["api.open-meteo.com","geocoding-api.open-meteo.com","en.wikipedia.org","www.google.com","maps.google.com"]);\nself.addEventListener("install",event=>{event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(PRECACHE_URLS)).then(()=>self.skipWaiting()))});\nself.addEventListener("activate",event=>{event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key.startsWith("${cachePrefix}")&&key!==CACHE_NAME).map(key=>caches.delete(key)))).then(()=>self.clients.claim()))});\nself.addEventListener("fetch",event=>{const{request}=event;if(request.method!=="GET")return;const url=new URL(request.url);if(NETWORK_ONLY_HOSTS.has(url.hostname))return;if(request.mode==="navigate"){event.respondWith(networkFirst(request,"index.html"));return}if(url.origin===self.location.origin)event.respondWith(cacheFirst(request))});\nasync function cacheFirst(request){const cached=await caches.match(request);if(cached)return cached;const response=await fetch(request);if(response&&response.ok){const cache=await caches.open(CACHE_NAME);cache.put(request,response.clone())}return response}\nasync function networkFirst(request,fallbackUrl){try{const response=await fetch(request);if(response&&response.ok){const cache=await caches.open(CACHE_NAME);cache.put(request,response.clone())}return response}catch(_){const cached=await caches.match(request);return cached||caches.match(fallbackUrl)}}\n`;
 }
 
 function readLocalTextAsset(url) {
@@ -1204,7 +1230,16 @@ function renderSuggestionPicker(destination) {
   suggestionDestination = normalizedDestination;
   document.querySelector("#suggestionDestination").textContent = destination;
   const starterSuggestionNote = document.querySelector("#starterSuggestionNote");
-  if (starterSuggestionNote) starterSuggestionNote.hidden = hasLiveOrCuratedCatalog(destination);
+  const isResearching = Boolean(pendingDynamicCatalog && pendingDynamicCatalog.destination === destination.trim());
+  if (starterSuggestionNote) {
+    if (isResearching) {
+      starterSuggestionNote.hidden = false;
+      starterSuggestionNote.textContent = `Researching real places for ${destination} — you can continue, results will update automatically.`;
+    } else {
+      starterSuggestionNote.hidden = hasLiveOrCuratedCatalog(destination);
+      starterSuggestionNote.textContent = "Suggestions are limited for this destination — your selections and notes will be preserved for AI research.";
+    }
+  }
   suggestionGroups = createSuggestionGroups(destination);
   suggestionLookup = new Map(suggestionGroups.flatMap((group) => group.items.map((suggestion) => [suggestion.key, suggestion])));
   suggestionBoard.innerHTML = "";

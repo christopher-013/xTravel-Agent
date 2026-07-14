@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f1e8">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://en.wikipedia.org https://en.wikivoyage.org; frame-src 'self' https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://en.wikipedia.org https://en.wikivoyage.org https://overpass-api.de; frame-src 'self' https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>PlanToGuide — Turn your trip plan into a mobile travel guide</title>
   <meta name="description" content="Create a shareable trip website, mobile travel guide, and AI-ready planning file.">
   <link rel="manifest" href="manifest.webmanifest">
@@ -14,8 +14,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
-  <!-- When releasing, update APP_VERSION in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=3.1.7">
+  <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
+  <link rel="stylesheet" href="styles.css?v=3.2.0">
 </head>
 <body>
   <main class="page-shell">
@@ -389,12 +389,12 @@
     </article>
   </template>
 
-  <script src="version.js?v=3.1.7"></script>
-  <script src="dynamic-catalog.js?v=3.1.7"></script>
-  <script src="export-styles.js?v=3.1.7"></script>
-  <script src="icon-source.js?v=3.1.7"></script>
-  <script src="photo-store.js?v=3.1.7"></script>
-  <script src="trip-schema.js?v=3.1.7"></script>
-  <script src="app.js?v=3.1.7"></script>
+  <script src="version.js?v=3.2.0"></script>
+  <script src="dynamic-catalog.js?v=3.2.0"></script>
+  <script src="export-styles.js?v=3.2.0"></script>
+  <script src="icon-source.js?v=3.2.0"></script>
+  <script src="photo-store.js?v=3.2.0"></script>
+  <script src="trip-schema.js?v=3.2.0"></script>
+  <script src="app.js?v=3.2.0"></script>
 </body>
 </html>
