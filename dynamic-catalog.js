@@ -2,6 +2,7 @@
   "use strict";
 
   const FETCH_TIMEOUT_MS = 6000;
+  const OVERPASS_TIMEOUT_MS = 10000;
   const PIPELINE_TIMEOUT_MS = 12000;
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
   const CACHE_LIMIT_BYTES = 200000;
@@ -28,7 +29,7 @@
   }
 
   function cacheKey(slug) {
-    return `ptg:dyncat2:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
+    return `ptg:dyncat3:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
   }
 
   const dynamicCatalogCache = {
@@ -60,9 +61,9 @@
     return url.toString();
   }
 
-  async function fetchJson(url, signal) {
+  async function fetchJson(url, signal, timeoutMs = FETCH_TIMEOUT_MS) {
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     const abort = () => controller.abort();
     signal?.addEventListener?.("abort", abort, { once: true });
     try {
@@ -77,7 +78,9 @@
 
   async function fetchOverpass(query, signal) {
     const url = makeUrl(OVERPASS_API, { data: query });
-    return fetchJson(url, signal);
+    // Dense metro areas routinely need more than the default fetch budget; the pipeline cap (12s)
+    // still bounds the total wait, and the other sources run in parallel.
+    return fetchJson(url, signal, OVERPASS_TIMEOUT_MS);
   }
 
   function scoreGeocodeResult(result, query) {
@@ -208,12 +211,14 @@
   }
 
   function findDistrictTitles(wikitext = "", pageTitle = "") {
-    const escaped = escapeRegExp(pageTitle.replace(/ /g, "[ _]"));
+    // Escape first, then loosen spaces — the reverse order escaped the [ _] brackets themselves,
+    // so district subpages were never detected for any multi-word city (Las Vegas, New York, ...).
+    const escaped = escapeRegExp(pageTitle).replace(/ /g, "[ _]");
     const titles = new Set();
     const regex = new RegExp(`\\[\\[(${escaped}/[^|\\]#]+)`, "gi");
     let match;
-    while ((match = regex.exec(wikitext))) titles.add(match[1].replace(/_/g, " "));
-    return [...titles].slice(0, 3);
+    while ((match = regex.exec(wikitext))) titles.add(match[1].replace(/_/g, " ").trim());
+    return [...titles].slice(0, 5);
   }
 
   async function wikivoyagePageTitle(destination, signal) {
@@ -235,7 +240,10 @@
     if (!title) return { title: "", items: [] };
     const wikitext = await fetchWikivoyageWikitext(title, signal);
     let items = parseWikivoyageListings(wikitext, title);
-    if (items.filter((item) => item.type === "see").length < 5) {
+    const thin = items.filter((item) => item.type === "see").length < 5
+      || items.filter((item) => item.type === "eat").length < 3
+      || items.filter((item) => item.type === "buy").length < 2;
+    if (thin) {
       const districts = findDistrictTitles(wikitext, title);
       const districtLists = await Promise.all(districts.map(async (district) => {
         try { return parseWikivoyageListings(await fetchWikivoyageWikitext(district, signal), district); }
@@ -249,16 +257,16 @@
   // Tuned to drop Wikipedia geosearch noise that isn't a visitable attraction — transit infrastructure,
   // schools/faculties, and administrative-boundary articles — while still keeping the single nearest
   // station (travelers use the main station) and legitimate "University of X" main-campus articles.
-  const NON_ATTRACTION_TITLE_PATTERN = /railway station|train station|metro station|bus station|school|faculty|district of|municipality|province of|county of|\(company\)|corporation/i;
+  const NON_ATTRACTION_TITLE_PATTERN = /railway station|train station|metro station|bus station|school|faculty|district of|municipality|province of|county of|\(company\)|corporation|timeline of|history of|list of|diocese|archdiocese|city hall|courthouse|court house|post office|fire (department|station|& rescue)|police|\(tv series\)|\(film\)|\(series\)|season \d|city council|school district|library district/i;
   const STATION_TITLE_PATTERN = /railway station|train station|metro station|bus station/i;
 
   async function fetchWikipediaGeoPlaces(geocode, signal) {
     if (!geocode?.latitude || !geocode?.longitude) return [];
     const geo = await fetchJson(makeUrl(WIKIPEDIA_API, {
       action: "query", list: "geosearch", gscoord: `${geocode.latitude}|${geocode.longitude}`, gsradius: "10000",
-      gslimit: "20", format: "json", origin: "*"
+      gslimit: "50", format: "json", origin: "*"
     }), signal);
-    const ids = (geo?.query?.geosearch || []).map((item) => item.pageid).filter(Boolean).slice(0, 20);
+    const ids = (geo?.query?.geosearch || []).map((item) => item.pageid).filter(Boolean).slice(0, 50);
     if (!ids.length) return [];
     const pages = await fetchJson(makeUrl(WIKIPEDIA_API, {
       action: "query", pageids: ids.join("|"), prop: "pageimages|extracts|info", exintro: "1", explaintext: "1",
@@ -290,10 +298,36 @@
     }));
   }
 
+  // Topics used to discover the destination's real category names. Many metro areas file their
+  // headline attractions under regional categories ("Tourist attractions in the Las Vegas Valley",
+  // not "... in Las Vegas"), so a fixed "in {city}" list misses them entirely.
+  const CATEGORY_TOPICS = ["Tourist attractions", "Landmarks", "Museums", "Parks", "Beaches", "Shopping malls", "Casinos", "Amusement parks"];
+  const CATEGORY_TITLE_EXCLUDE = /defunct|former|proposed|demolished|planned|unbuilt|people|history of|companies|images/i;
+
+  async function discoverCategoryTitles(city, signal) {
+    const searches = await Promise.all(CATEGORY_TOPICS.map(async (topic) => {
+      try {
+        const data = await fetchJson(makeUrl(WIKIPEDIA_API, {
+          action: "query", list: "search", srnamespace: "14", srlimit: "5",
+          srsearch: `intitle:"${topic}" intitle:"${city}"`, format: "json", origin: "*"
+        }), signal);
+        return (data?.query?.search || [])
+          .map((result) => String(result.title || "").replace(/^Category:/, ""))
+          .filter((title) => title.toLowerCase().startsWith(topic.toLowerCase())
+            && title.toLowerCase().includes(city.toLowerCase())
+            && !CATEGORY_TITLE_EXCLUDE.test(title))
+          .slice(0, 2);
+      } catch (_) {
+        return [];
+      }
+    }));
+    return searches.flat();
+  }
+
   async function fetchWikipediaCategoryPlaces(destination, geocode, signal) {
     const city = geocode?.name || destination;
     const admin = geocode?.admin1 || "";
-    const categoryNames = [
+    const staticNames = [
       `Tourist attractions in ${city}`,
       `Landmarks in ${city}`,
       `Museums in ${city}`,
@@ -304,6 +338,8 @@
       admin ? `Museums in ${city}, ${admin}` : "",
       admin ? `Parks in ${city}, ${admin}` : ""
     ].filter(Boolean);
+    const discovered = await discoverCategoryTitles(city, signal).catch(() => []);
+    const categoryNames = [...new Set([...discovered, ...staticNames])].slice(0, 14);
     const categoryResults = await Promise.all(categoryNames.map(async (category) => {
       try {
         const data = await fetchJson(makeUrl(WIKIPEDIA_API, {
@@ -316,10 +352,16 @@
         return [];
       }
     }));
+    // Interleave round-robin across categories so a long first category can't crowd the later
+    // ones (e.g. casinos, malls) out of the overall cap.
     const pageIds = new Set();
-    categoryResults.flat().forEach((item) => {
-      if (item.pageid && !/list of|timeline of|history of/i.test(item.title || "")) pageIds.add(item.pageid);
-    });
+    const maxLength = Math.max(0, ...categoryResults.map((list) => list.length));
+    for (let position = 0; position < maxLength; position += 1) {
+      for (const list of categoryResults) {
+        const item = list[position];
+        if (item && item.pageid && !/list of|timeline of|history of/i.test(item.title || "")) pageIds.add(item.pageid);
+      }
+    }
     const ids = [...pageIds].slice(0, 45);
     if (!ids.length) return [];
     const pages = await fetchJson(makeUrl(WIKIPEDIA_API, {
@@ -438,8 +480,8 @@
     if (!geocode?.latitude || !geocode?.longitude) return [];
     const lat = Number(geocode.latitude);
     const lon = Number(geocode.longitude);
-    const radius = Number(geocode.population || 0) > 2000000 ? 26000 : Number(geocode.population || 0) > 500000 ? 18000 : 12000;
-    const query = `[out:json][timeout:8];
+    const radius = Number(geocode.population || 0) > 2000000 ? 20000 : Number(geocode.population || 0) > 500000 ? 14000 : 12000;
+    const query = `[out:json][timeout:9];
 (
   nwr(around:${radius},${lat},${lon})["amenity"~"^(restaurant|cafe|fast_food|food_court|bar|pub|marketplace)$"]["name"];
   nwr(around:${radius},${lat},${lon})["shop"~"^(bakery|mall|department_store|boutique|clothes|gift|books|art|antiques|jewelry|supermarket)$"]["name"];
@@ -454,9 +496,9 @@ out center tags 80;`;
   const TOURISM_KEYWORD_WEIGHTS = new Map([
     ["zoo", 34], ["beach", 32], ["park", 30], ["balboa", 30], ["griffith", 30],
     ["observatory", 30], ["getty", 30], ["universal studios", 30], ["hollywood", 28],
-    ["seaworld", 30], ["sea world", 30], ["museum", 26], ["aquarium", 25], ["monument", 24],
+    ["seaworld", 30], ["sea world", 30], ["casino", 28], ["museum", 26], ["aquarium", 25], ["monument", 24],
     ["historic", 22], ["old town", 22], ["waterfront", 20], ["pier", 20], ["cove", 20],
-    ["view", 18], ["garden", 18], ["market", 16], ["village", 14],
+    ["view", 18], ["garden", 18], ["resort", 16], ["market", 16], ["fountain", 16], ["village", 14],
     ["mall", 12], ["shopping", 12], ["district", 10], ["studio", 10]
   ]);
 
