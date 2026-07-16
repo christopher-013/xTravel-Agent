@@ -61,7 +61,9 @@ self.addEventListener("fetch", (event) => {
 });
 
 async function cacheFirst(request) {
-  const cached = await caches.match(request, { ignoreSearch: true });
+  // Preserve versioned asset URLs so a release cannot be masked by an older
+  // unversioned precache entry. Offline navigation still uses ignoreSearch.
+  const cached = await caches.match(request);
   if (cached) return cached;
   const response = await fetch(request);
   if (response && response.ok) {

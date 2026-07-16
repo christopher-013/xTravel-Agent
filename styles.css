@@ -13,7 +13,7 @@
 }
 
 * { box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 body {
   margin: 0;
   min-width: 320px;
@@ -3448,5 +3448,177 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
     max-width: 58px;
     font-size: 8px;
     letter-spacing: 0;
+  }
+}
+
+/* Real-device mobile compaction: keep workflow controls fixed and scroll only the choices. */
+.starter-suggestion-note[hidden] { display: none !important; }
+
+@media (max-width: 680px) {
+  .builder.builder-wide.builder-adventure,
+  .builder.builder-wide.builder-adventure .trip-form[data-current-step="2"] {
+    box-sizing: border-box;
+    height: 100svh;
+    height: 100dvh;
+    max-height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .builder.builder-wide.builder-adventure .trip-form[data-current-step="2"] {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    padding: 6px 10px max(8px, env(safe-area-inset-bottom));
+  }
+  .builder.builder-wide.builder-adventure .step-row,
+  .builder.builder-wide.builder-adventure .security-note,
+  .builder.builder-wide.builder-adventure #adventureStepCopy,
+  .builder.builder-wide.builder-adventure .form-footnote {
+    display: none;
+  }
+  .builder.builder-wide.builder-adventure .form-progress {
+    height: 42px;
+    margin: 0 0 5px;
+    gap: 2px;
+  }
+  .builder.builder-wide.builder-adventure .form-progress span {
+    height: 42px;
+    min-height: 0;
+    gap: 3px;
+    padding-block: 4px;
+  }
+  .builder.builder-wide.builder-adventure .form-progress span b {
+    width: 17px;
+    height: 17px;
+    flex-basis: 17px;
+    font-size: 7px;
+  }
+  .builder.builder-wide.builder-adventure .form-progress span small strong {
+    font-size: clamp(7px, 2.1vw, 9px);
+    line-height: 1;
+  }
+  .builder.builder-wide.builder-adventure .form-progress span small em {
+    display: none;
+  }
+  .builder.builder-wide.builder-adventure [data-form-step="2"].active {
+    display: grid;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+    min-height: 0;
+    align-content: stretch;
+    overflow: hidden;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-intro {
+    min-height: 0;
+    padding: 1px 0 4px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-intro .eyebrow {
+    margin-bottom: 2px;
+    font-size: 8px;
+    line-height: 1;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-intro h2 {
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.05;
+  }
+  .builder.builder-wide.builder-adventure .starter-suggestion-note:not([hidden]) {
+    display: -webkit-box;
+    margin: 4px 0 0;
+    padding: 5px 7px;
+    overflow: hidden;
+    font-size: 10px;
+    line-height: 1.2;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-toolbar {
+    min-height: 36px;
+    margin: 2px 0 5px;
+    padding: 4px 7px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-toolbar strong {
+    font-size: 10px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-toolbar span {
+    display: none;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-toolbar button {
+    min-height: 34px;
+    padding: 5px 10px;
+    font-size: 10px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-board {
+    height: auto;
+    min-height: 0;
+    padding: 0;
+    overflow: hidden;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-group {
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-group[hidden] {
+    display: none;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-group-heading {
+    min-height: 26px;
+    margin: 0 0 4px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-group-heading h3 {
+    font-size: 11px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-card-list {
+    height: 100%;
+    min-height: 0;
+    max-height: none;
+    gap: 6px;
+    padding: 1px 5px 6px 1px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-card-list .suggestion-bubble {
+    grid-template-columns: 72px minmax(0, 1fr);
+    min-height: 94px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-card-image {
+    width: 72px;
+    min-height: 72px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-card-body {
+    gap: 3px;
+    padding: 7px 8px 4px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-card-top strong {
+    font-size: 11px;
+    line-height: 1.15;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-card-meta,
+  .builder.builder-wide.builder-adventure .suggestion-card-detail,
+  .builder.builder-wide.builder-adventure .suggestion-card-links a {
+    font-size: 8px;
+  }
+  .builder.builder-wide.builder-adventure .suggestion-card-detail {
+    line-height: 1.25;
+    -webkit-line-clamp: 2;
+  }
+  .builder.builder-wide.builder-adventure .selection-summary {
+    min-height: 26px;
+    margin: 4px 0 0;
+    padding: 4px 8px;
+    font-size: 9px;
+  }
+  .builder.builder-wide.builder-adventure .preference-actions {
+    margin: 4px 0 0;
+  }
+  .builder.builder-wide.builder-adventure .preference-actions .icon-nav-button {
+    min-height: 40px;
+    padding: 5px 12px;
+    font-size: 10px;
+  }
+  .builder.builder-wide.builder-adventure .compact-preference-error:empty {
+    display: none;
   }
 }

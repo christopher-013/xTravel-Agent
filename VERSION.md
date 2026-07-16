@@ -1,5 +1,11 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.2.3 real-device mobile workflow fit
+
+- Removes repeated Step 2 chrome on small screens while retaining the progress path and readable controls.
+- Lets only recommendation cards scroll so selection controls and Back/Next stay in the viewport on iPhone-sized screens.
+- Prevents Safari text auto-sizing and correctly keeps hidden catalog notices out of the layout.
+
 ## v3.2.2 compact adventure workflow
 
 - Keeps the Adventure suggestion step within one desktop or mobile viewport whenever screen height allows.
