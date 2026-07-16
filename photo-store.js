@@ -37,17 +37,61 @@
     return openPromise;
   }
 
-  async function withStore(mode, action, fallback) {
+  /**
+   * Run one request and settle only when its transaction settles.
+   *
+   * IndexedDB fires request.onsuccess before transaction.oncomplete. Resolving a
+   * write from request.onsuccess can therefore report success even when the
+   * transaction subsequently aborts (for example, because storage is full).
+   * This helper records the request result, but does not expose it until commit.
+   * All request/transaction failures use the existing explicit `null` fallback.
+   */
+  async function withStore(mode, action, fallback, mapCommittedResult) {
     try {
       const db = await photoStoreOpen();
       if (!db) return fallback;
       return await new Promise((resolve) => {
-        const transaction = db.transaction(STORE_NAME, mode);
-        const store = transaction.objectStore(STORE_NAME);
-        const request = action(store);
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => resolve(fallback);
-        transaction.onerror = () => resolve(fallback);
+        let settled = false;
+        let requestSucceeded = false;
+        let requestResult;
+
+        const finish = (value) => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
+        };
+
+        try {
+          const transaction = db.transaction(STORE_NAME, mode);
+          const store = transaction.objectStore(STORE_NAME);
+          const request = action(store);
+
+          if (!request) {
+            finish(fallback);
+            return;
+          }
+
+          request.onsuccess = () => {
+            requestSucceeded = true;
+            requestResult = request.result;
+          };
+          request.onerror = () => {
+            requestSucceeded = false;
+          };
+          transaction.oncomplete = () => {
+            if (!requestSucceeded) {
+              finish(fallback);
+              return;
+            }
+            finish(typeof mapCommittedResult === "function"
+              ? mapCommittedResult(requestResult)
+              : requestResult);
+          };
+          transaction.onerror = () => finish(fallback);
+          transaction.onabort = () => finish(fallback);
+        } catch (_) {
+          finish(fallback);
+        }
       });
     } catch (_) {
       markUnavailable();
@@ -55,6 +99,7 @@
     }
   }
 
+  // Resolves to the stored key after commit, or null when validation/storage fails.
   async function photoStorePut(record) {
     if (!record || !record.id || !record.tripKey || !record.src) return null;
     return withStore("readwrite", (store) => store.put(record), null);
@@ -66,13 +111,33 @@
       const db = await photoStoreOpen();
       if (!db) return [];
       return await new Promise((resolve) => {
-        const transaction = db.transaction(STORE_NAME, "readonly");
-        const store = transaction.objectStore(STORE_NAME);
-        const index = store.index("tripKey");
-        const request = index.getAll(tripKey);
-        request.onsuccess = () => resolve(Array.isArray(request.result) ? request.result : []);
-        request.onerror = () => resolve([]);
-        transaction.onerror = () => resolve([]);
+        let settled = false;
+        let requestSucceeded = false;
+        let rows = [];
+        const finish = (value) => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
+        };
+
+        try {
+          const transaction = db.transaction(STORE_NAME, "readonly");
+          const store = transaction.objectStore(STORE_NAME);
+          const index = store.index("tripKey");
+          const request = index.getAll(tripKey);
+          request.onsuccess = () => {
+            requestSucceeded = true;
+            rows = Array.isArray(request.result) ? request.result : [];
+          };
+          request.onerror = () => {
+            requestSucceeded = false;
+          };
+          transaction.oncomplete = () => finish(requestSucceeded ? rows : []);
+          transaction.onerror = () => finish([]);
+          transaction.onabort = () => finish([]);
+        } catch (_) {
+          finish([]);
+        }
       });
     } catch (_) {
       markUnavailable();
@@ -80,30 +145,61 @@
     }
   }
 
+  // Resolves true after commit, or null when validation/storage fails.
   async function photoStoreDelete(id) {
     if (!id) return null;
-    return withStore("readwrite", (store) => store.delete(id), null);
+    return withStore("readwrite", (store) => store.delete(id), null, () => true);
   }
 
+  // Resolves true after every matching deletion commits, or null on failure.
   async function photoStoreDeleteTrip(tripKey) {
     if (!tripKey) return null;
     try {
       const db = await photoStoreOpen();
       if (!db) return null;
       return await new Promise((resolve) => {
-        const transaction = db.transaction(STORE_NAME, "readwrite");
-        const store = transaction.objectStore(STORE_NAME);
-        const index = store.index("tripKey");
-        const request = index.openCursor(IDBKeyRange.only(tripKey));
-        request.onsuccess = () => {
-          const cursor = request.result;
-          if (cursor) {
-            cursor.delete();
-            cursor.continue();
-          }
+        let settled = false;
+        let cursorFailed = false;
+        const finish = (value) => {
+          if (settled) return;
+          settled = true;
+          resolve(value);
         };
-        transaction.oncomplete = () => resolve(true);
-        transaction.onerror = () => resolve(null);
+
+        try {
+          const transaction = db.transaction(STORE_NAME, "readwrite");
+          const store = transaction.objectStore(STORE_NAME);
+          const index = store.index("tripKey");
+          const request = index.openCursor(IDBKeyRange.only(tripKey));
+          request.onsuccess = () => {
+            const cursor = request.result;
+            if (!cursor) return;
+            try {
+              const deleteRequest = cursor.delete();
+              if (deleteRequest) {
+                deleteRequest.onerror = () => {
+                  cursorFailed = true;
+                };
+              }
+              cursor.continue();
+            } catch (_) {
+              cursorFailed = true;
+              try {
+                transaction.abort();
+              } catch (_) {
+                finish(null);
+              }
+            }
+          };
+          request.onerror = () => {
+            cursorFailed = true;
+          };
+          transaction.oncomplete = () => finish(cursorFailed ? null : true);
+          transaction.onerror = () => finish(null);
+          transaction.onabort = () => finish(null);
+        } catch (_) {
+          finish(null);
+        }
       });
     } catch (_) {
       markUnavailable();

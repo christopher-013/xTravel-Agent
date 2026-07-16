@@ -1,5 +1,15 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.2.1 P0/P1 reliability release
+
+- Rejects unusable dynamic catalogs and adds throttled, retryable public-source research.
+- Prevents ambiguous city matches and preserves Unicode destination identity.
+- Builds non-overlapping day schedules with explicit activity durations and route travel time.
+- Preserves imported AI plans, complete guide context, coordinates, photos, and source provenance across reloads and exports.
+- Waits for IndexedDB photo transactions to commit and falls back without silently losing data.
+- Makes recommendation, file-upload, wizard, tab, and day controls keyboard and screen-reader friendly.
+- Adds accurate third-party network disclosure plus exported source/license attributions.
+
 This root folder is now the active V3 workspace for `PlanToGuide`, started from the completed V2 snapshot on 2026-07-10.
 
 ## Version snapshots

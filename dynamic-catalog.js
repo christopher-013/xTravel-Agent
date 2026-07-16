@@ -4,6 +4,9 @@
   const FETCH_TIMEOUT_MS = 6000;
   const OVERPASS_TIMEOUT_MS = 10000;
   const PIPELINE_TIMEOUT_MS = 12000;
+  const MAX_CONCURRENT_REQUESTS = 6;
+  const MAX_REQUEST_ATTEMPTS = 3;
+  const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
   const CACHE_LIMIT_BYTES = 200000;
   const WIKIVOYAGE_API = "https://en.wikivoyage.org/w/api.php";
@@ -11,6 +14,58 @@
   const OPEN_METEO_GEOCODE = "https://geocoding-api.open-meteo.com/v1/search";
   const OVERPASS_API = "https://overpass-api.de/api/interpreter";
   const NEUTRAL_BANNER_PLACEHOLDER = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="800" viewBox="0 0 1800 800"><defs><linearGradient id="g" x2="1" y2="1"><stop stop-color="#244f66"/><stop offset="1" stop-color="#79a6ad"/></linearGradient></defs><rect width="1800" height="800" fill="url(#g)"/></svg>')}`;
+
+  let activeRequestCount = 0;
+  const requestQueue = [];
+  const inFlightJsonRequests = new Map();
+
+  function drainRequestQueue() {
+    while (activeRequestCount < MAX_CONCURRENT_REQUESTS && requestQueue.length) {
+      const entry = requestQueue.shift();
+      if (entry.signal?.aborted) {
+        entry.reject(abortError());
+        continue;
+      }
+      activeRequestCount += 1;
+      Promise.resolve().then(entry.task).then(entry.resolve, entry.reject).finally(() => {
+        activeRequestCount -= 1;
+        drainRequestQueue();
+      });
+    }
+  }
+
+  function withRequestLimit(task, signal) {
+    return new Promise((resolve, reject) => {
+      requestQueue.push({ task, signal, resolve, reject });
+      drainRequestQueue();
+    });
+  }
+
+  function abortError() {
+    try { return new DOMException("The request was aborted.", "AbortError"); }
+    catch (_) { const error = new Error("The request was aborted."); error.name = "AbortError"; return error; }
+  }
+
+  function coordinate(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const number = Number(value);
+    return Number.isFinite(number) ? number : null;
+  }
+
+  function waitFor(ms, signal) {
+    if (signal?.aborted) return Promise.reject(abortError());
+    return new Promise((resolve, reject) => {
+      const abort = () => {
+        clearTimeout(timer);
+        reject(abortError());
+      };
+      const timer = setTimeout(() => {
+        signal?.removeEventListener?.("abort", abort);
+        resolve();
+      }, ms);
+      signal?.addEventListener?.("abort", abort, { once: true });
+    });
+  }
 
   function slugify(value = "") {
     return String(value).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "destination";
@@ -61,19 +116,54 @@
     return url.toString();
   }
 
-  async function fetchJson(url, signal, timeoutMs = FETCH_TIMEOUT_MS) {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const abort = () => controller.abort();
-    signal?.addEventListener?.("abort", abort, { once: true });
-    try {
-      const response = await fetch(url, { signal: controller.signal });
-      if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-      return await response.json();
-    } finally {
-      clearTimeout(timer);
-      signal?.removeEventListener?.("abort", abort);
+  async function performJsonRequest(url, signal, timeoutMs) {
+    let lastError;
+    for (let attempt = 0; attempt < MAX_REQUEST_ATTEMPTS; attempt += 1) {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const abort = () => controller.abort();
+      signal?.addEventListener?.("abort", abort, { once: true });
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        if (response.ok) return await response.json();
+        const error = new Error(`Request failed: ${response.status}`);
+        error.status = response.status;
+        error.retryAfter = Number(response.headers?.get?.("retry-after") || 0);
+        throw error;
+      } catch (error) {
+        lastError = error;
+        if (signal?.aborted || error?.name === "AbortError" || !RETRYABLE_STATUS.has(Number(error?.status)) || attempt === MAX_REQUEST_ATTEMPTS - 1) throw error;
+        const retryDelay = error.retryAfter > 0 ? Math.min(error.retryAfter * 1000, 3000) : 250 * (2 ** attempt);
+        await waitFor(retryDelay, signal);
+      } finally {
+        clearTimeout(timer);
+        signal?.removeEventListener?.("abort", abort);
+      }
     }
+    throw lastError || new Error("Request failed");
+  }
+
+  function fetchJson(url, signal, timeoutMs = FETCH_TIMEOUT_MS) {
+    if (signal?.aborted) return Promise.reject(abortError());
+    const key = `${timeoutMs}:${url}`;
+    let shared = inFlightJsonRequests.get(key);
+    if (!shared) {
+      shared = withRequestLimit(() => performJsonRequest(url, signal, timeoutMs), signal)
+        .finally(() => inFlightJsonRequests.delete(key));
+      inFlightJsonRequests.set(key, shared);
+    }
+    if (!signal?.addEventListener) return shared;
+    return new Promise((resolve, reject) => {
+      const abort = () => reject(abortError());
+      signal.addEventListener("abort", abort, { once: true });
+      shared.then((value) => {
+        signal.removeEventListener?.("abort", abort);
+        resolve(value);
+      }, (error) => {
+        signal.removeEventListener?.("abort", abort);
+        reject(error);
+      });
+    });
   }
 
   async function fetchOverpass(query, signal) {
@@ -186,16 +276,20 @@
     const category = templateName === "listing" ? String(fields.type || "").toLowerCase() : templateName;
     const type = /eat|drink/.test(category) ? "eat" : /buy/.test(category) ? "buy" : /see|do/.test(category) ? "see" : "";
     if (!type) return null;
+    const sourceUrl = `https://en.wikivoyage.org/wiki/${encodeURIComponent(String(pageTitle || "").replace(/\s+/g, "_"))}`;
     return {
       name,
       type,
       area: stripWikitext(pageTitle || fields.address || fields.district || ""),
       detail: description || "A Wikivoyage-listed place to research and verify before visiting.",
       address: stripWikitext(fields.address || ""),
-      lat: Number(fields.lat || fields.latitude) || null,
-      lon: Number(fields.long || fields.lon || fields.longitude) || null,
+      lat: coordinate(fields.lat || fields.latitude),
+      lon: coordinate(fields.long || fields.lon || fields.longitude),
       sourceLabel: "Wikivoyage",
-      sourceUrl: `https://en.wikivoyage.org/wiki/${encodeURIComponent(String(pageTitle || "").replace(/\s+/g, "_"))}`
+      sourceUrl,
+      sourceId: `wikivoyage:${slugify(pageTitle)}:${slugify(name)}`,
+      sourceLicense: "CC BY-SA 4.0",
+      sourceAttribution: "Wikivoyage contributors"
     };
   }
 
@@ -273,6 +367,7 @@
       piprop: "thumbnail", pithumbsize: "640", inprop: "url", format: "json", origin: "*"
     }), signal);
     const pageMap = pages?.query?.pages || {};
+    const geoMap = new Map((geo?.query?.geosearch || []).map((item) => [Number(item.pageid), item]));
     const orderedPages = ids.map((id) => pageMap[id]).filter(Boolean);
     const destinationName = geocode.name || "";
     let keptAStation = false;
@@ -293,8 +388,13 @@
       area: geocode.name,
       detail: String(page.extract || "A Wikipedia-listed landmark or neighborhood worth researching.").split(/\n/)[0].slice(0, 220),
       image: page.thumbnail?.source || "",
+      lat: coordinate(geoMap.get(Number(page.pageid))?.lat),
+      lon: coordinate(geoMap.get(Number(page.pageid))?.lon),
       sourceLabel: "Wikipedia",
-      sourceUrl: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(String(page.title || "").replace(/\s+/g, "_"))}`
+      sourceUrl: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(String(page.title || "").replace(/\s+/g, "_"))}`,
+      sourceId: `wikipedia:${page.pageid || slugify(page.title)}`,
+      sourceLicense: "CC BY-SA 4.0",
+      sourceAttribution: "Wikipedia contributors"
     }));
   }
 
@@ -365,7 +465,7 @@
     const ids = [...pageIds].slice(0, 45);
     if (!ids.length) return [];
     const pages = await fetchJson(makeUrl(WIKIPEDIA_API, {
-      action: "query", pageids: ids.join("|"), prop: "pageimages|extracts|info", exintro: "1", explaintext: "1",
+      action: "query", pageids: ids.join("|"), prop: "coordinates|pageimages|extracts|info", exintro: "1", explaintext: "1",
       piprop: "thumbnail", pithumbsize: "640", inprop: "url", format: "json", origin: "*"
     }), signal);
     return Object.values(pages?.query?.pages || {}).map((page) => ({
@@ -374,15 +474,20 @@
       area: city,
       detail: String(page.extract || "A Wikipedia-listed attraction worth researching and verifying before visiting.").split(/\n/)[0].slice(0, 240),
       image: page.thumbnail?.source || "",
+      lat: coordinate(page.coordinates?.[0]?.lat),
+      lon: coordinate(page.coordinates?.[0]?.lon),
       sourceLabel: "Wikipedia category",
-      sourceUrl: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(String(page.title || "").replace(/\s+/g, "_"))}`
+      sourceUrl: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(String(page.title || "").replace(/\s+/g, "_"))}`,
+      sourceId: `wikipedia:${page.pageid || slugify(page.title)}`,
+      sourceLicense: "CC BY-SA 4.0",
+      sourceAttribution: "Wikipedia contributors"
     }));
   }
 
   function osmElementLatLon(element) {
     return {
-      lat: Number(element.lat || element.center?.lat) || null,
-      lon: Number(element.lon || element.center?.lon) || null
+      lat: coordinate(element.lat ?? element.center?.lat),
+      lon: coordinate(element.lon ?? element.center?.lon)
     };
   }
 
@@ -457,6 +562,9 @@
         detail: `${name} is an OpenStreetMap-listed ${cuisine.toLowerCase()} option in ${area}. Verify current hours, popularity, reservations, and menu before locking it into the plan.`,
         sourceLabel: "OpenStreetMap",
         sourceUrl: `https://www.openstreetmap.org/${element.type}/${element.id}`,
+        sourceId: `osm:${element.type}/${element.id}`,
+        sourceLicense: "ODbL 1.0",
+        sourceAttribution: "OpenStreetMap contributors",
         osmScore: osmPopularityScore(tags)
       };
     }
@@ -472,6 +580,9 @@
       detail: `${name} is an OpenStreetMap-listed shopping option in ${area}, useful for ${bestFor.toLowerCase()}. Verify current stores, hours, and fit before travel.`,
       sourceLabel: "OpenStreetMap",
       sourceUrl: `https://www.openstreetmap.org/${element.type}/${element.id}`,
+      sourceId: `osm:${element.type}/${element.id}`,
+      sourceLicense: "ODbL 1.0",
+      sourceAttribution: "OpenStreetMap contributors",
       osmScore: osmPopularityScore(tags)
     };
   }
@@ -504,7 +615,9 @@ out center tags 80;`;
 
   const SEEDED_DESTINATION_CATALOGS = [
     {
-      match: /\b(san\s*diego|san-diego)\b/i,
+      aliases: ["san diego", "san diego california", "san diego ca"],
+      admin1: ["california", "ca"],
+      country: ["united states", "usa", "us"],
       label: "San Diego, California, United States",
       items: [
         { name: "San Diego Zoo", type: "see", area: "Balboa Park", detail: "World-famous zoo in Balboa Park, known for expansive habitats, pandas, koalas, and a full-day family-friendly layout.", seedRank: 100 },
@@ -529,7 +642,9 @@ out center tags 80;`;
       ]
     },
     {
-      match: /\b(los\s*angeles|la,\s*california|l\.a\.|hollywood)\b/i,
+      aliases: ["los angeles", "los angeles california", "los angeles ca", "la california", "la ca"],
+      admin1: ["california", "ca"],
+      country: ["united states", "usa", "us"],
       label: "Los Angeles, California, United States",
       items: [
         { name: "Griffith Observatory", type: "see", area: "Griffith Park / Los Feliz", detail: "Classic Los Angeles viewpoint with skyline views, astronomy exhibits, hiking nearby, and one of the city’s best sunset angles.", seedRank: 100 },
@@ -557,9 +672,31 @@ out center tags 80;`;
     }
   ];
 
+  function normalizeDestinationText(value = "") {
+    return String(value).normalize("NFKC").toLocaleLowerCase("en-US")
+      .replace(/[\p{P}\p{S}]+/gu, " ").replace(/\s+/gu, " ").trim();
+  }
+
+  function seedEntryMatches(entry, destination, geocode) {
+    const aliases = new Set((entry.aliases || []).map(normalizeDestinationText));
+    const input = normalizeDestinationText(destination);
+    const geocodeName = normalizeDestinationText(geocode?.name);
+    const admin = normalizeDestinationText(geocode?.admin1);
+    const country = normalizeDestinationText(geocode?.country);
+    const nameMatches = aliases.has(input) || aliases.has(geocodeName);
+    if (!nameMatches) return false;
+    if (!geocode) return aliases.has(input);
+    const adminMatches = !entry.admin1?.length || entry.admin1.map(normalizeDestinationText).includes(admin);
+    const countryMatches = !entry.country?.length || entry.country.map(normalizeDestinationText).includes(country);
+    return adminMatches && countryMatches;
+  }
+
+  function findSeededDestination(destination, geocode) {
+    return SEEDED_DESTINATION_CATALOGS.find((entry) => seedEntryMatches(entry, destination, geocode));
+  }
+
   function seededDestinationItems(destination, geocode) {
-    const haystack = [destination, geocode?.name, geocode?.admin1, geocode?.country].filter(Boolean).join(" ");
-    const seed = SEEDED_DESTINATION_CATALOGS.find((entry) => entry.match.test(haystack));
+    const seed = findSeededDestination(destination, geocode);
     if (!seed) return { items: [], label: "", banner: "" };
     return {
       label: seed.label,
@@ -568,14 +705,16 @@ out center tags 80;`;
         ...item,
         sourceLabel: "PlanToGuide starter catalog",
         sourceUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.name} ${seed.label}`)}`,
+        sourceId: `plantoguide:${slugify(seed.label)}:${slugify(item.name)}`,
+        sourceLicense: "PlanToGuide curated catalog",
+        sourceAttribution: "PlanToGuide",
         seeded: true
       }))
     };
   }
 
   function hasSeededDestinationCatalog(destination, geocode) {
-    const haystack = [destination, geocode?.name, geocode?.admin1, geocode?.country].filter(Boolean).join(" ");
-    return SEEDED_DESTINATION_CATALOGS.some((entry) => entry.match.test(haystack));
+    return Boolean(findSeededDestination(destination, geocode));
   }
 
   function catalogHasSeededAnchors(catalog, destination, geocode) {
@@ -644,14 +783,65 @@ out center tags 80;`;
     return food;
   }
 
-  function dedupeItems(items = []) {
+  function sourceRecord(item = {}) {
+    if (!item.sourceLabel && !item.sourceUrl && !item.sourceId) return null;
+    return {
+      id: item.sourceId || item.sourceUrl || `${item.sourceLabel || "source"}:${slugify(item.name)}`,
+      label: item.sourceLabel || "Source",
+      url: item.sourceUrl || "",
+      license: item.sourceLicense || "",
+      attribution: item.sourceAttribution || item.sourceLabel || ""
+    };
+  }
+
+  function itemSources(item = {}) {
+    const records = [...(Array.isArray(item.sources) ? item.sources : [])];
+    const direct = sourceRecord(item);
+    if (direct) records.push(direct);
     const seen = new Set();
-    return items.filter((item) => {
-      const key = slugify(item.name);
+    return records.filter((record) => {
+      const key = String(record?.id || record?.url || `${record?.label}:${record?.attribution}`);
       if (!key || seen.has(key)) return false;
       seen.add(key);
       return true;
     });
+  }
+
+  function mergeItemRecords(primary, secondary) {
+    const mergedSources = itemSources({ ...secondary, sources: [...itemSources(primary), ...itemSources(secondary)] });
+    return {
+      ...secondary,
+      ...primary,
+      area: primary.area || secondary.area || "",
+      detail: primary.detail || secondary.detail || "",
+      address: primary.address || secondary.address || "",
+      image: primary.image || secondary.image || "",
+      lat: coordinate(primary.lat) ?? coordinate(secondary.lat),
+      lon: coordinate(primary.lon) ?? coordinate(secondary.lon),
+      sourceLabel: primary.sourceLabel || secondary.sourceLabel || "",
+      sourceUrl: primary.sourceUrl || secondary.sourceUrl || "",
+      sourceId: primary.sourceId || secondary.sourceId || "",
+      sourceLicense: primary.sourceLicense || secondary.sourceLicense || "",
+      sourceAttribution: primary.sourceAttribution || secondary.sourceAttribution || "",
+      sources: mergedSources
+    };
+  }
+
+  function dedupeItems(items = []) {
+    const positions = new Map();
+    const merged = [];
+    items.forEach((item) => {
+      const key = slugify(item.name);
+      if (!key) return;
+      if (positions.has(key)) {
+        const position = positions.get(key);
+        merged[position] = mergeItemRecords(merged[position], item);
+        return;
+      }
+      positions.set(key, merged.length);
+      merged.push(mergeItemRecords(item, {}));
+    });
+    return merged;
   }
 
   function toPlace(item, fallbackArea) {
@@ -661,20 +851,66 @@ out center tags 80;`;
       detail: item.detail || "Research this local recommendation before adding it to a final route.",
       address: item.address || "",
       image: item.image || "",
+      lat: coordinate(item.lat),
+      lon: coordinate(item.lon),
       sourceLabel: item.sourceLabel || "",
-      sourceUrl: item.sourceUrl || ""
+      sourceUrl: item.sourceUrl || "",
+      sourceId: item.sourceId || "",
+      sourceLicense: item.sourceLicense || "",
+      sourceAttribution: item.sourceAttribution || "",
+      sources: itemSources(item),
+      placeholder: Boolean(item.placeholder)
     };
+  }
+
+  function attractionFallbacks(destination, fallbackArea) {
+    return [
+      {
+        name: `${destination} visitor center and orientation`,
+        type: "see",
+        area: fallbackArea,
+        detail: "Start with the official visitor center or tourism office, confirm current headline sights, and collect local route guidance.",
+        placeholder: true,
+        sourceLabel: "PlanToGuide research checklist",
+        sourceId: `plantoguide:research:${slugify(destination)}:visitor-center`,
+        sourceLicense: "PlanToGuide generated guidance",
+        sourceAttribution: "PlanToGuide"
+      },
+      {
+        name: `${destination} historic center orientation walk`,
+        type: "see",
+        area: fallbackArea,
+        detail: "Use official tourism and map sources to verify a compact orientation walk through the destination's historic or civic center.",
+        placeholder: true,
+        sourceLabel: "PlanToGuide research checklist",
+        sourceId: `plantoguide:research:${slugify(destination)}:historic-center`,
+        sourceLicense: "PlanToGuide generated guidance",
+        sourceAttribution: "PlanToGuide"
+      }
+    ];
+  }
+
+  function destinationMatchPattern(values = []) {
+    const patterns = [...new Set(values.map((value) => String(value || "").trim()).filter(Boolean))]
+      .map((value) => value.split(/[\s,]+/u).filter(Boolean).map(escapeRegExp).join("[\\s,]+"));
+    return patterns.length ? `^(?:${patterns.join("|")})$` : "$^";
   }
 
   function assembleDynamicCatalog(destination, geocode, sourceData = {}) {
     const seeded = seededDestinationItems(destination, geocode);
     const fallbackArea = seeded.label || [geocode?.name, geocode?.admin1, geocode?.country].filter(Boolean).join(", ") || destination;
     const items = rankDynamicItems(dedupeItems([...(seeded.items || []), ...(sourceData.wikivoyageItems || []), ...(sourceData.wikipediaItems || []), ...(sourceData.osmItems || [])]), destination);
-    const see = items.filter((item) => item.type === "see").slice(0, 24).map((item) => toPlace(item, fallbackArea));
+    const realSee = items.filter((item) => item.type === "see" && !item.placeholder).slice(0, 24).map((item) => toPlace(item, fallbackArea));
+    // Food or shopping data alone is not enough for itinerary generation. Two real attractions
+    // is the minimum usable signal; explicit research cards safely bring a thin result to four.
+    if (realSee.length < 2) return null;
+    const see = [...realSee];
+    for (const fallback of attractionFallbacks(destination, fallbackArea)) {
+      if (see.length >= 4) break;
+      see.push(toPlace(fallback, fallbackArea));
+    }
     const eatItems = items.filter((item) => item.type === "eat").slice(0, 18).map((item) => ({ ...toPlace(item, fallbackArea), cuisine: item.cuisine || "Local cuisine", order: item.order || "Check the current menu and signature dishes." }));
     const buy = items.filter((item) => item.type === "buy").slice(0, 18).map((item) => ({ ...toPlace(item, fallbackArea), bestFor: item.bestFor || "Local shopping, gifts, and browsing" }));
-    const enoughSignal = see.length >= 4 || eatItems.length >= 3 || buy.length >= 2;
-    if (!enoughSignal) return null;
     const fillerImage = seeded.banner || [...see, ...eatItems, ...buy].find((item) => item.image)?.image || NEUTRAL_BANNER_PLACEHOLDER;
     const food = distributeFoodItems(eatItems, destination, fallbackArea);
     const zones = see.slice(0, 8).map((item, index) => ({
@@ -683,14 +919,14 @@ out center tags 80;`;
       keywords: [item.name, item.area].filter(Boolean)
     }));
     const slug = slugify([geocode?.name, geocode?.admin1, geocode?.country].filter(Boolean).join(" "));
-    const matchPattern = `\\b(?:${[destination, geocode?.name].filter(Boolean).map(escapeRegExp).join("|")})\\b`;
+    const matchPattern = destinationMatchPattern([destination, geocode?.name]);
     return {
       dynamic: true,
       researchMode: true,
       slug,
       matchPattern,
-      matchFlags: "i",
-      match: new RegExp(matchPattern, "i"),
+      matchFlags: "iu",
+      match: new RegExp(matchPattern, "iu"),
       label: fallbackArea,
       banner: fillerImage,
       zones: zones.length ? zones : [{ name: fallbackArea, icon: "🧭", keywords: [destination] }],
@@ -720,7 +956,10 @@ out center tags 80;`;
       if (!geocode) return null;
       const slug = slugify([geocode.name, geocode.admin1, geocode.country].filter(Boolean).join(" "));
       const cached = dynamicCatalogCache.get(slug);
-      if (cached && catalogHasSeededAnchors(cached, destination, geocode)) return { ...cached, match: new RegExp(cached.matchPattern || `\\b(?:${escapeRegExp(destination)})\\b`, cached.matchFlags || "i") };
+      if (cached && catalogHasSeededAnchors(cached, destination, geocode)) {
+        const matchPattern = cached.matchPattern || destinationMatchPattern([destination, geocode?.name]);
+        return { ...cached, matchPattern, matchFlags: cached.matchFlags || "iu", match: new RegExp(matchPattern, cached.matchFlags || "iu") };
+      }
       const [voyage, wikiGeo, wikiCategory, osm] = await Promise.all([
         fetchWikivoyageListings([geocode.name, geocode.country].filter(Boolean).join(" "), controller.signal).catch(() => ({ title: "", items: [] })),
         fetchWikipediaGeoPlaces(geocode, controller.signal).catch(() => []),

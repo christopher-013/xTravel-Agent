@@ -7,6 +7,7 @@ const sandbox = {
   globalThis: {},
   localStorage: { getItem: () => "", setItem: () => {} },
   URL,
+  AbortController,
   setTimeout,
   clearTimeout,
   fetch: async () => { throw new Error("network disabled in smoke test"); }
@@ -37,7 +38,8 @@ const catalog = api.assembleDynamicCatalog("Fixture City", { name: "Fixture City
   wikivoyageTitle: "Fixture City",
   wikivoyageItems: normalItems,
   wikipediaItems: [
-    { name: "Hill View", type: "see", area: "North", detail: "A scenic viewpoint.", sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Hill_View" },
+    { name: "Old Town Square", type: "see", area: "Center", detail: "A second public-source record.", image: "https://images.example/square.jpg", lat: 48.14, lon: 11.58, sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Old_Town_Square", sourceId: "wikipedia:101", sourceLicense: "CC BY-SA 4.0", sourceAttribution: "Wikipedia contributors" },
+    { name: "Hill View", type: "see", area: "North", detail: "A scenic viewpoint.", sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Hill_View", sourceId: "wikipedia:102", sourceLicense: "CC BY-SA 4.0", sourceAttribution: "Wikipedia contributors" },
     { name: "Art Walk", type: "see", area: "Arts", detail: "A public art route.", sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Art_Walk" },
     { name: "Garden", type: "see", area: "Park", detail: "A central green space.", sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Garden" }
   ]
@@ -48,6 +50,46 @@ assert.ok(catalog.match.test("Fixture City"));
 assert.ok(catalog.attractions.length >= 4);
 assert.ok(catalog.food.breakfast.length >= 3);
 assert.ok(catalog.shopping.length >= 1);
+const mergedAttraction = catalog.attractions.find((item) => item.name === "Old Town Square");
+assert.equal(mergedAttraction.lat, 48.14);
+assert.equal(mergedAttraction.lon, 11.58);
+assert.equal(mergedAttraction.image, "https://images.example/square.jpg");
+assert.ok(mergedAttraction.sources.some((source) => source.id === "wikipedia:101"));
+assert.ok(mergedAttraction.sources.some((source) => source.label === "Wikivoyage"));
+assert.ok(mergedAttraction.sources.every((source) => Object.hasOwn(source, "license") && Object.hasOwn(source, "attribution")));
+
+const thinCatalog = api.assembleDynamicCatalog("Thin City", { name: "Thin City", country: "Exampleland" }, {
+  wikipediaItems: [
+    { name: "Real Museum", type: "see", area: "Center", detail: "A real museum.", lat: 1, lon: 2, sourceLabel: "Wikipedia", sourceId: "wikipedia:201", sourceLicense: "CC BY-SA 4.0" },
+    { name: "Real Park", type: "see", area: "North", detail: "A real park.", lat: 3, lon: 4, sourceLabel: "Wikipedia", sourceId: "wikipedia:202", sourceLicense: "CC BY-SA 4.0" }
+  ]
+});
+assert.equal(thinCatalog.attractions.length, 4, "Two real attractions should be padded to a safe four-card catalog");
+assert.equal(thinCatalog.attractions.filter((item) => item.placeholder).length, 2);
+assert.equal(thinCatalog.attractions.find((item) => item.name === "Real Museum").sourceId, "wikipedia:201");
+
+assert.equal(api.assembleDynamicCatalog("Empty City", { name: "Empty City" }, {}), null);
+assert.equal(api.assembleDynamicCatalog("Food Only City", { name: "Food Only City" }, {
+  osmItems: [
+    { name: "Cafe One", type: "eat" }, { name: "Cafe Two", type: "eat" }, { name: "Cafe Three", type: "eat" }
+  ]
+}), null, "Food-only results must not be accepted as an itinerary catalog");
+assert.equal(api.assembleDynamicCatalog("Shop Only City", { name: "Shop Only City" }, {
+  osmItems: [{ name: "Market One", type: "buy" }, { name: "Market Two", type: "buy" }]
+}), null, "Shop-only results must not be accepted as an itinerary catalog");
+assert.equal(api.assembleDynamicCatalog("One Sight City", { name: "One Sight City" }, {
+  wikipediaItems: [{ name: "Only Landmark", type: "see" }]
+}), null, "One attraction is insufficient for itinerary generation");
+
+const unicodeCatalog = api.assembleDynamicCatalog("München, Deutschland", { name: "München", country: "Deutschland" }, {
+  wikipediaItems: [
+    { name: "Residenz München", type: "see", sourceLabel: "Wikipedia" },
+    { name: "Englischer Garten", type: "see", sourceLabel: "Wikipedia" }
+  ]
+});
+assert.ok(unicodeCatalog.match.test("München, Deutschland"));
+assert.ok(unicodeCatalog.match.test("München"));
+assert.equal(unicodeCatalog.match.test("Münchenberg"), false, "Unicode destination matching must be exact, not ASCII word-boundary based");
 
 const osmEnhancedCatalog = api.assembleDynamicCatalog("OSM Food City", { name: "OSM Food City", country: "Exampleland" }, {
   wikivoyageTitle: "OSM Food City",
@@ -118,17 +160,22 @@ assert.equal(api.catalogHasSeededAnchors({
 }, "Los Angeles, California"), false);
 assert.equal(api.catalogHasSeededAnchors(losAngelesCatalog, "Los Angeles, California"), true);
 
-const newYorkCatalog = api.assembleDynamicCatalog("New York City, New York", {
-  name: "New York City",
-  admin1: "New York",
-  country: "United States"
-}, {
-  wikivoyageTitle: "New York City",
-  wikivoyageItems: [],
-  wikipediaItems: []
-});
-assert.equal(newYorkCatalog.dynamic, true);
-assert.ok(newYorkCatalog.match.test("New York City"));
+assert.equal(api.hasSeededDestinationCatalog("San Diego, Texas", { name: "San Diego", admin1: "Texas", country: "United States" }), false);
+assert.equal(api.hasSeededDestinationCatalog("Hollywood, Florida", { name: "Hollywood", admin1: "Florida", country: "United States" }), false);
+
+const catalogData = JSON.parse(readFileSync("catalogs.json", "utf8"));
+const hydratedCatalogs = catalogData.destinationCatalogs.map((entry) => ({ ...entry, match: new RegExp(entry.matchPattern, entry.matchFlags || "i") }));
+const catalogFor = (destination) => hydratedCatalogs.find((entry) => entry.match.test(destination));
+assert.equal(catalogFor("Paris, Texas"), undefined);
+assert.equal(catalogFor("Rome, Georgia"), undefined);
+assert.equal(catalogFor("Vancouver, Washington"), undefined);
+assert.equal(catalogFor("Kyoto, Japan"), undefined);
+assert.ok(catalogFor("Paris, France"));
+assert.ok(catalogFor("Rome, Italy"));
+assert.ok(catalogFor("Vancouver, Canada"));
+assert.ok(catalogFor("Tokyo, Japan"));
+const newYorkCatalog = catalogFor("New York City, United States");
+assert.ok(newYorkCatalog, "Expected the built-in New York catalog");
 const newYorkAttractions = newYorkCatalog.attractions.map((item) => item.name);
 for (const expected of ["Statue of Liberty and Ellis Island", "Central Park", "The Metropolitan Museum of Art", "Empire State Building"]) {
   assert.ok(newYorkAttractions.includes(expected), `Expected New York attraction: ${expected}`);
@@ -137,9 +184,38 @@ assert.ok(newYorkAttractions.some((name) => /Times Square|Broadway/i.test(name))
 assert.ok(newYorkAttractions.some((name) => /Brooklyn Bridge|DUMBO/i.test(name)), "Expected Brooklyn Bridge or DUMBO recommendation");
 assert.ok(newYorkCatalog.shopping.some((item) => /Fifth Avenue|SoHo|Chelsea Market/.test(item.name)));
 assert.ok(Object.values(newYorkCatalog.food).flat().some((item) => /Katz|Russ|Pizza|Tacos/i.test(item.name)));
-assert.equal(api.catalogHasSeededAnchors({
-  attractions: [{ name: "Generic New York landmark" }, { name: "Downtown walk" }]
-}, "New York City, New York"), false);
-assert.equal(api.catalogHasSeededAnchors(newYorkCatalog, "New York City, New York"), true);
+
+let requestCount = 0;
+let activeRequests = 0;
+let peakRequests = 0;
+const networkSandbox = {
+  console,
+  globalThis: {},
+  localStorage: { getItem: () => "", setItem: () => {} },
+  URL,
+  AbortController,
+  setTimeout,
+  clearTimeout,
+  fetch: async (url) => {
+    requestCount += 1;
+    activeRequests += 1;
+    peakRequests = Math.max(peakRequests, activeRequests);
+    await new Promise((resolve) => setTimeout(resolve, 12));
+    activeRequests -= 1;
+    const name = new URL(url).searchParams.get("name") || "Test City";
+    return {
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      json: async () => ({ results: [{ name, country: "Exampleland", latitude: 1, longitude: 2, population: 1000 }] })
+    };
+  }
+};
+networkSandbox.globalThis = networkSandbox;
+vm.runInNewContext(readFileSync("dynamic-catalog.js", "utf8"), networkSandbox, { filename: "dynamic-catalog.js" });
+await Promise.all([networkSandbox.geocodeDestination("Coalesce City"), networkSandbox.geocodeDestination("Coalesce City")]);
+assert.equal(requestCount, 1, "Identical in-flight requests should be coalesced");
+await Promise.all(Array.from({ length: 10 }, (_, index) => networkSandbox.geocodeDestination(`Burst City ${index}`)));
+assert.ok(peakRequests <= 6, `Public-source requests exceeded the concurrency cap: ${peakRequests}`);
 
 console.log("dynamic catalog smoke test passed");

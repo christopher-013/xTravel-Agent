@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=3.2.0">
+  <link rel="stylesheet" href="styles.css?v=3.2.1">
 </head>
 <body>
   <main class="page-shell">
@@ -61,9 +61,12 @@
           <span data-go-step="4" role="button" tabindex="0" aria-label="Go to Constraints"><b>4</b><small><strong>Constraints</strong><em>Bookings &amp; needs</em></small></span>
           <span data-go-step="5" role="button" tabindex="0" aria-label="Go to Create"><b>5</b><small><strong>Create</strong><em>Build &amp; export</em></small></span>
         </div>
-        <div class="security-note" role="note">
+        <div class="security-note" role="note" aria-label="Privacy and external research notice">
           <span aria-hidden="true">✓</span>
-          <p><strong>Public-safe demo</strong> Runs entirely in your browser with no API key, account, or usage charges.</p>
+          <div>
+            <p><strong>Public-safe browser mode</strong> No API key, account, or usage charges. Your trip answers and saved draft stay on this device.</p>
+            <p class="privacy-disclosure">Destination and weather research contacts Open-Meteo, Wikimedia/Wikivoyage, and OpenStreetMap/Overpass, which receive your destination query and connection data.</p>
+          </div>
         </div>
 
         <section class="form-step active" data-form-step="1">
@@ -89,12 +92,12 @@
               <p>Choose your arrival and departure dates.</p>
               <div class="date-grid">
                 <div class="date-field">
-                  <span>Arrive</span>
+                  <label for="startDate">Arrive</label>
                   <input id="startDate" name="startDate" type="date" required>
                 </div>
                 <span class="date-arrow" aria-hidden="true">→</span>
                 <div class="date-field">
-                  <span>Depart</span>
+                  <label for="endDate">Depart</label>
                   <input id="endDate" name="endDate" type="date" required>
                 </div>
               </div>
@@ -179,7 +182,8 @@
       </form>
     </section>
 
-    <section class="result" id="result" aria-live="polite" hidden>
+    <section class="result" id="result" hidden>
+      <p class="report-status" id="reportStatus" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="trip-app">
         <header class="trip-app-header">
           <a class="brand app-brand" href="#" aria-label="PlanToGuide trip home"><span class="brand-mark"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><span class="brand-wordmark">PlanToGuide</span></a>
@@ -266,7 +270,7 @@
 
           <section class="app-panel" data-panel="bookings" aria-label="Bookings">
             <div class="compact-app-hero bookings-hero"><div><p class="eyebrow light">Confirm</p><h2>Bookings</h2><p>Reservations, tickets, and confirmation details.</p></div></div>
-            <section class="user-entry-manager app-panel-body" data-entry-kind="booking"><div><p class="eyebrow">Add a confirmed plan</p><h3>Add booking details</h3><p>Save a reservation, ticket, hotel, flight, or tour to this trip.</p></div><div class="user-entry-form"><input id="bookingEntryTitle" type="text" maxlength="100" placeholder="Location or booking name"><input id="bookingEntryDate" type="date"><textarea id="bookingEntryDetails" rows="3" maxlength="500" placeholder="Time, confirmation number, address, reservation notes…"></textarea><button type="button" id="addBookingEntry">Add confirmed booking</button></div><p class="user-entry-status" id="bookingEntryStatus" role="status"></p></section>
+            <section class="user-entry-manager app-panel-body" data-entry-kind="booking"><div><p class="eyebrow">Add a confirmed plan</p><h3>Add booking details</h3><p>Save a reservation, ticket, hotel, flight, or tour to this trip.</p></div><div class="user-entry-form"><label class="user-entry-field" for="bookingEntryTitle"><span>Location or booking name</span><input id="bookingEntryTitle" type="text" maxlength="100" placeholder="e.g. Harbor tour"></label><label class="user-entry-field" for="bookingEntryDate"><span>Booking date</span><input id="bookingEntryDate" type="date"></label><label class="user-entry-field user-entry-details" for="bookingEntryDetails"><span>Booking details</span><textarea id="bookingEntryDetails" rows="3" maxlength="500" placeholder="Time, confirmation number, address, reservation notes…"></textarea></label><button type="button" id="addBookingEntry">Add confirmed booking</button></div><p class="user-entry-status" id="bookingEntryStatus" role="status"></p></section>
             <div class="app-panel-body" id="bookingList"></div>
           </section>
 
@@ -278,13 +282,13 @@
 
           <section class="app-panel" data-panel="food" aria-label="Food and dining">
             <div class="compact-app-hero food-hero"><div><p class="eyebrow light">Taste</p><h2>Food & dining</h2><p>Three popular breakfast, lunch, and dinner options.</p></div></div>
-            <section class="user-entry-manager app-panel-body" data-entry-kind="food"><div><p class="eyebrow">Add your own</p><h3>Add a food destination</h3><p>Save a restaurant, café, market, or dish you want included.</p></div><div class="user-entry-form"><input id="foodEntryTitle" type="text" maxlength="100" placeholder="Restaurant or food destination"><input id="foodEntryDate" type="date"><textarea id="foodEntryDetails" rows="3" maxlength="500" placeholder="Address, cuisine, what to order, rating, reservation notes…"></textarea><button type="button" id="addFoodEntry">Add to Food</button></div><p class="user-entry-status" id="foodEntryStatus" role="status"></p></section>
+            <section class="user-entry-manager app-panel-body" data-entry-kind="food"><div><p class="eyebrow">Add your own</p><h3>Add a food destination</h3><p>Save a restaurant, café, market, or dish you want included.</p></div><div class="user-entry-form"><label class="user-entry-field" for="foodEntryTitle"><span>Restaurant or food destination</span><input id="foodEntryTitle" type="text" maxlength="100" placeholder="e.g. Central Market"></label><label class="user-entry-field" for="foodEntryDate"><span>Visit date</span><input id="foodEntryDate" type="date"></label><label class="user-entry-field user-entry-details" for="foodEntryDetails"><span>Food details</span><textarea id="foodEntryDetails" rows="3" maxlength="500" placeholder="Address, cuisine, what to order, rating, reservation notes…"></textarea></label><button type="button" id="addFoodEntry">Add to Food</button></div><p class="user-entry-status" id="foodEntryStatus" role="status"></p></section>
             <div class="collection-list app-panel-body" id="foodList"></div>
           </section>
 
           <section class="app-panel" data-panel="shop" aria-label="Shopping">
             <div class="compact-app-hero shop-hero"><div><p class="eyebrow light">Browse</p><h2>Shopping</h2><p>Three popular shopping areas worth exploring.</p></div></div>
-            <section class="user-entry-manager app-panel-body" data-entry-kind="shop"><div><p class="eyebrow">Add your own</p><h3>Add a shopping destination</h3><p>Save a store, market, district, or item you want to find.</p></div><div class="user-entry-form"><input id="shopEntryTitle" type="text" maxlength="100" placeholder="Store, market, or shopping area"><input id="shopEntryDate" type="date"><textarea id="shopEntryDetails" rows="3" maxlength="500" placeholder="Address, what it is known for, hours, items to find…"></textarea><button type="button" id="addShopEntry">Add to Shop</button></div><p class="user-entry-status" id="shopEntryStatus" role="status"></p></section>
+            <section class="user-entry-manager app-panel-body" data-entry-kind="shop"><div><p class="eyebrow">Add your own</p><h3>Add a shopping destination</h3><p>Save a store, market, district, or item you want to find.</p></div><div class="user-entry-form"><label class="user-entry-field" for="shopEntryTitle"><span>Store, market, or shopping area</span><input id="shopEntryTitle" type="text" maxlength="100" placeholder="e.g. Arts District Market"></label><label class="user-entry-field" for="shopEntryDate"><span>Visit date</span><input id="shopEntryDate" type="date"></label><label class="user-entry-field user-entry-details" for="shopEntryDetails"><span>Shopping details</span><textarea id="shopEntryDetails" rows="3" maxlength="500" placeholder="Address, what it is known for, hours, items to find…"></textarea></label><button type="button" id="addShopEntry">Add to Shop</button></div><p class="user-entry-status" id="shopEntryStatus" role="status"></p></section>
             <div class="collection-list app-panel-body" id="shopList"></div>
           </section>
 
@@ -294,7 +298,7 @@
               <section class="photo-manager" aria-labelledby="photoManagerTitle">
                 <div><p class="eyebrow">Build your journal</p><h3 id="photoManagerTitle">Add trip photos</h3><p>Upload images for the selected date. When a photo contains matching capture-date or GPS metadata, PlanToGuide files it under the corresponding trip day and plots its location.</p></div>
                 <div class="photo-manager-actions">
-                  <label class="photo-upload-button">Upload photos<input id="photoUploadInput" type="file" accept="image/*" multiple hidden></label>
+                  <label class="photo-upload-button">Upload photos<input class="native-file-button" id="photoUploadInput" type="file" accept="image/*" multiple aria-label="Upload trip photos"></label>
                   <label class="photo-caption-field"><span>Caption</span><input id="photoCaptionInput" type="text" maxlength="120" placeholder="Optional caption for this upload"></label>
                 </div>
                 <p class="photo-manager-note" id="photoManagerStatus" role="status" aria-live="polite"></p>
@@ -360,7 +364,7 @@
     <div class="import-precheck" id="importPrecheck" role="status" aria-live="polite">No trip JSON block found yet.</div>
     <div class="import-error" id="importError" role="alert" hidden></div>
     <div class="import-actions">
-      <label class="secondary-button import-file-label">Choose .md file<input id="importPlanFile" type="file" accept=".md,.markdown,.txt,.json" hidden></label>
+      <label class="secondary-button import-file-label">Choose .md file<input class="native-file-button" id="importPlanFile" type="file" accept=".md,.markdown,.txt,.json" aria-label="Choose an updated trip plan file"></label>
       <button class="secondary-button" id="importDialogCancel" type="button">Cancel</button>
       <button class="primary-button" id="importPlanButton" type="button">Import &amp; render trip</button>
     </div>
@@ -389,12 +393,12 @@
     </article>
   </template>
 
-  <script src="version.js?v=3.2.0"></script>
-  <script src="dynamic-catalog.js?v=3.2.0"></script>
-  <script src="export-styles.js?v=3.2.0"></script>
-  <script src="icon-source.js?v=3.2.0"></script>
-  <script src="photo-store.js?v=3.2.0"></script>
-  <script src="trip-schema.js?v=3.2.0"></script>
-  <script src="app.js?v=3.2.0"></script>
+  <script src="version.js?v=3.2.1"></script>
+  <script src="dynamic-catalog.js?v=3.2.1"></script>
+  <script src="export-styles.js?v=3.2.1"></script>
+  <script src="icon-source.js?v=3.2.1"></script>
+  <script src="photo-store.js?v=3.2.1"></script>
+  <script src="trip-schema.js?v=3.2.1"></script>
+  <script src="app.js?v=3.2.1"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 {
   "destinationCatalogs": [
     {
-      "matchPattern": "tokyo|japan",
+      "matchPattern": "^(?:tokyo(?:\\s*,?\\s*japan)?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1800&q=82",
       "zones": [
@@ -227,7 +227,7 @@
       }
     },
     {
-      "matchPattern": "paris|france",
+      "matchPattern": "^(?:paris(?:\\s*,?\\s*france)?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&w=1800&q=82",
       "attractions": [
@@ -344,7 +344,7 @@
       ]
     },
     {
-      "matchPattern": "london|england|united kingdom|\\buk\\b",
+      "matchPattern": "^(?:london(?:\\s*,?\\s*(?:england|united kingdom|uk|great britain))?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=1800&q=82",
       "attractions": [
@@ -461,7 +461,7 @@
       ]
     },
     {
-      "matchPattern": "new york|nyc|manhattan",
+      "matchPattern": "^(?:(?:new york(?: city)?|nyc|manhattan)(?:\\s*,?\\s*(?:new york|united states|usa|us))?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1522083165195-3424ed129620?auto=format&fit=crop&w=1800&q=82",
       "attractions": [
@@ -623,7 +623,7 @@
       ]
     },
     {
-      "matchPattern": "rome|italy",
+      "matchPattern": "^(?:rome(?:\\s*,?\\s*italy)?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?auto=format&fit=crop&w=1800&q=82",
       "attractions": [
@@ -740,7 +740,7 @@
       ]
     },
     {
-      "matchPattern": "lisbon|portugal",
+      "matchPattern": "^(?:lisbon(?:\\s*,?\\s*portugal)?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1555881400-74d7acaacd8b?auto=format&fit=crop&w=1800&q=82",
       "attractions": [
@@ -857,7 +857,7 @@
       ]
     },
     {
-      "matchPattern": "honolulu|oahu|hawaii",
+      "matchPattern": "^(?:(?:honolulu|waikiki)(?:\\s*,?\\s*(?:oahu|hawaii|united states|usa|us))?|oahu(?:\\s*,?\\s*(?:hawaii|united states|usa|us))?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1507876466758-bc54f384809c?auto=format&fit=crop&w=1800&q=82",
       "zones": [
@@ -1015,7 +1015,7 @@
       ]
     },
     {
-      "matchPattern": "vancouver|british columbia|\\bbc\\b",
+      "matchPattern": "^(?:vancouver(?:\\s*,?\\s*(?:british columbia|bc|canada))?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1559511260-66a654ae982a?auto=format&fit=crop&w=1800&q=82",
       "zones": [
@@ -1172,7 +1172,7 @@
       ]
     },
     {
-      "matchPattern": "seattle|washington state|puget sound",
+      "matchPattern": "^(?:seattle(?:\\s*,?\\s*(?:washington|washington state|wa|united states|usa|us))?)$",
       "matchFlags": "i",
       "banner": "https://images.unsplash.com/photo-1502175353174-a7a70e73b362?auto=format&fit=crop&w=1800&q=82",
       "zones": [
