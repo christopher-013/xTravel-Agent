@@ -6,7 +6,13 @@
   const PIPELINE_TIMEOUT_MS = 12000;
   const MAX_CONCURRENT_REQUESTS = 6;
   const MAX_REQUEST_ATTEMPTS = 3;
-  const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+  // 429 is deliberately NOT retryable: retrying pours more requests into an already-tripped
+  // rate-limit window. A 429 opens the Wikimedia circuit breaker below instead.
+  const RETRYABLE_STATUS = new Set([500, 502, 503, 504]);
+  const WIKIMEDIA_HOST_PATTERN = /(^|\.)wikipedia\.org$|(^|\.)wikivoyage\.org$/i;
+  const WIKIMEDIA_API_USER_AGENT = "PlanToGuide/3.4 (https://christopher-013.github.io/PlanToGuide/)";
+  const RATE_LIMIT_DEFAULT_MS = 60000;
+  const RATE_LIMIT_MAX_MS = 5 * 60000;
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
   const CACHE_LIMIT_BYTES = 200000;
   const WIKIVOYAGE_API = "https://en.wikivoyage.org/w/api.php";
@@ -18,6 +24,41 @@
   let activeRequestCount = 0;
   const requestQueue = [];
   const inFlightJsonRequests = new Map();
+
+  // Wikimedia circuit breaker: after any 429, all Wikimedia requests fail fast until the
+  // Retry-After window passes, instead of burning more of the rate-limit budget.
+  let wikimediaBlockedUntil = 0;
+  let rateLimitEpoch = 0;
+  let lastResearchOutcome = null;
+
+  function isWikimediaUrl(url) {
+    try { return WIKIMEDIA_HOST_PATTERN.test(new URL(url).hostname); } catch (_) { return false; }
+  }
+
+  function noteWikimediaRateLimit(retryAfterSeconds) {
+    const waitMs = Math.min(RATE_LIMIT_MAX_MS, Math.max(RATE_LIMIT_DEFAULT_MS, (Number(retryAfterSeconds) || 0) * 1000));
+    wikimediaBlockedUntil = Math.max(wikimediaBlockedUntil, Date.now() + waitMs);
+    rateLimitEpoch += 1;
+  }
+
+  function isWikimediaThrottled() {
+    return Date.now() < wikimediaBlockedUntil;
+  }
+
+  function wikimediaRetryAfterMs() {
+    return Math.max(0, wikimediaBlockedUntil - Date.now());
+  }
+
+  function getLastResearchOutcome() {
+    return lastResearchOutcome ? { ...lastResearchOutcome } : null;
+  }
+
+  function rateLimitError() {
+    const error = new Error("Wikimedia requests are rate limited");
+    error.status = 429;
+    error.rateLimited = true;
+    return error;
+  }
 
   function drainRequestQueue() {
     while (activeRequestCount < MAX_CONCURRENT_REQUESTS && requestQueue.length) {
@@ -117,22 +158,32 @@
   }
 
   async function performJsonRequest(url, signal, timeoutMs) {
+    const wikimedia = isWikimediaUrl(url);
+    // Wikimedia asks API clients to identify themselves; browsers cannot set User-Agent but
+    // honor Api-User-Agent as the documented substitute. Anonymous no-agent traffic gets the
+    // strictest rate-limit bucket.
+    const requestInit = wikimedia ? { headers: { "Api-User-Agent": WIKIMEDIA_API_USER_AGENT } } : {};
     let lastError;
     for (let attempt = 0; attempt < MAX_REQUEST_ATTEMPTS; attempt += 1) {
+      if (wikimedia && isWikimediaThrottled()) throw rateLimitError();
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), timeoutMs);
       const abort = () => controller.abort();
       signal?.addEventListener?.("abort", abort, { once: true });
       try {
-        const response = await fetch(url, { signal: controller.signal });
+        const response = await fetch(url, { ...requestInit, signal: controller.signal });
         if (response.ok) return await response.json();
+        if (response.status === 429 && wikimedia) {
+          noteWikimediaRateLimit(Number(response.headers?.get?.("retry-after") || 0));
+          throw rateLimitError();
+        }
         const error = new Error(`Request failed: ${response.status}`);
         error.status = response.status;
         error.retryAfter = Number(response.headers?.get?.("retry-after") || 0);
         throw error;
       } catch (error) {
         lastError = error;
-        if (signal?.aborted || error?.name === "AbortError" || !RETRYABLE_STATUS.has(Number(error?.status)) || attempt === MAX_REQUEST_ATTEMPTS - 1) throw error;
+        if (signal?.aborted || error?.name === "AbortError" || error?.rateLimited || !RETRYABLE_STATUS.has(Number(error?.status)) || attempt === MAX_REQUEST_ATTEMPTS - 1) throw error;
         const retryDelay = error.retryAfter > 0 ? Math.min(error.retryAfter * 1000, 3000) : 250 * (2 ** attempt);
         await waitFor(retryDelay, signal);
       } finally {
@@ -404,42 +455,55 @@
   const CATEGORY_TOPICS = ["Tourist attractions", "Landmarks", "Museums", "Parks", "Beaches", "Shopping malls", "Casinos", "Amusement parks"];
   const CATEGORY_TITLE_EXCLUDE = /defunct|former|proposed|demolished|planned|unbuilt|people|history of|companies|images/i;
 
+  function filterDiscoveredCategoryTitles(results, city) {
+    const perTopic = new Map();
+    (results || []).forEach((result) => {
+      const title = String(result.title || "").replace(/^Category:/, "");
+      const lower = title.toLowerCase();
+      const topic = CATEGORY_TOPICS.find((candidate) => lower.startsWith(candidate.toLowerCase()));
+      if (!topic || !lower.includes(city.toLowerCase()) || CATEGORY_TITLE_EXCLUDE.test(title)) return;
+      const bucket = perTopic.get(topic) || [];
+      if (bucket.length < 2) { bucket.push(title); perTopic.set(topic, bucket); }
+    });
+    return [...perTopic.values()].flat();
+  }
+
+  // Two searches instead of one per topic: the headline "Tourist attractions" query plus one
+  // combined query whose OR terms surface the remaining topic categories. Keeps the request
+  // budget small while still finding metro-area category names like "... the Las Vegas Valley".
   async function discoverCategoryTitles(city, signal) {
-    const searches = await Promise.all(CATEGORY_TOPICS.map(async (topic) => {
+    const queries = [
+      `intitle:"Tourist attractions" intitle:"${city}"`,
+      `intitle:"${city}" (museums OR casinos OR malls OR parks OR beaches OR landmarks OR amusement)`
+    ];
+    const searches = await Promise.all(queries.map(async (srsearch) => {
       try {
         const data = await fetchJson(makeUrl(WIKIPEDIA_API, {
-          action: "query", list: "search", srnamespace: "14", srlimit: "5",
-          srsearch: `intitle:"${topic}" intitle:"${city}"`, format: "json", origin: "*"
+          action: "query", list: "search", srnamespace: "14", srlimit: "20",
+          srsearch, format: "json", origin: "*"
         }), signal);
-        return (data?.query?.search || [])
-          .map((result) => String(result.title || "").replace(/^Category:/, ""))
-          .filter((title) => title.toLowerCase().startsWith(topic.toLowerCase())
-            && title.toLowerCase().includes(city.toLowerCase())
-            && !CATEGORY_TITLE_EXCLUDE.test(title))
-          .slice(0, 2);
+        return data?.query?.search || [];
       } catch (_) {
         return [];
       }
     }));
-    return searches.flat();
+    return filterDiscoveredCategoryTitles(searches.flat(), city);
   }
 
   async function fetchWikipediaCategoryPlaces(destination, geocode, signal) {
     const city = geocode?.name || destination;
-    const admin = geocode?.admin1 || "";
     const staticNames = [
       `Tourist attractions in ${city}`,
-      `Landmarks in ${city}`,
       `Museums in ${city}`,
       `Parks in ${city}`,
-      `Beaches of ${city}`,
-      `Shopping malls in ${city}`,
-      admin ? `Tourist attractions in ${city}, ${admin}` : "",
-      admin ? `Museums in ${city}, ${admin}` : "",
-      admin ? `Parks in ${city}, ${admin}` : ""
-    ].filter(Boolean);
+      `Shopping malls in ${city}`
+    ];
     const discovered = await discoverCategoryTitles(city, signal).catch(() => []);
-    const categoryNames = [...new Set([...discovered, ...staticNames])].slice(0, 14);
+    // Discovered titles come first, then only the static names not already covered by a
+    // discovered category of the same topic, capped hard to keep the request budget low.
+    const discoveredTopics = new Set(discovered.map((title) => CATEGORY_TOPICS.find((topic) => title.toLowerCase().startsWith(topic.toLowerCase()))));
+    const remainingStatic = staticNames.filter((name) => !discoveredTopics.has(CATEGORY_TOPICS.find((topic) => name.toLowerCase().startsWith(topic.toLowerCase()))));
+    const categoryNames = [...new Set([...discovered, ...remainingStatic])].slice(0, 8);
     const categoryResults = await Promise.all(categoryNames.map(async (category) => {
       try {
         const data = await fetchJson(makeUrl(WIKIPEDIA_API, {
@@ -951,14 +1015,24 @@ out center tags 80;`;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), PIPELINE_TIMEOUT_MS);
     options.signal?.addEventListener?.("abort", () => controller.abort(), { once: true });
+    const rateLimitEpochBefore = rateLimitEpoch;
+    const recordOutcome = (catalog) => {
+      lastResearchOutcome = {
+        destination: String(destination || "").trim(),
+        ok: Boolean(catalog),
+        rateLimited: !catalog && (rateLimitEpoch !== rateLimitEpochBefore || isWikimediaThrottled()),
+        at: Date.now()
+      };
+      return catalog;
+    };
     try {
       const geocode = options.geocode || await geocodeDestination(destination, { signal: controller.signal });
-      if (!geocode) return null;
+      if (!geocode) return recordOutcome(null);
       const slug = slugify([geocode.name, geocode.admin1, geocode.country].filter(Boolean).join(" "));
       const cached = dynamicCatalogCache.get(slug);
       if (cached && catalogHasSeededAnchors(cached, destination, geocode)) {
         const matchPattern = cached.matchPattern || destinationMatchPattern([destination, geocode?.name]);
-        return { ...cached, matchPattern, matchFlags: cached.matchFlags || "iu", match: new RegExp(matchPattern, cached.matchFlags || "iu") };
+        return recordOutcome({ ...cached, matchPattern, matchFlags: cached.matchFlags || "iu", match: new RegExp(matchPattern, cached.matchFlags || "iu") });
       }
       const [voyage, wikiGeo, wikiCategory, osm] = await Promise.all([
         fetchWikivoyageListings([geocode.name, geocode.country].filter(Boolean).join(" "), controller.signal).catch(() => ({ title: "", items: [] })),
@@ -967,18 +1041,18 @@ out center tags 80;`;
         fetchOpenStreetMapRecommendations(destination, geocode, controller.signal).catch(() => [])
       ]);
       const catalog = assembleDynamicCatalog(destination, geocode, { wikivoyageTitle: voyage.title, wikivoyageItems: voyage.items, wikipediaItems: [...wikiGeo, ...wikiCategory], osmItems: osm });
-      if (!catalog) return null;
+      if (!catalog) return recordOutcome(null);
       const cacheable = { ...catalog, match: undefined };
       dynamicCatalogCache.set(slug, cacheable);
-      return catalog;
+      return recordOutcome(catalog);
     } catch (_) {
-      return null;
+      return recordOutcome(null);
     } finally {
       clearTimeout(timer);
     }
   }
 
-  const api = { geocodeDestination, parseWikivoyageListings, stripWikitext, buildDynamicCatalog, dynamicCatalogCache, assembleDynamicCatalog, hasSeededDestinationCatalog, catalogHasSeededAnchors, fetchWikipediaCategoryPlaces, fetchOpenStreetMapRecommendations, slugify };
+  const api = { geocodeDestination, parseWikivoyageListings, stripWikitext, buildDynamicCatalog, dynamicCatalogCache, assembleDynamicCatalog, hasSeededDestinationCatalog, catalogHasSeededAnchors, fetchWikipediaCategoryPlaces, fetchOpenStreetMapRecommendations, slugify, destinationMatchPattern, isWikimediaThrottled, wikimediaRetryAfterMs, noteWikimediaRateLimit, getLastResearchOutcome };
   Object.assign(global, api);
   if (typeof module !== "undefined") module.exports = api;
 })(typeof globalThis !== "undefined" ? globalThis : window);

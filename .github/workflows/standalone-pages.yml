@@ -22,16 +22,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Precompute destination catalogs
+        # Runs the browser research pipeline server-side for top tourist cities so most real
+        # queries never hit the rate-limited runtime path. A bad research day must degrade
+        # coverage, never break the deploy: tolerate a non-zero exit and always leave a valid
+        # (possibly empty) precomputed-catalogs.json behind for the assemble step.
+        timeout-minutes: 25
+        run: |
+          node build-precomputed-catalogs.mjs --out precomputed-catalogs.json || echo "::warning::Precompute step failed; shipping empty precomputed catalogs."
+          if [ ! -s precomputed-catalogs.json ]; then
+            echo '{"generatedAt":"","count":0,"precomputedCatalogs":[]}' > precomputed-catalogs.json
+          fi
       - name: Assemble standalone site
         run: |
           mkdir _site
-          cp index.html version.js catalogs.json dynamic-catalog.js app.js styles.css export-styles.js icon-source.js photo-store.js trip-schema.js plan-x-guide-centered-compass-morph-clean-x.svg manifest.webmanifest sw.js _site/
+          cp index.html version.js catalogs.json precomputed-catalogs.json dynamic-catalog.js app.js styles.css export-styles.js icon-source.js photo-store.js trip-schema.js plan-x-guide-centered-compass-morph-clean-x.svg manifest.webmanifest sw.js _site/
           mkdir -p _site/icons
           cp icons/icon-192.png icons/icon-512.png _site/icons/
       - name: Verify artifact contents
         run: |
           missing=0
-          for f in index.html version.js catalogs.json dynamic-catalog.js styles.css app.js trip-schema.js export-styles.js icon-source.js photo-store.js sw.js manifest.webmanifest icons/icon-192.png icons/icon-512.png plan-x-guide-centered-compass-morph-clean-x.svg; do
+          for f in index.html version.js catalogs.json precomputed-catalogs.json dynamic-catalog.js styles.css app.js trip-schema.js export-styles.js icon-source.js photo-store.js sw.js manifest.webmanifest icons/icon-192.png icons/icon-512.png plan-x-guide-centered-compass-morph-clean-x.svg; do
             if [ ! -f "_site/$f" ]; then
               echo "::error::Missing required file in deployment artifact: $f"
               missing=1

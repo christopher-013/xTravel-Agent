@@ -221,16 +221,40 @@ async function loadDestinationCatalogs() {
     renderKnownDestinationOptions();
     return;
   }
+  const version = encodeURIComponent(window.PLANTOGUIDE_VERSION || "3.1.0");
   try {
-    const version = encodeURIComponent(window.PLANTOGUIDE_VERSION || "3.1.0");
     const response = await fetch("catalogs.json?v=" + version, { cache: "no-cache" });
     if (!response.ok) throw new Error("Catalog request failed: " + response.status);
     applyCatalogData(await response.json());
   } catch (_) {
     applyCatalogData(EMBEDDED_CATALOG_FALLBACK);
-  } finally {
-    catalogsReady = true;
   }
+  // Deploy-time research catalogs for popular destinations: same shape as runtime dynamic
+  // catalogs, generated server-side so most real queries never touch the rate-limited
+  // browser research path. The file is optional (absent in local/file deployments).
+  try {
+    const response = await fetch("precomputed-catalogs.json?v=" + version, { cache: "no-cache" });
+    if (response.ok) applyPrecomputedCatalogs((await response.json())?.precomputedCatalogs);
+  } catch (_) {
+    // Optional file; runtime research remains the fallback.
+  }
+  catalogsReady = true;
+}
+
+function applyPrecomputedCatalogs(precomputed) {
+  if (!Array.isArray(precomputed)) return;
+  const existingLabels = new Set(destinationCatalogs.map((catalog) => String(catalog.label || "").toLowerCase()));
+  precomputed.forEach((entry) => {
+    if (!entry || !entry.matchPattern || !Array.isArray(entry.attractions) || !entry.attractions.length) return;
+    if (entry.label && existingLabels.has(String(entry.label).toLowerCase())) return;
+    try {
+      destinationCatalogs.push({ ...entry, dynamic: true, researchMode: true, precomputed: true, match: new RegExp(entry.matchPattern, entry.matchFlags || "iu") });
+      existingLabels.add(String(entry.label || "").toLowerCase());
+    } catch (_) {
+      // Skip entries whose stored pattern fails to compile.
+    }
+  });
+  updateDestinationModeBadge();
 }
 
 function renderKnownDestinationOptions() {
@@ -437,8 +461,12 @@ async function goToPreferencesStep() {
     if (!getLiveOrCuratedCatalog(knownDestination.label)) startOrReuseDynamicCatalogResearch(knownDestination.label);
   } else {
     const researchDestination = destinationInput.value.trim();
-    startOrReuseDynamicCatalogResearch(researchDestination);
-    destinationError.textContent = `Researching real places for ${researchDestination} — you can continue, results will update automatically.`;
+    if (getLiveOrCuratedCatalog(researchDestination)) {
+      destinationError.textContent = "Live research catalog ready. Verify hours, closures, ratings, tickets, and availability before travel.";
+    } else {
+      startOrReuseDynamicCatalogResearch(researchDestination);
+      destinationError.textContent = `Researching real places for ${researchDestination} — you can continue, results will update automatically.`;
+    }
   }
   destinationInput.setCustomValidity("");
   updateDestinationModeBadge();
@@ -504,6 +532,14 @@ async function ensureDynamicCatalog(destination) {
   }
 }
 
+function researchWasRateLimited(destination) {
+  if (typeof getLastResearchOutcome !== "function") return false;
+  const outcome = getLastResearchOutcome();
+  if (!outcome || outcome.ok) return false;
+  const matchesDestination = String(outcome.destination || "").toLowerCase() === String(destination || "").trim().toLowerCase();
+  return matchesDestination && (outcome.rateLimited || (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()));
+}
+
 function startOrReuseDynamicCatalogResearch(destination) {
   if (pendingDynamicCatalog && pendingDynamicCatalog.destination === destination) return pendingDynamicCatalog.promise;
   const promise = ensureDynamicCatalog(destination).then((catalog) => {
@@ -512,7 +548,9 @@ function startOrReuseDynamicCatalogResearch(destination) {
     if (stillOnThisDestination) {
       destinationError.textContent = catalog
         ? "Live research catalog created from keyless public sources. Verify hours, closures, ratings, tickets, and availability before travel."
-        : "Starter mode is available for this destination: PlanToGuide will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
+        : researchWasRateLimited(destination)
+          ? "Live research is busy right now — showing starter suggestions. Retry in a minute."
+          : "Starter mode is available for this destination: PlanToGuide will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
       updateDestinationModeBadge();
       renderSuggestionPicker(destination);
     }
@@ -1291,6 +1329,20 @@ function renderSuggestionPicker(destination) {
     if (isResearching) {
       starterSuggestionNote.hidden = false;
       starterSuggestionNote.textContent = `Researching real places for ${destination} — you can continue, results will update automatically.`;
+    } else if (!hasLiveOrCuratedCatalog(destination) && researchWasRateLimited(destination)) {
+      // Fail loudly instead of silently showing placeholders: tell the traveler research was
+      // rate limited and give them a retry control.
+      starterSuggestionNote.hidden = false;
+      starterSuggestionNote.textContent = "Live research is busy right now — showing starter suggestions. ";
+      const retryButton = document.createElement("button");
+      retryButton.type = "button";
+      retryButton.className = "text-button suggestion-retry-button";
+      retryButton.textContent = "Retry live research";
+      retryButton.addEventListener("click", () => {
+        startOrReuseDynamicCatalogResearch(destination);
+        renderSuggestionPicker(destination);
+      });
+      starterSuggestionNote.appendChild(retryButton);
     } else {
       starterSuggestionNote.hidden = hasLiveOrCuratedCatalog(destination);
       starterSuggestionNote.textContent = "Suggestions are limited for this destination — your selections and notes will be preserved for AI research.";
@@ -1499,11 +1551,15 @@ function queueSuggestionImageLookup(cacheKey, task) {
 
 async function fetchSuggestionImage(url) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const response = await fetch(url);
+    const response = await fetch(url, { headers: { "Api-User-Agent": "PlanToGuide/3.4 (https://christopher-013.github.io/PlanToGuide/)" } });
     if (response.ok) return response.json();
-    if (attempt === 0 && (response.status === 429 || response.status >= 500)) {
-      const retryAfter = Math.min(2000, Math.max(250, Number(response.headers.get("Retry-After")) * 1000 || 500));
-      await new Promise((resolve) => setTimeout(resolve, retryAfter));
+    if (response.status === 429) {
+      // Trip the shared Wikimedia circuit breaker instead of retrying into the penalty window.
+      if (typeof noteWikimediaRateLimit === "function") noteWikimediaRateLimit(Number(response.headers.get("Retry-After") || 0));
+      throw new Error("Image lookup rate limited");
+    }
+    if (attempt === 0 && response.status >= 500) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
       continue;
     }
     throw new Error("Image lookup unavailable");
@@ -1523,6 +1579,11 @@ async function hydrateSuggestionImage(imageElement, suggestion, destination) {
     imageElement.dataset.imageLookup = "ready";
     return;
   }
+  if (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()) {
+    // Skip without caching the miss so a later render can retry once the window clears.
+    imageElement.dataset.imageLookup = "ready";
+    return;
+  }
   try {
     const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${suggestion.name} ${destination}`, gsrlimit: "1", prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
     const payload = await queueSuggestionImageLookup(cacheKey, () => fetchSuggestionImage(`https://en.wikipedia.org/w/api.php?${params}`));
@@ -1531,7 +1592,8 @@ async function hydrateSuggestionImage(imageElement, suggestion, destination) {
     suggestionImageCache.set(cacheKey, source);
     if (source && imageElement.isConnected) imageElement.src = source;
   } catch (_) {
-    suggestionImageCache.set(cacheKey, "");
+    // Don't cache rate-limit misses; those cards deserve a retry after the window clears.
+    if (!(typeof isWikimediaThrottled === "function" && isWikimediaThrottled())) suggestionImageCache.set(cacheKey, "");
   } finally {
     imageElement.dataset.imageLookup = "ready";
   }

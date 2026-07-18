@@ -21,3 +21,6 @@ Thumbs.db
 .idea/
 *.log
 npm-debug.log*
+
+# Generated at deploy time by build-precomputed-catalogs.mjs
+precomputed-catalogs.json

@@ -1,5 +1,13 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.4.0 research reliability release
+
+- Precomputes research catalogs for ~60 top tourist cities at deploy time (`build-precomputed-catalogs.mjs` in the Pages workflow), shipped as `precomputed-catalogs.json`, so most destinations resolve instantly without touching the rate-limited runtime research path.
+- Sends the documented `Api-User-Agent` header on every Wikimedia request so the app leaves the strictest anonymous rate-limit bucket.
+- Cuts the research request budget roughly in half: category discovery collapsed from eight searches to two, static category names trimmed and deduplicated against discovered ones, and the merged list capped at eight.
+- Adds a Wikimedia circuit breaker: the first 429 stops all further Wikimedia requests (including image lookups) until the Retry-After window passes, instead of retrying into the penalty.
+- Fails loudly when research is rate limited: Step 2 explains "Live research is busy — showing starter suggestions" with a Retry button, instead of silently rendering placeholders; rate-limited image lookups are skipped without caching the miss.
+
 ## v3.3.7 Adventure step viewport sizing
 
 - Expands the desktop Places to see panel to use available vertical space.
