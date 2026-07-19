@@ -992,6 +992,8 @@ out center tags 80;`;
       matchFlags: "iu",
       match: new RegExp(matchPattern, "iu"),
       label: fallbackArea,
+      country: geocode?.country || "",
+      countryCode: String(geocode?.country_code || "").toUpperCase(),
       banner: fillerImage,
       zones: zones.length ? zones : [{ name: fallbackArea, icon: "🧭", keywords: [destination] }],
       attractions: see,

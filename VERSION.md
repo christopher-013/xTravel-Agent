@@ -1,5 +1,95 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.5.3 coordinated homepage wordmark
+
+- Restyles the product name beneath the animated compass as PLAN TO GUIDE.
+- Matches the hero headline's yellow, pale-yellow, and blue typography with the same animated gradient underline beneath GUIDE.
+- Preserves a compact, readable treatment on mobile and reduced-motion accessibility.
+
+## v3.5.1 Tokyo-style daily Maps list
+
+- Keeps the existing embedded Google route map and full-route action.
+- Replaces verbose Maps cards with a selected-day-only list of numbered locations and addresses.
+- Shows the estimated walk, transit, or ride-share/taxi leg to the next stop using distance and traveler transport preferences.
+- Removes the redundant View day itinerary buttons from the Maps tab.
+
+## v3.5.0 realistic daily scheduling
+
+- Reserves at least one hour for every full meal, with longer lunch and dinner blocks where appropriate.
+- Uses coordinates, travel preference, and neighborhood proximity to produce conservative travel-time estimates between stops.
+- Removes lower-priority activities when the complete schedule cannot fit between the traveler's selected start and evening times.
+- Aligns generated activity start and end times to easy-to-follow 30-minute increments while preserving exact confirmed reservation start times.
+- Carries activity duration and travel-leg details into the website and AI-ready exports.
+
+## v3.4.13 stable Adventure spacing and image fallback
+
+- Prevents the Adventure heading, helper text, and controls from collapsing into one another at all desktop heights.
+- Makes the recommendation list the only flexible scrolling row while preserving fixed workflow controls.
+- Replaces failed remote recommendation images with a local graphic fallback without exposing long broken-image alternative text.
+
+## v3.4.12 simplified Trip Basics import action
+
+- Removes the Tokyo Family Trip example card from the questionnaire.
+- Keeps the AI-updated-plan importer as a single left-aligned support card, with full-width mobile behavior.
+
+## v3.4.11 primary Trip Basics brand banner
+
+- Replaces the airplane and sun decorations with a large animated PlanToGuide compass-X logo beside the opening message.
+- Keeps the product name paired with the logo on the left while the builder label, headline, and description remain together on the right.
+- Adds a compact two-column mobile treatment and respects reduced-motion preferences.
+
+## v3.4.10 Maps itinerary action layout
+
+- Keeps each Maps-tab “View itinerary” action inside the stop card’s main content column instead of the narrow icon column.
+- Preserves a compact pill treatment while allowing long localized dates to wrap cleanly on small screens.
+
+## v3.4.9 split Trip Basics actions
+
+- Anchors the Tokyo example card to the left side of the Trip Basics page and the AI-updated-plan importer to the right.
+- Preserves the compact stacked-card treatment on narrow mobile screens.
+
+## v3.4.8 shallow-screen Adventure layout
+
+- Prevents the Adventure title, helper toolbar, and recommendation graphics from overlapping in wide, shallow desktop windows or at increased browser zoom.
+- Keeps the recommendation list as the flexible scrolling region while reserving readable rows for workflow controls.
+
+## v3.4.7 full-card Trip Basics actions
+
+- Aligns the Tokyo example and AI-updated-plan cards as a compact group on the right side of the Trip Basics form.
+- Makes the complete Tokyo card an external link and the complete AI-plan card an importer button, with keyboard-visible hover and focus feedback.
+- Keeps both cards full-width and stacked on narrow screens.
+
+## v3.4.6 quieter live-research status
+
+- Replaces the highlighted yellow Live Research Catalog card with a subtle transparent glass status beneath the weather widget.
+- Removes its drop shadow and reduces border contrast while keeping the text legible over destination photography.
+
+## v3.4.5 simplified Trip Basics support area
+
+- Removes the Included with every adventure / Five ready-to-use outputs preview card from Trip Basics.
+- Keeps only the Tokyo example and AI-updated-plan import cards immediately before the final, right-aligned Next Step button.
+
+## v3.4.4 Trip Basics supporting-card placement
+
+- Moves the Tokyo example, AI-plan import, and five included-output cards out of the hero banner and into a compact supporting section at the end of Trip Basics.
+- Keeps Next Step as the final control, aligned at the bottom right after every supporting card.
+- Restyles the moved content for the light form surface and preserves horizontally scrollable deliverable cards on narrow screens.
+
+## v3.4.3 reference-scale workflow and practical travel guidance
+
+- Uses the Tokyo showcase as the desktop scale reference: larger workflow headings, controls, suggestion photography, card copy, and meaningful icons while retaining the contained mobile layout.
+- Shortens the trip-building transition and offers repeat visitors a Skip animation control.
+- Rejects unrelated Wikimedia image matches, checks several relevant Wikipedia results, and falls back to Wikimedia Commons before retaining an honest branded placeholder.
+- Places the compact Live Research Catalog status directly beneath the destination weather card.
+- Expands country-aware emergency contacts and adds transit, tipping, and key-phrase guidance for supported non-English-speaking destinations.
+
+## v3.4.2 Home report polish and safety contacts
+
+- Removes the redundant Day by day list from the bottom of the Home tab.
+- Improves report typography, itinerary symbols, cards, and navigation readability on desktop-sized displays without changing the mobile scale.
+- Reduces the unsupported-destination Live Research Catalog notice to a concise, right-aligned card.
+- Keeps Police / Fire / Ambulance, Tourist Hotline (EN), and U.S. Embassy rows visible for every trip, with country-aware contacts for built-in destinations and explicit verification-safe fallbacks elsewhere.
+
 ## v3.4.1 gold-standard Home tab
 
 - Rebuilds the generated trip site's Home tab to match the Tokyo gold-standard layout: Selected Day plan card (with locked-booking count and status-colored stops), a time-aware Next Stop widget, Next Reservation (with address and confirmation line when available), Today's Route & Transit timeline, an auto-generated Pre-Trip Checklist, and Emergency Contacts.

@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=3.4.1">
+  <link rel="stylesheet" href="styles.css?v=3.5.3">
 </head>
 <body>
   <main class="page-shell">
@@ -30,26 +30,13 @@
 
     <section class="builder" id="builder" aria-labelledby="builderTitle">
       <div class="builder-copy">
-        <a class="builder-brand home-brand-lockup" href="#" aria-label="PlanToGuide home"><span aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><strong>PlanToGuide</strong></a>
-        <p class="eyebrow">Trip website builder · Free browser mode</p>
-        <h1 id="builderTitle">Turn your trip <strong class="hero-brand-word hero-brand-plan">PLAN</strong> <strong class="hero-brand-word hero-brand-to">TO</strong> a<br>mobile travel <strong class="hero-brand-word hero-brand-guide">GUIDE.</strong></h1>
-        <p class="lede homepage-tagline">Create a shareable trip website, printable itinerary, and AI-ready planning file for your next trip.</p>
-        <div class="home-showcase-row">
-          <div class="demo-showcase"><strong>Example: Tokyo 2026 Family Trip</strong><span>Locked bookings, route flow, food, shopping, maps, weather, photos, and AI-ready planning structure.</span><a href="https://christopher-013.github.io/Tokyo2026/" target="_blank" rel="noopener">View demo trip →</a></div>
-          <div class="import-callout"><strong>Already have an AI-updated plan?</strong><span>Paste the TRIP-PLAN.md your AI returned and re-render your trip website instantly.</span><button type="button" class="text-button" data-open-import>Import updated plan →</button></div>
-          <section class="home-deliverables-preview" aria-labelledby="homeDeliverablesTitle">
-            <div class="home-deliverables-heading">
-              <span>Included with every adventure</span>
-              <strong id="homeDeliverablesTitle">Five ready-to-use outputs</strong>
-            </div>
-            <div class="home-deliverables-cards">
-              <article class="home-deliverable-card" tabindex="0" aria-label="Mobile Trip App. A phone-friendly guide with daily navigation, weather, bookings, maps, food, shopping, and photos for use while traveling." data-description="A phone-friendly guide with daily navigation, weather, bookings, maps, food, shopping, and photos for use while traveling."><span aria-hidden="true">📱</span><strong>Mobile Trip App</strong><small>Use on the go</small></article>
-              <article class="home-deliverable-card" tabindex="0" aria-label="Printable Guide. A printer-ready daily itinerary with route flow, times, reservations, addresses, and practical notes." data-description="A printer-ready daily itinerary with route flow, times, reservations, addresses, and practical notes."><span aria-hidden="true">📄</span><strong>Printable Guide</strong><small>Plan and share</small></article>
-              <article class="home-deliverable-card" tabindex="0" aria-label="Shareable Website. A complete static website package you can publish or share with friends and family without requiring an account." data-description="A complete static website package you can publish or share with friends and family without requiring an account."><span aria-hidden="true">🌐</span><strong>Shareable Website</strong><small>Friends and family</small></article>
-              <article class="home-deliverable-card" tabindex="0" aria-label="Photo Journal. A date-organized gallery for uploaded photos, captions, and available geotagged map locations." data-description="A date-organized gallery for uploaded photos, captions, and available geotagged map locations."><span aria-hidden="true">📷</span><strong>Photo Journal</strong><small>Save the story</small></article>
-              <article class="home-deliverable-card" tabindex="0" aria-label="AI Source-of-Truth. A TRIP-PLAN Markdown file preserving preferences, bookings, constraints, and refinement instructions for your favorite AI tools." data-description="A TRIP-PLAN Markdown file preserving preferences, bookings, constraints, and refinement instructions for your favorite AI tools."><span aria-hidden="true">✦</span><strong>AI Source-of-Truth</strong><small>Keep refining</small></article>
-            </div>
-          </section>
+        <div class="builder-hero-lockup">
+          <a class="builder-brand home-brand-lockup" href="#" aria-label="PlanToGuide home"><span aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><strong class="home-brand-wordmark" aria-hidden="true"><span class="home-brand-plan">PLAN</span><span class="home-brand-to">TO</span><span class="home-brand-guide">GUIDE</span></strong></a>
+          <div class="builder-hero-message">
+            <p class="eyebrow">Trip website builder · Free browser mode</p>
+            <h1 id="builderTitle">Turn your trip <strong class="hero-brand-word hero-brand-plan">PLAN</strong> <strong class="hero-brand-word hero-brand-to">TO</strong> a<br>mobile travel <strong class="hero-brand-word hero-brand-guide">GUIDE.</strong></h1>
+            <p class="lede homepage-tagline">Create a shareable trip website, printable itinerary, and AI-ready planning file for your next trip.</p>
+          </div>
         </div>
         <div class="journey-line" aria-hidden="true">
           <span class="journey-dot start"></span>
@@ -116,6 +103,15 @@
                 </div>
               </div>
               <p class="date-error" id="dateError" role="alert"></p>
+            </div>
+          </div>
+          <div class="trip-basics-end-showcase">
+            <div class="trip-basics-support-row">
+              <button type="button" class="import-callout support-action-card" data-open-import>
+                <strong>Already have an AI-updated plan?</strong>
+                <span>Paste the TRIP-PLAN.md your AI returned and re-render your trip website instantly.</span>
+                <span class="support-card-action">Import updated plan →</span>
+              </button>
             </div>
           </div>
           <button class="primary-button compact-next-button" id="nextStepButton" type="button">
@@ -238,6 +234,11 @@
                 <div class="weather-metrics-row" id="weatherMetrics"></div>
                 <small class="weather-disclaimer" id="weatherDisclaimer">Loading live conditions. Seasonal planning guidance is used when the forecast is unavailable.</small>
               </section>
+              <section class="research-mode-notice" id="researchModeNotice" hidden>
+                <p class="eyebrow">Starter research mode</p>
+                <h3>Local details need research</h3>
+                <p>This destination is not in the detailed browser catalog yet.</p>
+              </section>
             </div>
             </div>
             <div class="app-panel-body home-panel-body">
@@ -245,22 +246,12 @@
                 <div><p class="eyebrow">Ready when you are</p><h3>Your trip at a glance</h3></div>
                 <span class="saved-pill">Draft saved</span>
               </div>
-              <section class="research-mode-notice" id="researchModeNotice" hidden>
-                <p class="eyebrow">Starter research mode</p>
-                <h3>Local details need research</h3>
-                <p>This destination is not in the detailed browser catalog yet. Your site preserves your must-dos and bookings while providing an AI-ready planning structure.</p>
-                <ul><li>Verify landmark names, hours, closures, and ticket requirements</li><li>Research neighborhoods and optimize each day geographically</li><li>Confirm restaurant cuisine, ratings, dietary fit, and reservations</li><li>Replace placeholder shopping and activity cards with verified choices</li><li>Check transit times, weather, accessibility, and seasonal conditions</li></ul>
-              </section>
               <div class="home-day-plan" id="homeDayPlan"></div>
               <div class="home-widget-slot" id="homeNextStop"></div>
               <div class="home-widget-slot" id="homeNextReservation"></div>
               <div class="home-widget-slot" id="homeRouteTransit"></div>
               <div class="home-widget-slot" id="homeChecklist"></div>
               <div class="home-widget-slot" id="homeEmergency"></div>
-              <div class="home-days">
-                <div class="section-heading"><p>Day by day</p><button type="button" data-open-tab="itinerary">View all →</button></div>
-                <div id="homeDayList"></div>
-              </div>
             </div>
           </section>
 
@@ -344,6 +335,7 @@
   </main>
 
   <div class="trip-creation-transition" id="tripCreationTransition" role="status" aria-live="polite" aria-atomic="true" hidden>
+    <button class="creation-skip-button" id="tripCreationSkip" type="button" hidden>Skip animation →</button>
     <div class="trip-creation-transition-card">
       <div class="creation-center-stage">
         <span class="creation-orbit-halo" aria-hidden="true"></span>
@@ -413,12 +405,12 @@
     </article>
   </template>
 
-  <script src="version.js?v=3.4.1"></script>
-  <script src="dynamic-catalog.js?v=3.4.1"></script>
-  <script src="export-styles.js?v=3.4.1"></script>
-  <script src="icon-source.js?v=3.4.1"></script>
-  <script src="photo-store.js?v=3.4.1"></script>
-  <script src="trip-schema.js?v=3.4.1"></script>
-  <script src="app.js?v=3.4.1"></script>
+  <script src="version.js?v=3.5.3"></script>
+  <script src="dynamic-catalog.js?v=3.5.3"></script>
+  <script src="export-styles.js?v=3.5.3"></script>
+  <script src="icon-source.js?v=3.5.3"></script>
+  <script src="photo-store.js?v=3.5.3"></script>
+  <script src="trip-schema.js?v=3.5.3"></script>
+  <script src="app.js?v=3.5.3"></script>
 </body>
 </html>

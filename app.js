@@ -1021,7 +1021,7 @@ async function bundleExportImages(html) {
 
 function createExportWebsite() {
   const dayNav = trip.days.map((day, index) => `<a href="#day-${index + 1}">${escapeHtml(formatDate(day.date, false))}</a>`).join("");
-  const days = trip.days.map((day, dayIndex) => `<section class="day" id="day-${dayIndex + 1}"><header><p>${escapeHtml(formatDate(day.date, true))}</p><h2>${escapeHtml(day.title)}</h2></header>${day.activities.map((item) => `<article class="stop"><time>${escapeHtml(item.time)}</time><div><span>${escapeHtml(item.type)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p>${item.sourceLabel && item.sourceUrl ? `<a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener">Source: ${escapeHtml(item.sourceLabel)}${item.sourceLicense ? ` · ${escapeHtml(item.sourceLicense)}` : ""} ↗</a>` : ""}<a href="${googleMapsSearchUrl(cleanActivityTitle(item.title))}" target="_blank" rel="noopener">Google Maps details ↗</a></div></article>`).join("")}</section>`).join("");
+  const days = trip.days.map((day, dayIndex) => `<section class="day" id="day-${dayIndex + 1}"><header><p>${escapeHtml(formatDate(day.date, true))}</p><h2>${escapeHtml(day.title)}</h2></header>${day.activities.map((item) => `<article class="stop"><time>${escapeHtml(item.time)}${item.endTime ? `<small>to ${escapeHtml(item.endTime)}</small>` : ""}</time><div><span>${escapeHtml(item.type)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p>${item.travelMinutesToNext ? `<p class="travel">${escapeHtml(item.travelIconToNext || "🚇")} Approximately ${escapeHtml(String(item.travelMinutesToNext))} minutes to the next stop · ${escapeHtml(item.travelModeToNext || "local travel")}</p>` : ""}${item.sourceLabel && item.sourceUrl ? `<a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener">Source: ${escapeHtml(item.sourceLabel)}${item.sourceLicense ? ` · ${escapeHtml(item.sourceLicense)}` : ""} ↗</a>` : ""}<a href="${googleMapsSearchUrl(cleanActivityTitle(item.title))}" target="_blank" rel="noopener">Google Maps details ↗</a></div></article>`).join("")}</section>`).join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(trip.destination)} Travel Guide · PlanToGuide</title><link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"></head><body><header class="hero" style="--banner:url('${escapeHtml(trip.guide.banner)}')"><p>PlanToGuide</p><h1>${escapeHtml(trip.destination)}</h1><span>${escapeHtml(formatDate(trip.start, true))} — ${escapeHtml(formatDate(trip.end, true))}</span></header><nav>${dayNav}</nav><main>${days}</main><footer>Exported from PlanToGuide · Verify live details before traveling · <a href="ATTRIBUTIONS.md">Sources and licenses</a>.</footer></body></html>`;
 }
 
@@ -1044,7 +1044,7 @@ function createAttributionsMarkdown(activeTrip = trip) {
 }
 
 function createExportStyles() {
-  return `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Fraunces:wght@600&display=swap');*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:#1c1f26;background:#f5f1e8;font-family:'DM Sans',sans-serif}.hero{min-height:340px;display:flex;flex-direction:column;justify-content:end;padding:48px max(24px,calc((100% - 1000px)/2));color:white;background:linear-gradient(110deg,rgba(18,45,39,.88),rgba(22,55,48,.42)),var(--banner);background-position:center;background-size:cover}.hero p{margin:0 0 12px;color:#f5c84b;font-weight:700}.hero h1{margin:0;font:600 clamp(48px,8vw,90px)/1 'Fraunces',serif}.hero span{margin-top:14px}nav{position:sticky;top:0;z-index:2;display:flex;gap:8px;overflow:auto;padding:12px max(18px,calc((100% - 1000px)/2));background:#173e35}nav a{flex:none;padding:9px 13px;border-radius:999px;color:white;background:rgba(255,255,255,.12);font-size:12px;text-decoration:none}main{max-width:1000px;margin:auto;padding:36px 22px 70px}.day{margin-bottom:54px}.day>header{padding-bottom:14px;border-bottom:2px solid #24594c}.day>header p{margin:0;color:#8a6500;font-size:12px;font-weight:700}.day h2{margin:4px 0 0;font:600 32px 'Fraunces',serif}.stop{display:grid;grid-template-columns:72px 1fr;gap:18px;padding:22px 0;border-bottom:1px solid #d8d1c3}.stop time{color:#24594c;font-weight:700}.stop span{color:#8a6500;font-size:10px;font-weight:700;text-transform:uppercase}.stop h3{margin:4px 0 7px;color:#254b7a}.stop p{margin:0;color:#626c68;line-height:1.6}.stop a{display:inline-block;margin-top:9px;color:#24594c;font-size:12px;font-weight:700}footer{padding:24px;text-align:center;color:#69716f;background:#ece6da;font-size:12px}@media(max-width:600px){.hero{min-height:280px;padding:32px 20px}.stop{grid-template-columns:1fr;gap:6px}.day h2{font-size:26px}}`;
+  return `@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700&family=Fraunces:wght@600&display=swap');*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;color:#1c1f26;background:#f5f1e8;font-family:'DM Sans',sans-serif}.hero{min-height:340px;display:flex;flex-direction:column;justify-content:end;padding:48px max(24px,calc((100% - 1000px)/2));color:white;background:linear-gradient(110deg,rgba(18,45,39,.88),rgba(22,55,48,.42)),var(--banner);background-position:center;background-size:cover}.hero p{margin:0 0 12px;color:#f5c84b;font-weight:700}.hero h1{margin:0;font:600 clamp(48px,8vw,90px)/1 'Fraunces',serif}.hero span{margin-top:14px}nav{position:sticky;top:0;z-index:2;display:flex;gap:8px;overflow:auto;padding:12px max(18px,calc((100% - 1000px)/2));background:#173e35}nav a{flex:none;padding:9px 13px;border-radius:999px;color:white;background:rgba(255,255,255,.12);font-size:12px;text-decoration:none}main{max-width:1000px;margin:auto;padding:36px 22px 70px}.day{margin-bottom:54px}.day>header{padding-bottom:14px;border-bottom:2px solid #24594c}.day>header p{margin:0;color:#8a6500;font-size:12px;font-weight:700}.day h2{margin:4px 0 0;font:600 32px 'Fraunces',serif}.stop{display:grid;grid-template-columns:86px 1fr;gap:18px;padding:22px 0;border-bottom:1px solid #d8d1c3}.stop time{color:#24594c;font-weight:700}.stop time small{display:block;margin-top:3px;color:#69716f}.stop span{color:#8a6500;font-size:10px;font-weight:700;text-transform:uppercase}.stop h3{margin:4px 0 7px;color:#254b7a}.stop p{margin:0;color:#626c68;line-height:1.6}.stop p.travel{margin-top:9px;color:#24594c;font-size:12px;font-weight:700}.stop a{display:inline-block;margin-top:9px;color:#24594c;font-size:12px;font-weight:700}footer{padding:24px;text-align:center;color:#69716f;background:#ece6da;font-size:12px}@media(max-width:600px){.hero{min-height:280px;padding:32px 20px}.stop{grid-template-columns:1fr;gap:6px}.day h2{font-size:26px}}`;
 }
 
 function createTripMarkdownBase() {
@@ -1054,7 +1054,7 @@ function createTripMarkdownBase() {
   const selected = trip.selections.length ? trip.selections.map((item) => `- ${item.name}${item.area ? ` — ${item.area}` : ""}: ${item.detail}${item.sourceLabel ? ` (Source: ${item.sourceLabel}${item.sourceLicense ? `, ${item.sourceLicense}` : ""}${item.sourceUrl ? ` — ${item.sourceUrl}` : ""})` : ""}`).join("\n") : "- No manually selected places.";
   const locked = trip.bookings.length ? trip.bookings.map((item) => `- **${item.name}** — ${item.date || "date flexible"} — ${item.time || "time TBD"} — ${titleCase(item.status)}`).join("\n") : "- No locked bookings supplied.";
   const optional = trip.days.flatMap((day) => day.activities.filter((item) => /optional|backup/i.test(item.status || "")).map((item) => `- ${formatDate(day.date, false)} — ${item.title} — ${item.status}`)).join("\n") || "- No optional items marked.";
-  const days = trip.days.map((day, index) => `## ${index + 1}. ${formatDate(day.date, true)} — ${day.title}\n\n**Area focus:** ${day.zone?.name || trip.destination}\n\n${day.activities.map((item) => `### ${item.time} — ${item.title}\n\n- Status: ${item.status || "Recommended"}\n- Type: ${item.type}\n- Details: ${item.description}\n- Google Maps: ${googleMapsSearchUrl(cleanActivityTitle(item.title))}${item.sourceLabel ? `\n- Source: ${item.sourceLabel}${item.sourceLicense ? ` (${item.sourceLicense})` : ""}${item.sourceAttribution ? ` — ${item.sourceAttribution}` : ""}${item.sourceUrl ? ` — ${item.sourceUrl}` : ""}` : ""}`).join("\n\n")}`).join("\n\n---\n\n");
+  const days = trip.days.map((day, index) => `## ${index + 1}. ${formatDate(day.date, true)} — ${day.title}\n\n**Area focus:** ${day.zone?.name || trip.destination}\n\n${day.activities.map((item) => `### ${item.time}${item.endTime ? `–${item.endTime}` : ""} — ${item.title}\n\n- Status: ${item.status || "Recommended"}\n- Type: ${item.type}\n- Duration: ${item.durationMinutes || estimateActivityMinutes(item)} minutes\n${item.travelMinutesToNext ? `- Travel to next stop: approximately ${item.travelMinutesToNext} minutes by ${item.travelModeToNext || "local transport"}\n` : ""}- Details: ${item.description}\n- Google Maps: ${googleMapsSearchUrl(cleanActivityTitle(item.title))}${item.sourceLabel ? `\n- Source: ${item.sourceLabel}${item.sourceLicense ? ` (${item.sourceLicense})` : ""}${item.sourceAttribution ? ` — ${item.sourceAttribution}` : ""}${item.sourceUrl ? ` — ${item.sourceUrl}` : ""}` : ""}`).join("\n\n")}`).join("\n\n---\n\n");
   const practical = trip.practical || createEmptyPracticalInfo(trip.destination);
   const practicalLines = [
     `- **Emergency numbers:** ${practical.emergencyNumbers || "Needs verification"}`,
@@ -1271,21 +1271,36 @@ async function navigateToWizardStep(stepNumber) {
 async function showTripCreationTransition() {
   const overlay = document.querySelector("#tripCreationTransition");
   const logo = document.querySelector("#tripCreationLogo");
+  const skipButton = document.querySelector("#tripCreationSkip");
+  const seenKey = "plantoguide-creation-animation-seen";
+  const hasSeenAnimation = safeStorageGet(seenKey) === "1";
   overlay.hidden = false;
   overlay.classList.remove("finishing", "is-running");
   document.body.classList.add("creating-trip");
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (skipButton) skipButton.hidden = !hasSeenAnimation;
   logo.removeAttribute("src");
   void logo.offsetWidth;
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   overlay.classList.add("is-running");
   const animationSource = brandIconAnimationSource();
   logo.src = animationSource;
-  await new Promise((resolve) => setTimeout(resolve, reducedMotion ? 2800 : 9000));
+  await new Promise((resolve) => {
+    let timer = 0;
+    const finish = () => {
+      window.clearTimeout(timer);
+      skipButton?.removeEventListener("click", finish);
+      resolve();
+    };
+    skipButton?.addEventListener("click", finish, { once: true });
+    timer = window.setTimeout(finish, reducedMotion ? 1100 : 6000);
+  });
+  safeStorageSet(seenKey, "1");
   overlay.classList.add("finishing");
-  await new Promise((resolve) => setTimeout(resolve, reducedMotion ? 180 : 650));
+  await new Promise((resolve) => setTimeout(resolve, reducedMotion ? 120 : 360));
   overlay.hidden = true;
   overlay.classList.remove("finishing", "is-running");
+  if (skipButton) skipButton.hidden = true;
   document.body.classList.remove("creating-trip");
   releaseBrandIconSource(animationSource, 0);
 }
@@ -1383,7 +1398,7 @@ function renderSuggestionPicker(destination) {
         : suggestion.category === "shop"
           ? [suggestion.area, suggestion.bestFor || "Popular local shopping"]
           : [suggestion.area, "Popular place to see"];
-      card.innerHTML = `<button class="suggestion-select-button" type="button" aria-pressed="${selectedSuggestions.has(suggestion.key) ? "true" : "false"}"><img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="${escapeHtml(`${suggestion.name} in ${destination}`)}" loading="lazy"><span class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong><span class="suggestion-check">✓</span></span><span class="suggestion-card-meta">${meta.filter(Boolean).map(escapeHtml).join(" · ")}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span></span></button><span class="suggestion-card-links">${sourceCreditHtml(suggestion)}<a class="suggestion-map-link" href="${googleMapsSearchUrl(`${suggestion.name} ${destination}`)}" target="_blank" rel="noopener noreferrer">Verify current details on Google Maps ↗</a></span>`;
+      card.innerHTML = `<button class="suggestion-select-button" type="button" aria-pressed="${selectedSuggestions.has(suggestion.key) ? "true" : "false"}"><img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="" aria-hidden="true" loading="lazy"><span class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong><span class="suggestion-check">✓</span></span><span class="suggestion-card-meta">${meta.filter(Boolean).map(escapeHtml).join(" · ")}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span></span></button><span class="suggestion-card-links">${sourceCreditHtml(suggestion)}<a class="suggestion-map-link" href="${googleMapsSearchUrl(`${suggestion.name} ${destination}`)}" target="_blank" rel="noopener noreferrer">Verify current details on Google Maps ↗</a></span>`;
       hydrateSuggestionImage(card.querySelector(".suggestion-card-image"), suggestion, destination);
       card.dataset.suggestionKey = suggestion.key;
       const selectButton = card.querySelector(".suggestion-select-button");
@@ -1528,6 +1543,49 @@ function suggestionImagePlaceholder(suggestion) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+const IMAGE_MATCH_STOP_WORDS = new Set([
+  "and", "the", "of", "at", "in", "for", "restaurant", "cafe", "market", "shop",
+  "shopping", "street", "district", "center", "centre", "park", "local", "popular",
+  "top", "rated", "best", "neighborhood", "neighbourhood"
+]);
+
+function normalizedImageTokens(value = "") {
+  return String(value).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/)
+    .filter((token) => token.length >= 3 && !IMAGE_MATCH_STOP_WORDS.has(token));
+}
+
+function imagePageMatchScore(page, suggestion, destination) {
+  if (!page?.thumbnail?.source && !page?.imageinfo?.[0]?.thumburl && !page?.imageinfo?.[0]?.url) return -1;
+  const pageTokens = new Set(normalizedImageTokens(page.title));
+  const destinationTokens = normalizedImageTokens(destination);
+  const destinationTokenSet = new Set(destinationTokens);
+  const allNameTokens = normalizedImageTokens(suggestion.name);
+  const nameTokens = allNameTokens.filter((token) => !destinationTokenSet.has(token));
+  if (!nameTokens.length) return -1;
+  const nameMatches = nameTokens.filter((token) => pageTokens.has(token));
+  if (!nameMatches.length) return -1;
+  const destinationMatches = destinationTokens.filter((token) => pageTokens.has(token));
+  const normalizedTitle = normalizedImageTokens(page.title).join(" ");
+  const normalizedName = nameTokens.join(" ");
+  return (normalizedTitle.includes(normalizedName) ? 12 : 0) + (nameMatches.length * 5) + destinationMatches.length;
+}
+
+function bestMatchingImagePage(payload, suggestion, destination) {
+  return Object.values(payload?.query?.pages || {})
+    .map((page) => ({ page, score: imagePageMatchScore(page, suggestion, destination) }))
+    .filter((candidate) => candidate.score >= 5)
+    .sort((left, right) => right.score - left.score)[0]?.page || null;
+}
+
+function resolvedPageImage(page) {
+  return page?.thumbnail?.source || page?.imageinfo?.[0]?.thumburl || page?.imageinfo?.[0]?.url || "";
+}
+
+function isRemoteSuggestionImage(value = "") {
+  return /^https:\/\//i.test(String(value));
+}
+
 function drainSuggestionImageQueue() {
   while (activeSuggestionImageLookups < MAX_SUGGESTION_IMAGE_LOOKUPS && suggestionImageQueue.length) {
     const job = suggestionImageQueue.shift();
@@ -1551,7 +1609,7 @@ function queueSuggestionImageLookup(cacheKey, task) {
 
 async function fetchSuggestionImage(url) {
   for (let attempt = 0; attempt < 2; attempt += 1) {
-    const response = await fetch(url, { headers: { "Api-User-Agent": "PlanToGuide/3.4 (https://christopher-013.github.io/PlanToGuide/)" } });
+    const response = await fetch(url, { headers: { "Api-User-Agent": "PlanToGuide/3.4.3 (https://christopher-013.github.io/PlanToGuide/)" } });
     if (response.ok) return response.json();
     if (response.status === 429) {
       // Trip the shared Wikimedia circuit breaker instead of retrying into the penalty window.
@@ -1569,13 +1627,32 @@ async function fetchSuggestionImage(url) {
 
 async function hydrateSuggestionImage(imageElement, suggestion, destination) {
   if (!imageElement) return;
+  const placeholder = suggestionImagePlaceholder(suggestion);
+  const restorePlaceholder = () => {
+    if (imageElement.dataset.imageSource === "placeholder" && imageElement.src === placeholder) return;
+    imageElement.src = placeholder;
+    imageElement.classList.add("is-placeholder");
+    imageElement.dataset.imageSource = "placeholder";
+  };
+  const applyImage = (source, sourceName) => {
+    if (!source || !imageElement.isConnected) return;
+    imageElement.src = source;
+    imageElement.classList.remove("is-placeholder");
+    imageElement.dataset.imageSource = sourceName;
+  };
+  imageElement.addEventListener("error", restorePlaceholder);
+  if (!isRemoteSuggestionImage(imageElement.currentSrc || imageElement.src)) restorePlaceholder();
   if (suggestion.researchPrompt) { imageElement.dataset.imageLookup = "ready"; return; }
-  if (suggestion.image) { imageElement.dataset.imageLookup = "ready"; return; }
+  if (isRemoteSuggestionImage(suggestion.image)) {
+    applyImage(suggestion.image, suggestion.imageSource || "catalog");
+    imageElement.dataset.imageLookup = "ready";
+    return;
+  }
   imageElement.dataset.imageLookup = "loading";
   const cacheKey = `${suggestion.name}|${destination}`.toLowerCase();
   if (suggestionImageCache.has(cacheKey)) {
     const cached = suggestionImageCache.get(cacheKey);
-    if (cached) imageElement.src = cached;
+    if (cached) applyImage(cached, "cache");
     imageElement.dataset.imageLookup = "ready";
     return;
   }
@@ -1585,12 +1662,18 @@ async function hydrateSuggestionImage(imageElement, suggestion, destination) {
     return;
   }
   try {
-    const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${suggestion.name} ${destination}`, gsrlimit: "1", prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
+    const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${suggestion.name} ${destination}`, gsrlimit: "5", prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
     const payload = await queueSuggestionImageLookup(cacheKey, () => fetchSuggestionImage(`https://en.wikipedia.org/w/api.php?${params}`));
-    const page = Object.values(payload.query?.pages || {})[0];
-    const source = page?.thumbnail?.source || "";
+    let source = resolvedPageImage(bestMatchingImagePage(payload, suggestion, destination));
+    let imageSource = "wikipedia";
+    if (!source) {
+      const commonsParams = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${suggestion.name} ${destination}`, gsrnamespace: "6", gsrlimit: "8", prop: "imageinfo", iiprop: "url", iiurlwidth: "520", format: "json", origin: "*" });
+      const commonsPayload = await fetchSuggestionImage(`https://commons.wikimedia.org/w/api.php?${commonsParams}`);
+      source = resolvedPageImage(bestMatchingImagePage(commonsPayload, suggestion, destination));
+      imageSource = "wikimedia-commons";
+    }
     suggestionImageCache.set(cacheKey, source);
-    if (source && imageElement.isConnected) imageElement.src = source;
+    if (source) applyImage(source, imageSource);
   } catch (_) {
     // Don't cache rate-limit misses; those cards deserve a retry after the window clears.
     if (!(typeof isWikimediaThrottled === "function" && isWikimediaThrottled())) suggestionImageCache.set(cacheKey, "");
@@ -1627,6 +1710,162 @@ function switchAppTab(tabName) {
   if (activePanel) activePanel.scrollTop = 0;
   announceReportStatus(`${titleCase(tabName === "ai" ? "AI export" : tabName)} tab selected for ${formatDate(trip.days[activeDay].date, false)}.`);
   requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
+}
+
+// Emergency and consular contacts for the destination countries included in the
+// browser catalog. Emergency and embassy numbers are sourced from official
+// government guidance. Many countries do not operate one national English-language
+// tourist hotline, so the UI says that plainly instead of presenting a misleading
+// number. Unknown countries retain visible verification-safe fallbacks.
+const COUNTRY_PRACTICAL_CONTACTS = Object.freeze({
+  CA: {
+    emergencyNumbers: "Police / Fire / Ambulance: 911",
+    touristHotline: "Tourist Hotline (EN): No national hotline — use the destination's official visitor centre",
+    nearestEmbassy: "U.S. Embassy Ottawa: +1-613-688-5335"
+  },
+  FR: {
+    emergencyNumbers: "Police 17 · Fire 18 · Ambulance 15 · EU emergency 112",
+    touristHotline: "Tourist Hotline (EN): No national hotline — use the destination's official tourism office",
+    nearestEmbassy: "U.S. Embassy Paris: +33-1-43-12-22-22",
+    transitTips: "Use contactless payment or a local transit pass where accepted; validate paper tickets before boarding when required.",
+    tipping: "Service is included by law; round up or leave 5–10% for especially good table service.",
+    keyPhrases: ["Bonjour — hello", "Merci — thank you", "Parlez-vous anglais? — do you speak English?"]
+  },
+  GB: {
+    emergencyNumbers: "Police / Fire / Ambulance: 999 or 112",
+    touristHotline: "Tourist Hotline (EN): No national hotline — use the destination's official visitor centre",
+    nearestEmbassy: "U.S. Embassy London: +44-20-7499-9000"
+  },
+  IT: {
+    emergencyNumbers: "Police / Fire / Ambulance: 112",
+    touristHotline: "Tourist Hotline (EN): No national hotline — use the destination's official tourism office",
+    nearestEmbassy: "U.S. Embassy Rome: +39-06-4674-1",
+    transitTips: "Validate paper train and bus tickets before travel unless the ticket is already tied to a specific service.",
+    tipping: "A service or cover charge may already be included; rounding up or leaving 5–10% is appreciated, not compulsory.",
+    keyPhrases: ["Buongiorno — hello / good day", "Grazie — thank you", "Parla inglese? — do you speak English?"]
+  },
+  JP: {
+    emergencyNumbers: "Police 110 · Fire / Ambulance 119",
+    touristHotline: "JNTO Visitor Hotline (EN): +81-50-3816-2787",
+    nearestEmbassy: "U.S. Embassy Tokyo: +81-3-3224-5000",
+    transitTips: "Use a Suica or Pasmo IC card for most trains, subways, buses, convenience stores, and vending machines.",
+    tipping: "Tipping is not customary; attentive service is included in the price.",
+    keyPhrases: ["Sumimasen — excuse me / sorry", "Arigatou gozaimasu — thank you", "Eigo wa hanasemasu ka? — do you speak English?"]
+  },
+  PT: {
+    emergencyNumbers: "Police / Fire / Ambulance: 112",
+    touristHotline: "Tourist Hotline (EN): No national hotline — use the destination's official tourism office",
+    nearestEmbassy: "U.S. Embassy Lisbon: +351-21-770-2122",
+    transitTips: "Load a reusable local transit card and tap or validate it as required for each metro, tram, bus, or train trip.",
+    tipping: "Service is generally included; 5–10% is appreciated for good restaurant service.",
+    keyPhrases: ["Olá — hello", "Obrigado / Obrigada — thank you", "Fala inglês? — do you speak English?"]
+  },
+  ES: {
+    emergencyNumbers: "Police / Fire / Ambulance: 112",
+    touristHotline: "Tourist Hotline (EN): No national hotline — use the destination's official tourism office",
+    nearestEmbassy: "U.S. Embassy Madrid: +34-91-587-2200",
+    transitTips: "Use the city transit card or contactless system where offered; regional rail and high-speed trains often require separate tickets.",
+    tipping: "Service is included; rounding up or leaving 5–10% for good table service is appreciated.",
+    keyPhrases: ["Hola — hello", "Gracias — thank you", "¿Habla inglés? — do you speak English?"]
+  },
+  DE: {
+    emergencyNumbers: "Police 110 · Fire / Ambulance 112",
+    touristHotline: "Tourist Hotline (EN): Use the destination's official visitor information service",
+    nearestEmbassy: "U.S. Embassy Berlin: +49-30-8305-0",
+    transitTips: "Buy the correct fare-zone ticket and validate it before boarding when it is not time-stamped automatically.",
+    tipping: "Tell the server the total you want to pay; about 5–10% is customary for good service.",
+    keyPhrases: ["Guten Tag — hello", "Danke — thank you", "Sprechen Sie Englisch? — do you speak English?"]
+  },
+  GR: {
+    emergencyNumbers: "Police / Fire / Ambulance: 112",
+    touristHotline: "Tourist Police: 1571",
+    nearestEmbassy: "U.S. Embassy Athens: +30-210-721-2951",
+    transitTips: "Validate local transit tickets and keep them until the end of the trip; ferries should be booked early in peak season.",
+    tipping: "Round up for taxis and cafés; 5–10% is appreciated at restaurants when service is not included.",
+    keyPhrases: ["Yassas — hello", "Efcharistó — thank you", "Miláte Angliká? — do you speak English?"]
+  },
+  KR: {
+    emergencyNumbers: "Police 112 · Fire / Ambulance 119",
+    touristHotline: "Korea Travel Hotline (EN): 1330",
+    nearestEmbassy: "U.S. Embassy Seoul: +82-2-397-4114",
+    transitTips: "Load a T-money card for subways, buses, convenience stores, and many taxis.",
+    tipping: "Tipping is generally not expected; service charges may appear at upscale hotels or restaurants.",
+    keyPhrases: ["Annyeonghaseyo — hello", "Gamsahamnida — thank you", "Yeongeo haseyo? — do you speak English?"]
+  },
+  TH: {
+    emergencyNumbers: "Police 191 · Fire 199 · Ambulance 1669 · Tourist Police 1155",
+    touristHotline: "Tourist Police (EN): 1155",
+    nearestEmbassy: "U.S. Embassy Bangkok: +66-2-205-4000",
+    transitTips: "Use stored-value cards for the system that supports them, but expect separate payment systems for BTS, MRT, boats, and buses.",
+    tipping: "Not mandatory, but rounding up and leaving 5–10% for good restaurant or spa service is appreciated.",
+    keyPhrases: ["Sawasdee — hello", "Khob khun — thank you", "Pood pasa Angrit dai mai? — do you speak English?"]
+  },
+  MX: {
+    emergencyNumbers: "Police / Fire / Ambulance: 911",
+    touristHotline: "Tourist assistance (SECTUR): 078 where available",
+    nearestEmbassy: "U.S. Embassy Mexico City: +52-55-5080-2000",
+    transitTips: "Use official transit cards and authorized taxi or ride-hail pickup points; confirm intercity bus terminals before departure.",
+    tipping: "10–15% is customary at restaurants; tip hotel staff, guides, and drivers for good service.",
+    keyPhrases: ["Hola — hello", "Gracias — thank you", "¿Habla inglés? — do you speak English?"]
+  },
+  SG: {
+    emergencyNumbers: "Police 999 · Fire / Ambulance 995",
+    touristHotline: "Singapore Tourism Board: +65-6736-6622",
+    nearestEmbassy: "U.S. Embassy Singapore: +65-6476-9100",
+    transitTips: "Tap a contactless bank card or use an EZ-Link card on MRT and buses; remember to tap out.",
+    tipping: "Tipping is not customary; a service charge is commonly added to restaurant and hotel bills.",
+    keyPhrases: ["Hello", "Thank you", "English is widely spoken"]
+  },
+  NZ: {
+    emergencyNumbers: "Police / Fire / Ambulance: 111",
+    touristHotline: "Visitor information: Use the nearest official i-SITE visitor centre",
+    nearestEmbassy: "U.S. Embassy Wellington: +64-4-462-6000",
+    transitTips: "Use the destination's local stored-value transit card where available; intercity buses, ferries, and trains require separate bookings.",
+    tipping: "Tipping is not customary; exceptional service can be acknowledged at your discretion."
+  },
+  US: {
+    emergencyNumbers: "Police / Fire / Ambulance: 911",
+    touristHotline: "Visitor information: 311 where available, or the destination's official visitor centre",
+    nearestEmbassy: "U.S. Embassy: Not applicable within the United States"
+  }
+});
+
+function inferDestinationCountryCode(destination = "", guide = {}) {
+  const suppliedCode = String(guide.countryCode || guide.country_code || "").trim().toUpperCase();
+  if (suppliedCode) return suppliedCode;
+  const suppliedCountry = String(guide.country || "").toLowerCase();
+  const text = `${destination} ${guide.label || ""} ${suppliedCountry}`.toLowerCase();
+  if (/\b(japan|tokyo|osaka|kyoto|honolulu|oahu|hawaii)\b/.test(text)) return /\b(honolulu|oahu|hawaii)\b/.test(text) ? "US" : "JP";
+  if (/\b(france|paris)\b/.test(text)) return "FR";
+  if (/\b(united kingdom|great britain|england|scotland|wales|london|uk)\b/.test(text)) return "GB";
+  if (/\b(italy|rome)\b/.test(text)) return "IT";
+  if (/\b(portugal|lisbon)\b/.test(text)) return "PT";
+  if (/\b(spain|madrid|barcelona|seville)\b/.test(text)) return "ES";
+  if (/\b(germany|berlin|munich|hamburg)\b/.test(text)) return "DE";
+  if (/\b(greece|athens|santorini|mykonos)\b/.test(text)) return "GR";
+  if (/\b(south korea|korea|seoul|busan)\b/.test(text)) return "KR";
+  if (/\b(thailand|bangkok|phuket|chiang mai)\b/.test(text)) return "TH";
+  if (/\b(mexico|cancun|mexico city|oaxaca)\b/.test(text)) return "MX";
+  if (/\b(singapore)\b/.test(text)) return "SG";
+  if (/\b(canada|vancouver)\b/.test(text)) return "CA";
+  if (/\b(new zealand|auckland|wellington|christchurch|queenstown)\b/.test(text)) return "NZ";
+  if (/\b(united states|usa|new york|seattle|san diego|los angeles)\b/.test(text)) return "US";
+  return "";
+}
+
+function resolvePracticalInfo(destination = "", guide = {}) {
+  const countryCode = inferDestinationCountryCode(destination, guide);
+  const defaults = {
+    emergencyNumbers: "Police / Fire / Ambulance: Verify the official local emergency number before travel",
+    touristHotline: "Tourist Hotline (EN): Verify with the destination's official tourism office",
+    nearestEmbassy: "U.S. Embassy: Find the nearest post at usembassy.gov and save its number offline"
+  };
+  return {
+    ...defaults,
+    ...(guide.practical || {}),
+    ...(COUNTRY_PRACTICAL_CONTACTS[countryCode] || {}),
+    countryCode
+  };
 }
 
 function buildTrip(destination, start, end, wishes, selections = [], preferences = {}) {
@@ -1715,7 +1954,7 @@ function buildTrip(destination, start, end, wishes, selections = [], preferences
     preferences,
     bookings,
     guide,
-    practical: guide.practical || null,
+    practical: resolvePracticalInfo(destination, guide),
     researchMode: Boolean(guide.researchMode),
     dynamicCatalog: Boolean(guide.dynamic),
     days: itineraryDays
@@ -1833,10 +2072,10 @@ function createActivities(index, totalDays, ideas, destination, guide, selectedF
   const dinnerTime = preferences.evening === "quiet" ? "18:30" : preferences.evening === "nightlife" ? "20:00" : "19:30";
   const zoneNote = zone ? `Today stays centered on ${zone.name}, minimizing cross-city travel.` : "Today follows one compact district.";
   const routeNote = preferences.transport === "low-walking" ? `${zoneNote} Keep walking segments short and use door-to-door transport.` : preferences.transport === "mixed" ? `${zoneNote} Use transit for the main route and a taxi when it saves energy.` : `${zoneNote} Connect nearby stops by walking and public transit.`;
-  const breakfastActivity = activity("Eat", "☕", breakfastTime, `Breakfast: ${breakfast.name}`, `${breakfast.detail} ${areaText(breakfast)} Allow 45–60 minutes.`, "Recommended", breakfast);
+  const breakfastActivity = activity("Eat", "☕", breakfastTime, `Breakfast: ${breakfast.name}`, `${breakfast.detail} ${areaText(breakfast)} Allow at least 60 minutes.`, "Recommended", breakfast);
   const firstSightActivity = activity(index === 0 ? "Arrival" : "See", index === 0 ? "🧳" : "🏛️", morningTime, firstSight.name, `${firstSight.detail} ${areaText(firstSight)} Allow about 2–3 hours including nearby streets. ${routeNote}`, "Recommended", firstSight);
-  const lunchActivity = activity("Eat", "🍽️", "12:30", `Lunch: ${lunch.name}`, `${lunch.detail} ${areaText(lunch)} Check current opening days and queues.`, "Recommended", lunch);
-  const dinnerActivity = activity("Evening", "🌙", dinnerTime, `${index === totalDays - 1 ? "Farewell dinner" : "Dinner"}: ${dinner.name}`, `${dinner.detail} ${areaText(dinner)} Reserve when possible and verify current hours.${preferences.notes ? ` Plan around this note: ${preferences.notes}.` : ""}`, "Recommended", dinner);
+  const lunchActivity = activity("Eat", "🍽️", "12:30", `Lunch: ${lunch.name}`, `${lunch.detail} ${areaText(lunch)} Allow about 90 minutes, including possible queues, and check current opening days.`, "Recommended", lunch);
+  const dinnerActivity = activity("Evening", "🌙", dinnerTime, `${index === totalDays - 1 ? "Farewell dinner" : "Dinner"}: ${dinner.name}`, `${dinner.detail} ${areaText(dinner)} Allow about 90 minutes. Reserve when possible and verify current hours.${preferences.notes ? ` Plan around this note: ${preferences.notes}.` : ""}`, "Recommended", dinner);
   // Meals and the day's main sight are the day's non-negotiable structure; fillFullDay keeps these
   // regardless of the time budget and only trims/adds everything else.
   [breakfastActivity, firstSightActivity, lunchActivity, dinnerActivity].forEach((item) => { item.anchor = true; });
@@ -1854,11 +2093,12 @@ function createActivities(index, totalDays, ideas, destination, guide, selectedF
 
 function estimateActivityMinutes(item) {
   const title = String(item.title || "").toLowerCase();
+  if (title.startsWith("breakfast")) return 60;
+  if (title.startsWith("lunch")) return 75;
+  if (/^(dinner|farewell dinner)/.test(title)) return 90;
   if (item.type === "Eat") {
-    if (title.startsWith("breakfast")) return 50;
-    if (title.startsWith("lunch")) return 60;
     if (/snack|pastry|dessert|café|cafe|coffee|tea break/.test(title)) return 45;
-    return 90; // dinner / farewell dinner
+    return 75;
   }
   if (item.type === "Arrival") return 150;
   if (item.type === "See") return 100;
@@ -1870,7 +2110,7 @@ function estimateActivityMinutes(item) {
 
 function dayBudgetMinutes(preferences = {}) {
   const startHour = { early: 7.5, standard: 8.5, slow: 10 }[preferences.start] ?? 8.5;
-  const endHour = { quiet: 21.5, flexible: 22.5, nightlife: 23.5 }[preferences.evening] ?? 22.5;
+  const endHour = { quiet: 20.5, flexible: 21.5, nightlife: 23 }[preferences.evening] ?? 21.5;
   return Math.max(0, Math.round((endHour - startHour) * 60));
 }
 
@@ -1883,6 +2123,12 @@ function formatClockMinutes(totalMinutes) {
   const hour = Math.floor(normalized / 60) % 24;
   const minute = normalized % 60;
   return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function roundUpToScheduleSlot(totalMinutes, slotMinutes = 30) {
+  const value = Number(totalMinutes);
+  if (!Number.isFinite(value)) return value;
+  return Math.ceil(value / slotMinutes) * slotMinutes;
 }
 
 function coordinateDistanceKm(first, second) {
@@ -1898,39 +2144,68 @@ function coordinateDistanceKm(first, second) {
   return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-function travelMinutesBetween(first, second, preferences = {}) {
-  if (!first || !second) return 0;
+function roundTravelMinutes(value) {
+  return Math.max(5, Math.round(Number(value || 0) / 5) * 5);
+}
+
+function estimateTravelLeg(first, second, preferences = {}) {
+  if (!first || !second) return { minutes: 0, mode: "", icon: "", basis: "none" };
   const distance = coordinateDistanceKm(first, second);
   if (distance !== null) {
-    const speed = preferences.transport === "low-walking" ? 22 : preferences.transport === "mixed" ? 18 : 14;
-    return Math.max(8, Math.min(75, Math.round(8 + (distance / speed) * 60)));
+    if (preferences.transport !== "low-walking" && distance <= (preferences.transport === "mixed" ? .8 : 1.4)) {
+      return { minutes: Math.min(35, roundTravelMinutes(5 + (distance / 4.5) * 60)), mode: "walk", icon: "🚶", basis: "coordinates" };
+    }
+    if (preferences.transport === "low-walking") {
+      return { minutes: Math.min(120, roundTravelMinutes(12 + (distance / 24) * 60)), mode: "taxi / accessible transit", icon: "🚕", basis: "coordinates" };
+    }
+    if (preferences.transport === "mixed") {
+      return { minutes: Math.min(120, roundTravelMinutes(10 + (distance / 26) * 60)), mode: "transit or taxi", icon: "🚕", basis: "coordinates" };
+    }
+    return { minutes: Math.min(120, roundTravelMinutes(14 + (distance / 22) * 60)), mode: "public transit", icon: "🚇", basis: "coordinates" };
   }
   const firstArea = normalizeDestinationName(first.area || "");
   const secondArea = normalizeDestinationName(second.area || "");
-  if (firstArea && secondArea && (firstArea === secondArea || firstArea.includes(secondArea) || secondArea.includes(firstArea))) return 10;
-  return travelBufferMinutes(preferences);
+  const sameArea = firstArea && secondArea && (firstArea === secondArea || firstArea.includes(secondArea) || secondArea.includes(firstArea));
+  if (sameArea) {
+    if (preferences.transport === "low-walking") return { minutes: 15, mode: "taxi / accessible transit", icon: "🚕", basis: "same area" };
+    return { minutes: 15, mode: "walk", icon: "🚶", basis: "same area" };
+  }
+  if (preferences.transport === "low-walking") return { minutes: 30, mode: "taxi / accessible transit", icon: "🚕", basis: "area estimate" };
+  if (preferences.transport === "mixed") return { minutes: 25, mode: "transit or taxi", icon: "🚕", basis: "area estimate" };
+  return { minutes: 30, mode: "public transit", icon: "🚇", basis: "area estimate" };
+}
+
+function travelMinutesBetween(first, second, preferences = {}) {
+  return estimateTravelLeg(first, second, preferences).minutes;
 }
 
 function scheduleDayActivities(activities, preferences = {}) {
   const startMinutes = Math.round(({ early: 7.5, standard: 8.5, slow: 10 }[preferences.start] ?? 8.5) * 60);
-  const input = activities.map((item, index) => ({ ...item, _order: index }));
+  // Keep the user's/original requested time immutable across recursive trim passes. Without this,
+  // each pass would treat the previous pass's shifted time as a new request and progressively push
+  // meals later even after lower-priority activities were removed.
+  const input = activities.map((item, index) => ({ ...item, _order: index, _requestedTime: item._requestedTime || item.time }));
   const byRequestedTime = (first, second) => {
-    const firstTime = timeToMinutes(first.time);
-    const secondTime = timeToMinutes(second.time);
+    const firstTime = timeToMinutes(first._requestedTime);
+    const secondTime = timeToMinutes(second._requestedTime);
     if (firstTime !== secondTime) return firstTime - secondTime;
     return first._order - second._order;
   };
-  const isFixed = (item) => /confirmed/i.test(String(item.status || "")) && Number.isFinite(timeToMinutes(item.time));
+  const isFixed = (item) => /confirmed/i.test(String(item.status || "")) && Number.isFinite(timeToMinutes(item._requestedTime));
   const fixed = input.filter(isFixed).sort(byRequestedTime);
   const flexible = input.filter((item) => !isFixed(item)).sort(byRequestedTime);
   const output = [];
   let cursor = startMinutes;
   let previous = null;
 
-  const durationFor = (item) => Math.max(20, Number(item.durationMinutes) || estimateActivityMinutes(item));
+  // Generated plans use half-hour blocks so the itinerary is easy to scan and realistic to follow.
+  // Exact confirmed reservation start times remain untouched; flexible stops align around them.
+  const durationFor = (item) => roundUpToScheduleSlot(Math.max(30, Number(item.durationMinutes) || estimateActivityMinutes(item)));
   const appendFlexible = (item) => {
     const travel = previous ? travelMinutesBetween(previous, item, preferences) : 0;
-    const start = cursor + travel;
+    const requestedStart = timeToMinutes(item._requestedTime);
+    const earliestStart = Math.max(cursor + travel, Number.isFinite(requestedStart) ? requestedStart : cursor + travel);
+    const start = roundUpToScheduleSlot(earliestStart);
     item.time = formatClockMinutes(start);
     item.durationMinutes = durationFor(item);
     item.endTime = formatClockMinutes(start + item.durationMinutes);
@@ -1939,7 +2214,7 @@ function scheduleDayActivities(activities, preferences = {}) {
     previous = item;
   };
   const appendFixed = (item) => {
-    const suppliedTime = timeToMinutes(item.time);
+    const suppliedTime = timeToMinutes(item._requestedTime);
     const travel = previous ? travelMinutesBetween(previous, item, preferences) : 0;
     const arrival = cursor + travel;
     item.durationMinutes = durationFor(item);
@@ -1963,22 +2238,27 @@ function scheduleDayActivities(activities, preferences = {}) {
       continue;
     }
     const travelToFlexible = previous ? travelMinutesBetween(previous, nextFlexible, preferences) : 0;
-    const flexibleStart = cursor + travelToFlexible;
+    const flexibleStart = roundUpToScheduleSlot(cursor + travelToFlexible);
     const flexibleEnd = flexibleStart + durationFor(nextFlexible);
     const travelToFixed = travelMinutesBetween(nextFlexible, nextFixed, preferences);
-    if (flexibleEnd + travelToFixed <= timeToMinutes(nextFixed.time)) appendFlexible(flexible.shift());
+    if (flexibleEnd + travelToFixed <= timeToMinutes(nextFixed._requestedTime)) appendFlexible(flexible.shift());
     else appendFixed(fixed.shift());
   }
 
-  const desiredEnd = Math.round(({ quiet: 21.5, flexible: 22.5, nightlife: 23.5 }[preferences.evening] ?? 22.5) * 60);
+  const desiredEnd = Math.round(({ quiet: 20.5, flexible: 21.5, nightlife: 23 }[preferences.evening] ?? 21.5) * 60);
   if (cursor > desiredEnd) {
     const removable = [...output].reverse().find((item) => !item.anchor && !/confirmed/i.test(String(item.status || "")) && !["Booking", "Must do"].includes(item.type));
     if (removable) return scheduleDayActivities(input.filter((item) => item._order !== removable._order), preferences);
   }
 
   output.forEach((item, index) => {
-    item.travelMinutesToNext = index < output.length - 1 ? travelMinutesBetween(item, output[index + 1], preferences) : 0;
+    const leg = index < output.length - 1 ? estimateTravelLeg(item, output[index + 1], preferences) : { minutes: 0, mode: "", icon: "", basis: "none" };
+    item.travelMinutesToNext = leg.minutes;
+    item.travelModeToNext = leg.mode;
+    item.travelIconToNext = leg.icon;
+    item.travelEstimateBasis = leg.basis;
     delete item._order;
+    delete item._requestedTime;
   });
   return output;
 }
@@ -2134,12 +2414,12 @@ function renderTrip() {
     const copy = researchModeNotice.querySelector("p:not(.eyebrow)");
     if (trip.dynamicCatalog) {
       if (eyebrow) eyebrow.textContent = "Live research catalog";
-      if (heading) heading.textContent = "Real places found — verify live details";
-      if (copy) copy.textContent = "PlanToGuide built this guide from keyless public sources such as Wikivoyage and Wikipedia. Treat names and descriptions as useful research starters, then verify current hours, closures, tickets, routes, ratings, and reservations.";
+      if (heading) heading.textContent = "Real places found";
+      if (copy) copy.textContent = "Verify current hours, tickets, routes, ratings, and reservations.";
     } else {
       if (eyebrow) eyebrow.textContent = "Starter research mode";
       if (heading) heading.textContent = "Local details need research";
-      if (copy) copy.textContent = "This destination is not in the detailed browser catalog yet. Your site preserves your must-dos and bookings while providing an AI-ready planning structure.";
+      if (copy) copy.textContent = "Your choices and bookings are preserved for continued AI research.";
     }
   }
 
@@ -2357,7 +2637,7 @@ function renderHomeNextReservation(day) {
 }
 
 function transitModeLabel(travel) {
-  return travel.icon === "🚶" ? "Walk" : travel.icon === "🚕" ? "Taxi" : "Transit";
+  return travel.icon === "🚶" ? "Walk" : travel.icon === "🚕" ? "Taxi / transit" : "Transit";
 }
 
 // Today's Route & Transit — the selected day's stops on a timeline with the travel leg
@@ -2371,9 +2651,10 @@ function renderHomeRouteTransit(day) {
     const next = stops[index + 1];
     const travel = next ? estimateTravel(stop, next) : null;
     const leg = travel
-      ? `<div class="rt-leg"><span class="rt-leg-mode">${displayIcon(travel.icon)} ${escapeHtml(transitModeLabel(travel))}</span><span class="rt-leg-dur">${travel.minutes} min</span></div>`
+      ? `<div class="rt-leg"><span class="rt-leg-mode">${displayIcon(travel.icon)} ${escapeHtml(transitModeLabel(travel))}</span><span class="rt-leg-dur">~${travel.minutes} min</span></div>`
       : "";
-    return `<div class="rt-stop"><div class="rt-rail"><span class="rt-dot ${activityLockClass(stop)}"></span>${next ? '<span class="rt-line"></span>' : ""}</div><div class="rt-content"><div class="rt-row"><span class="rt-name"><span aria-hidden="true">${displayIcon(stop.icon)}</span> ${escapeHtml(cleanActivityTitle(stop.title))}</span><span class="rt-time">${escapeHtml(stop.time)}</span></div>${leg}</div></div>`;
+    const timeRange = stop.endTime ? `${stop.time}–${stop.endTime}` : stop.time;
+    return `<div class="rt-stop"><div class="rt-rail"><span class="rt-dot ${activityLockClass(stop)}"></span>${next ? '<span class="rt-line"></span>' : ""}</div><div class="rt-content"><div class="rt-row"><span class="rt-name"><span aria-hidden="true">${displayIcon(stop.icon)}</span> ${escapeHtml(cleanActivityTitle(stop.title))}</span><span class="rt-time">${escapeHtml(timeRange)}</span></div>${leg}</div></div>`;
   }).join("");
   container.innerHTML = `<article class="home-widget route-transit-widget"><div class="home-widget-head"><span aria-hidden="true">🗺️</span><span class="home-widget-label">Today's Route &amp; Transit</span></div><div class="rt-list">${rows}</div></article>`;
 }
@@ -2456,15 +2737,17 @@ function renderHomeDayList() {
 }
 
 function createPracticalToolEntries() {
-  const practical = trip.practical;
+  const guide = {
+    ...(trip.guide || {}),
+    practical: { ...(trip.guide?.practical || {}), ...(trip.practical || {}) }
+  };
+  const practical = resolvePracticalInfo(trip.destination, guide);
   const hasVerified = (value) => value && !/needs verification/i.test(value);
-  if (!practical || !["emergencyNumbers", "touristHotline", "nearestEmbassy", "hospitalOrClinic", "transitTips", "tipping"].some((key) => hasVerified(practical[key]))) {
-    return [["🆘", "Emergency card", "Save your hotel address, insurance details, local emergency number, and embassy contact offline. Ask your AI to fill the Practical Info section, then import the updated plan."]];
-  }
-  const entries = [];
-  if (hasVerified(practical.emergencyNumbers)) entries.push(["🆘", "Emergency numbers", practical.emergencyNumbers]);
-  if (hasVerified(practical.touristHotline)) entries.push(["☎️", "Tourist hotline", practical.touristHotline]);
-  if (hasVerified(practical.nearestEmbassy)) entries.push(["🏛️", "Embassy / consulate", practical.nearestEmbassy]);
+  const entries = [
+    ["🆘", "Police / Fire / Ambulance", practical.emergencyNumbers],
+    ["☎️", "Tourist Hotline (EN)", practical.touristHotline],
+    ["🏛️", "U.S. Embassy", practical.nearestEmbassy]
+  ];
   if (hasVerified(practical.hospitalOrClinic)) entries.push(["🏥", "Hospital / clinic", practical.hospitalOrClinic]);
   if (hasVerified(practical.transitTips)) entries.push(["🎫", "Transit tips", practical.transitTips]);
   if (hasVerified(practical.tipping)) entries.push(["💴", "Tipping", practical.tipping]);
@@ -2772,16 +3055,19 @@ function renderRouteFlow(day) {
     row.className = "route-flow-stop";
     const next = stops[index + 1];
     const travel = next ? estimateTravel(stop, next) : null;
-    row.innerHTML = `<div class="route-stop-marker">${displayIcon(stop.icon)}</div><div><time>${escapeHtml(stop.time)}</time><strong>${escapeHtml(cleanActivityTitle(stop.title))}</strong>${travel ? `<small>${displayIcon(travel.icon)} ${travel.minutes} min to next stop · ${escapeHtml(travel.mode)}</small>` : `<small>🏁 End of today’s route</small>`}</div>`;
+    const timeRange = stop.endTime ? `${stop.time}–${stop.endTime}` : stop.time;
+    row.innerHTML = `<div class="route-stop-marker">${displayIcon(stop.icon)}</div><div><time>${escapeHtml(timeRange)}</time><strong>${escapeHtml(cleanActivityTitle(stop.title))}</strong>${travel ? `<small>${displayIcon(travel.icon)} ~${travel.minutes} min to next stop · ${escapeHtml(travel.mode)}</small>` : `<small>🏁 End of today’s route</small>`}</div>`;
     list.appendChild(row);
   });
 }
 
 function estimateTravel(current, next) {
-  const mode = trip.preferences.transport === "low-walking" ? "taxi / accessible transit" : trip.preferences.transport === "mixed" ? "transit or taxi" : "walk + transit";
-  const minutes = Number(current.travelMinutesToNext) || travelMinutesBetween(current, next, trip.preferences);
-  const distance = coordinateDistanceKm(current, next);
-  return { minutes, mode, icon: trip.preferences.transport === "low-walking" ? "🚕" : distance !== null && distance < 1.2 ? "🚶" : "🚇" };
+  const estimate = estimateTravelLeg(current, next, trip.preferences);
+  return {
+    minutes: Number(current.travelMinutesToNext) || estimate.minutes,
+    mode: current.travelModeToNext || estimate.mode,
+    icon: current.travelIconToNext || estimate.icon
+  };
 }
 
 function renderRouteMapPreview(day) {
@@ -2805,9 +3091,63 @@ function googleMapsDirectionsUrl(stops) {
 }
 
 function renderCollections() {
-  renderCollection("#mapsList", ["Explore", "See", "Arrival", "Eat", "Shop", "Evening"], "Your planned stops will appear here by day.", true);
+  renderMapsList(trip.days[activeDay]);
   renderFoodOptions();
   renderShoppingOptions();
+}
+
+function mapsTravelDisplay(current, next, day) {
+  const travel = estimateTravel(current, next);
+  const distance = coordinateDistanceKm(current, next);
+  const mode = String(travel.mode || "").toLowerCase();
+  const currentArea = normalizeDestinationName(current.area || day.zone?.name || "");
+  const nextArea = normalizeDestinationName(next.area || day.zone?.name || "");
+  const sameRouteArea = currentArea && nextArea && (currentArea === nextArea || currentArea.includes(nextArea) || nextArea.includes(currentArea));
+  if (trip.preferences.transport !== "low-walking" && distance === null && sameRouteArea) {
+    return { ...travel, minutes: Math.min(Number(travel.minutes) || 15, 15), icon: "🚶", label: "Walk" };
+  }
+  if (mode.includes("walk")) return { ...travel, icon: "🚶", label: "Walk" };
+  if (mode.includes("taxi / accessible")) return { ...travel, icon: "🚕", label: "Ride share / taxi" };
+  if (mode.includes("transit or taxi")) {
+    return distance !== null && distance <= 4
+      ? { ...travel, icon: "🚕", label: "Ride share / taxi" }
+      : { ...travel, icon: "🚇", label: "Transit" };
+  }
+  return { ...travel, icon: "🚇", label: "Transit" };
+}
+
+function mapsStopAddress(activity, day) {
+  if (activity.address) return activity.address;
+  const area = activity.area || day.zone?.name || "";
+  const normalizedArea = normalizeDestinationName(area);
+  const normalizedDestination = normalizeDestinationName(trip.destination);
+  return area && normalizedArea !== normalizedDestination && !normalizedDestination.includes(normalizedArea)
+    ? `${area}, ${trip.destination}`
+    : `${trip.destination} · verify the exact address in Google Maps`;
+}
+
+function renderMapsList(day) {
+  const container = document.querySelector("#mapsList");
+  const stops = day.activities.filter((activity) => ["Explore", "See", "Arrival", "Eat", "Shop", "Evening", "Booking", "Must do"].includes(activity.type));
+  if (!stops.length) {
+    container.innerHTML = `<p class="empty-collection">Your planned stops will appear here for the selected day.</p>`;
+    return;
+  }
+  container.innerHTML = `<section class="maps-day-stops"><div class="maps-stop-heading"><span>📍</span><div><p>All stops · ${escapeHtml(formatDate(day.date, false))}</p><h3>${escapeHtml(day.title)}</h3></div><strong>${stops.length} locations</strong></div><div class="maps-stop-list"></div></section>`;
+  const list = container.querySelector(".maps-stop-list");
+  stops.forEach((activity, index) => {
+    const next = stops[index + 1];
+    const travel = next ? mapsTravelDisplay(activity, next, day) : null;
+    const address = mapsStopAddress(activity, day);
+    const link = document.createElement("a");
+    link.className = "maps-stop-card";
+    link.href = googleMapsSearchUrl(cleanActivityTitle(activity.title), activity.address || activity.area || day.zone?.name || "");
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.setAttribute("aria-label", `Open ${cleanActivityTitle(activity.title)} in Google Maps`);
+    link.innerHTML = `<span class="maps-stop-number">${index + 1}</span><div class="maps-stop-copy"><h4>${escapeHtml(cleanActivityTitle(activity.title))}</h4><p>📍 ${escapeHtml(address)}</p>${travel ? `<small>${displayIcon(travel.icon)} ${escapeHtml(travel.label)} to ${escapeHtml(cleanActivityTitle(next.title))} · approximately ${escapeHtml(String(travel.minutes))} min</small>` : `<small>🏁 End of today’s route</small>`}</div><span class="maps-stop-arrow" aria-hidden="true">↗</span>`;
+    list.appendChild(link);
+  });
 }
 
 function renderFoodOptions() {
@@ -2972,7 +3312,7 @@ function renderCollection(selector, types, emptyText, includeMapLinks = false) {
     const fragment = document.querySelector("#collectionTemplate").content.cloneNode(true);
     const card = fragment.querySelector(".collection-card");
     fragment.querySelector(".collection-icon").textContent = activity.icon;
-    fragment.querySelector(".collection-day").textContent = `${formatDate(day.date, false)} · ${activity.time}`;
+    fragment.querySelector(".collection-day").textContent = `${formatDate(day.date, false)} · ${activity.time}${activity.endTime ? `–${activity.endTime}` : ""}`;
     fragment.querySelector("h3").textContent = activity.title;
     fragment.querySelector("p").textContent = activity.description;
     if (activity.sourceLabel && activity.sourceUrl) fragment.querySelector("p").after(sourceCreditElement(activity));
@@ -2986,12 +3326,6 @@ function renderCollection(selector, types, emptyText, includeMapLinks = false) {
       mapLink.addEventListener("click", (event) => event.stopPropagation());
       (fragment.querySelector(".source-credit") || fragment.querySelector("p")).after(mapLink);
     }
-    const openButton = document.createElement("button");
-    openButton.type = "button";
-    openButton.className = "collection-open-button";
-    openButton.textContent = `View ${formatDate(day.date, false)} itinerary`;
-    openButton.addEventListener("click", () => { activeDay = dayIndex; renderTrip(); switchAppTab("itinerary"); });
-    card.appendChild(openButton);
     container.appendChild(fragment);
   });
 }
@@ -3007,7 +3341,13 @@ function googleMapsSearchUrl(name, area = "") {
 
 function renderActivity(activity) {
   const fragment = document.querySelector("#activityTemplate").content.cloneNode(true);
-  fragment.querySelector(".activity-time").textContent = activity.time;
+  const activityTime = fragment.querySelector(".activity-time");
+  activityTime.textContent = activity.time;
+  if (activity.endTime) {
+    const activityEnd = document.createElement("small");
+    activityEnd.textContent = `to ${activity.endTime}`;
+    activityTime.appendChild(activityEnd);
+  }
   fragment.querySelector(".activity-icon").textContent = activity.icon;
   fragment.querySelector(".activity-type").textContent = activity.type;
   const status = fragment.querySelector(".activity-status");

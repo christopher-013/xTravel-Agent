@@ -1794,6 +1794,22 @@ html, body, body *, button, input, select, textarea, dialog, option {
 .maps-destination-context span { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
 .maps-destination-context strong { color: var(--forest-dark); font-size: 12px; }
 .maps-destination-context .google-maps-link { margin: 0 0 0 auto; }
+.maps-day-stops { display: grid; gap: 8px; }
+.maps-stop-heading { display: grid; grid-template-columns: 42px minmax(0,1fr) auto; align-items: center; gap: 11px; margin-bottom: 4px; padding: 13px 15px; border-radius: 10px; color: white; background: linear-gradient(135deg,#17324d,#235a74); }
+.maps-stop-heading > span { display: grid; width: 38px; height: 38px; place-items: center; border-radius: 50%; background: rgba(255,255,255,.14); font-size: 20px; }
+.maps-stop-heading p, .maps-stop-heading h3 { margin: 0; }
+.maps-stop-heading p { color: rgba(255,255,255,.68); font-size: 8px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.maps-stop-heading h3 { margin-top: 2px; font-size: 15px; line-height: 1.25; }
+.maps-stop-heading > strong { padding: 6px 9px; border-radius: 999px; color: #17324d; background: #fff1bf; font-size: 8px; white-space: nowrap; }
+.maps-stop-list { display: grid; gap: 7px; }
+.maps-stop-card { display: grid; grid-template-columns: 32px minmax(0,1fr) 20px; align-items: center; gap: 12px; padding: 14px 15px; border: 1px solid var(--line); border-radius: 11px; color: inherit; background: var(--panel); box-shadow: var(--shadow); text-decoration: none; transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease; }
+.maps-stop-card:hover { transform: translateY(-1px); border-color: rgba(37,75,122,.42); box-shadow: 0 9px 22px rgba(32,49,46,.1); }
+.maps-stop-number { display: grid; width: 30px; height: 30px; place-items: center; border-radius: 50%; color: white; background: var(--forest); font-size: 10px; font-weight: 900; }
+.maps-stop-copy { min-width: 0; }
+.maps-stop-copy h4 { margin: 0; color: var(--ink); font-size: 13px; line-height: 1.3; }
+.maps-stop-copy p { margin: 3px 0 0; color: var(--muted); font-size: 9px; line-height: 1.4; }
+.maps-stop-copy small { display: block; margin-top: 6px; color: var(--blue); font-size: 9px; font-weight: 800; line-height: 1.35; }
+.maps-stop-arrow { color: var(--muted); font-size: 16px; }
 .wizard-actions { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: stretch; }
 .wizard-actions .primary-button { min-width: 0; }
 .secondary-button { min-width: 88px; border: 1px solid var(--line); border-radius: 8px; background: #f8f5ed; color: var(--ink); cursor: pointer; font-size: 11px; font-weight: 800; }
@@ -1808,6 +1824,9 @@ html, body, body *, button, input, select, textarea, dialog, option {
   .trip-style-grid { grid-template-columns: 1fr; gap: 8px; }
   .maps-destination-context { align-items: flex-start; flex-direction: column; }
   .maps-destination-context .google-maps-link { margin-left: 0; }
+  .maps-stop-heading { grid-template-columns: 36px minmax(0,1fr); padding: 12px; }
+  .maps-stop-heading > strong { display: none; }
+  .maps-stop-card { grid-template-columns: 30px minmax(0,1fr) 16px; gap: 9px; padding: 12px; }
 }
 
 /* Tokyo reference alignment: substantial date chips, full-width cards, image-backed route map */
@@ -2624,12 +2643,11 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
 .suggestion-board-loading-spinner { display:inline-block; font-size:22px; animation:suggestionLoadingSpin 1.1s linear infinite; }
 .suggestion-board-loading p { margin:0; font-size:13px; font-weight:700; }
 @keyframes suggestionLoadingSpin { to { transform:rotate(360deg); } }
-.research-mode-notice { margin:0 0 18px; padding:18px 20px; border:1px solid #dfbd62; border-radius:12px; background:#fff5d8; box-shadow:0 8px 22px rgba(74,54,6,.08); }
+.research-mode-notice { width:min(100%,430px); margin:0 0 18px auto; padding:12px 14px; border:1px solid #dfbd62; border-radius:12px; background:#fff5d8; box-shadow:0 8px 22px rgba(74,54,6,.08); }
 .research-mode-notice[hidden] { display:none; }
-.research-mode-notice h3 { margin:3px 0 7px; color:#24272a; font-size:18px; }
-.research-mode-notice > p:not(.eyebrow) { margin:0; color:#565149; font-size:10px; line-height:1.55; }
-.research-mode-notice ul { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 24px; margin:14px 0 0; padding-left:18px; color:#3e4144; font-size:9px; line-height:1.45; }
-@media(max-width:620px) { .research-mode-notice ul { grid-template-columns:1fr; } }
+.research-mode-notice h3 { margin:2px 0 5px; color:#24272a; font-size:16px; }
+.research-mode-notice > p:not(.eyebrow) { margin:0; color:#565149; font-size:10px; line-height:1.45; }
+@media(max-width:620px) { .research-mode-notice { width:100%; margin-right:0; } }
 
 .source-credit {
   display: inline-flex;
@@ -3312,6 +3330,61 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   }
 }
 
+/* Wide, shallow browser windows (including desktop zoom) previously allowed the
+   Adventure grid to shrink the title and toolbar tracks below their contents.
+   Reserve real rows for those controls and give only the recommendation list
+   the remaining flexible height. */
+@media (min-width: 681px) and (max-height: 620px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] {
+    --adventure-board-height: auto;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .step-row {
+    padding-bottom: 3px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress,
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span {
+    height: 44px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress {
+    margin-block: 3px 5px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .security-note {
+    margin-bottom: 4px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+    height: 100%;
+    grid-template-rows: auto auto minmax(70px, 1fr) auto auto auto;
+    align-content: stretch;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro {
+    min-height: 35px;
+    overflow: visible;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro h2 {
+    font-size: clamp(18px, 1.8vw, 22px);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar {
+    min-height: 32px;
+    margin-top: 2px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board {
+    height: auto;
+    min-height: 70px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .compact-preference-error:empty {
+    display: none;
+  }
+}
+
+.activity-time small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: .78em;
+  font-weight: 600;
+  line-height: 1.15;
+}
+
 /* Recommendation cards keep selection and outbound research links as separate controls. */
 .suggestion-card-list .suggestion-bubble { cursor: default; }
 .suggestion-select-button {
@@ -3338,6 +3411,11 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   outline-offset: -3px;
 }
 .collection-open-button {
+  display: inline-flex;
+  width: max-content;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
   align-self: flex-start;
   margin-top: 8px;
   padding: 8px 13px;
@@ -3346,6 +3424,8 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   color: var(--forest-dark);
   background: #fff7d8;
   font-weight: 800;
+  line-height: 1.25;
+  white-space: normal;
   cursor: pointer;
 }
 
@@ -3794,6 +3874,45 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
     font-size: 8px;
     letter-spacing: 0;
   }
+}
+
+/* Desktop report readability: keep the compact mobile treatment, but use the
+   available viewing distance and screen area for clearer type and symbols. */
+@media (min-width: 1024px) {
+  .trip-app .welcome-row h3 { font-size: 28px; }
+  .trip-app .home-widget-label { font-size: 13px; }
+  .trip-app .home-widget-note { font-size: 12px; }
+  .trip-app .checklist-text { font-size: 15px; }
+  .trip-app .checklist-sub { font-size: 13px; }
+  .trip-app .checklist-box { width: 24px; height: 24px; font-size: 15px; }
+  .trip-app .emg-title { font-size: 17px; }
+  .trip-app .emg-title > span { font-size: 22px; }
+  .trip-app .emg-label,
+  .trip-app .emg-value { font-size: 14px; }
+  .trip-app .activity-time { font-size: 13px; }
+  .trip-app .activity-icon { font-size: 24px; }
+  .trip-app .activity-copy h3 { font-size: 18px; }
+  .trip-app .activity-copy p { font-size: 14px; line-height: 1.55; }
+  .trip-app .activity-type,
+  .trip-app .activity-status { font-size: 11px; }
+  .trip-app .collection-icon { width: 56px; height: 56px; font-size: 26px; }
+  .trip-app .collection-card h3 { font-size: 19px; }
+  .trip-app .collection-card p { font-size: 13px; }
+  .trip-app .route-flow-stop time { font-size: 11px; }
+  .trip-app .route-flow-stop strong { font-size: 13px; }
+  .trip-app .route-flow-stop small { font-size: 11px; }
+  .trip-app .report-day-bar .day-nav-icon { font-size: 30px; }
+  .trip-app .report-day-bar .day-nav-date { font-size: 13px; }
+  .trip-app .report-day-bar .day-nav-title { font-size: 10px; }
+  .trip-app .app-nav-button > span {
+    width: 54px;
+    height: 54px;
+    min-width: 54px;
+    min-height: 54px;
+    flex-basis: 54px;
+    font-size: 29px;
+  }
+  .trip-app .app-nav-button small { max-width: 90px; font-size: 11px; }
 }
 
 /* Real-device mobile compaction: keep workflow controls fixed and scroll only the choices. */
@@ -4563,5 +4682,481 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   .creation-output-card:last-child {
     grid-column: auto;
     width: 100%;
+  }
+}
+
+/* Tokyo-reference scale for roomy workflow screens. Mobile keeps its contained layout. */
+@media (min-width: 1100px) and (min-height: 700px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] {
+    --adventure-board-height: clamp(410px, 62dvh, 720px);
+    padding: 14px clamp(32px, 4vw, 72px) 18px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .step-row { font-size: 14px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress {
+    height: 66px;
+    margin: 7px 0 10px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span {
+    height: 66px;
+    gap: 10px;
+    padding-block: 8px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span b {
+    width: 31px;
+    height: 31px;
+    flex-basis: 31px;
+    font-size: 11px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small strong { font-size: 12px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small em { font-size: 9px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .security-note {
+    gap: 11px;
+    margin-bottom: 10px;
+    padding: 9px 13px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .security-note > span {
+    width: 27px;
+    height: 27px;
+    flex-basis: 27px;
+    font-size: 14px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .security-note p { font-size: 11px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro { padding: 5px 0 9px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro .eyebrow { font-size: 11px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro h2 {
+    font-size: clamp(31px, 2.7vw, 42px);
+    line-height: 1;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro > p:not(.eyebrow) {
+    margin-top: 7px;
+    font-size: 13px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar {
+    min-height: 48px;
+    margin: 5px 0 9px;
+    padding: 8px 12px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar strong,
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar span { font-size: 12px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar button {
+    min-height: 38px;
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group-heading {
+    min-height: 36px;
+    margin-bottom: 7px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group-heading > span {
+    width: 35px;
+    height: 35px;
+    font-size: 20px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group-heading h3 { font-size: 17px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    padding: 2px 8px 12px 2px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-list .suggestion-bubble {
+    grid-template-columns: 122px minmax(0, 1fr);
+    min-height: 148px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-image {
+    width: 122px;
+    min-height: 122px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-body {
+    gap: 5px;
+    padding: 12px 12px 7px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-top strong {
+    font-size: 15px;
+    line-height: 1.15;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-meta { font-size: 9px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-detail {
+    font-size: 11px;
+    line-height: 1.35;
+    -webkit-line-clamp: 3;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-links a { font-size: 9px; }
+  .builder.builder-wide .trip-form[data-current-step="2"] .selection-summary {
+    min-height: 36px;
+    margin-top: 7px;
+    padding: 7px 11px;
+    font-size: 12px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .preference-actions .icon-nav-button {
+    min-height: 46px;
+    padding: 9px 18px;
+    font-size: 12px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="3"],
+  .builder.builder-wide .trip-form[data-current-step="4"] {
+    padding-inline: clamp(32px, 5vw, 88px);
+  }
+  .builder.builder-wide [data-form-step="3"].active .trip-style-grid,
+  .builder.builder-wide [data-form-step="4"].active .trip-style-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .builder.builder-wide [data-form-step="3"].active h2,
+  .builder.builder-wide [data-form-step="4"].active h2 { font-size: clamp(36px, 3.5vw, 54px); }
+  .builder.builder-wide [data-form-step="3"].active .style-question,
+  .builder.builder-wide [data-form-step="4"].active .style-question {
+    gap: 8px;
+    padding: 18px;
+  }
+  .builder.builder-wide [data-form-step="3"].active .style-question > span,
+  .builder.builder-wide [data-form-step="4"].active .style-question > span { font-size: 15px; }
+  .builder.builder-wide [data-form-step="3"].active .style-question small,
+  .builder.builder-wide [data-form-step="4"].active .style-question small { font-size: 11px; }
+  .builder.builder-wide [data-form-step="3"].active .style-question select,
+  .builder.builder-wide [data-form-step="3"].active .style-question input,
+  .builder.builder-wide [data-form-step="3"].active .style-question textarea,
+  .builder.builder-wide [data-form-step="4"].active .style-question select,
+  .builder.builder-wide [data-form-step="4"].active .style-question input,
+  .builder.builder-wide [data-form-step="4"].active .style-question textarea { min-height: 46px; font-size: 13px; }
+}
+
+@media (min-width: 1600px) and (min-height: 800px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-card-list {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Research status belongs to the destination/weather context, not the report body. */
+.home-weather-wrap .research-mode-notice {
+  width: 100%;
+  margin: 8px 0 0;
+  padding: 8px 11px;
+  border-color: rgba(255, 255, 255, .18);
+  border-radius: 11px;
+  background: rgba(8, 34, 44, .18);
+  box-shadow: none;
+  backdrop-filter: blur(4px);
+}
+.home-weather-wrap .research-mode-notice .eyebrow { margin: 0; color: rgba(255, 236, 173, .82); font-size: 7px; }
+.home-weather-wrap .research-mode-notice h3 { margin: 1px 0 2px; color: rgba(255, 255, 255, .9); font-size: 12px; }
+.home-weather-wrap .research-mode-notice > p:not(.eyebrow) { color: rgba(255, 255, 255, .68); font-size: 8px; line-height: 1.3; }
+
+/* The full animation is concise; repeat viewers can bypass it immediately. */
+.trip-creation-transition { transition-duration: .36s; }
+.trip-creation-transition.is-running::before { animation-duration: 5.8s; }
+.trip-creation-transition.is-running::after { animation-duration: 5.8s; }
+.trip-creation-transition.is-running .creation-orbit-halo {
+  animation-duration: 2.25s;
+  animation-iteration-count: 2;
+}
+.trip-creation-transition.is-running .creation-output-card {
+  animation-duration: 1.75s;
+  animation-delay: calc(.55s + (var(--creation-card-index) * .78s));
+}
+.creation-skip-button {
+  position: absolute;
+  z-index: 12;
+  top: max(18px, env(safe-area-inset-top));
+  right: max(18px, env(safe-area-inset-right));
+  min-height: 42px;
+  padding: 9px 16px;
+  border: 1px solid rgba(23, 62, 53, .28);
+  border-radius: 999px;
+  color: #173e35;
+  background: rgba(255, 249, 226, .9);
+  box-shadow: 0 8px 22px rgba(18, 52, 71, .12);
+  font: 800 11px/1 "Aptos", "Inter", sans-serif;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+}
+.creation-skip-button:hover,
+.creation-skip-button:focus-visible { color: #fff; background: #267d75; }
+.creation-skip-button[hidden] { display: none; }
+
+@media (max-width: 760px) {
+  .creation-skip-button {
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+    min-height: 36px;
+    padding: 7px 12px;
+    font-size: 10px;
+  }
+  .home-weather-wrap .research-mode-notice { margin-top: 6px; }
+}
+
+/* Trip Basics supporting examples now finish the form, immediately before Next Step. */
+.trip-basics-end-showcase {
+  display: grid;
+  gap: 10px;
+  margin: 2px 0 13px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.trip-basics-support-row {
+  display: grid;
+  grid-template-columns: minmax(0, 400px);
+  width: 100%;
+  gap: 9px;
+  justify-content: start;
+  justify-self: stretch;
+  margin-left: 0;
+}
+.trip-basics-end-showcase .demo-showcase,
+.trip-basics-end-showcase .import-callout {
+  width: 100%;
+  max-width: none;
+  min-height: 0;
+  gap: 3px;
+  margin: 0;
+  padding: 10px 11px;
+  border: 1px solid rgba(36, 89, 76, .15);
+  border-radius: 11px;
+  background: #f8f5ed;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.trip-basics-end-showcase .import-callout { border-style: dashed; background: rgba(219, 229, 216, .48); }
+.trip-basics-end-showcase .support-action-card {
+  appearance: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: border-color .18s ease, background .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+.trip-basics-end-showcase .support-action-card:hover,
+.trip-basics-end-showcase .support-action-card:focus-visible {
+  border-color: rgba(36, 89, 76, .48);
+  background: #fffdf8;
+  box-shadow: 0 9px 22px rgba(36, 89, 76, .11);
+  transform: translateY(-2px);
+  outline: none;
+}
+.trip-basics-end-showcase .demo-showcase strong,
+.trip-basics-end-showcase .import-callout strong {
+  color: var(--ink);
+  font-size: 10px;
+  line-height: 1.2;
+}
+.trip-basics-end-showcase .demo-showcase span,
+.trip-basics-end-showcase .import-callout span {
+  color: var(--muted);
+  font-size: 8px;
+  line-height: 1.35;
+}
+.trip-basics-end-showcase .support-action-card span.support-card-action {
+  justify-self: start;
+  padding: 0;
+  color: var(--forest);
+  font-size: 8px;
+  font-weight: 800;
+  text-decoration: none;
+}
+.trip-basics-end-showcase .support-action-card:hover span.support-card-action,
+.trip-basics-end-showcase .support-action-card:focus-visible span.support-card-action {
+  color: var(--forest-dark);
+  text-decoration: underline;
+}
+.trip-basics-end-showcase .home-deliverables-preview {
+  gap: 7px;
+  padding: 9px 10px;
+  border-color: rgba(36, 89, 76, .14);
+  border-radius: 11px;
+  background: rgba(255, 253, 248, .94);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.trip-basics-end-showcase .home-deliverables-heading > span { color: #8a6500; }
+.trip-basics-end-showcase .home-deliverables-heading > strong { color: var(--ink); }
+.trip-basics-end-showcase + .compact-next-button {
+  margin-top: 0;
+  margin-right: 0;
+  margin-left: auto;
+}
+
+@media (max-width: 700px) {
+  .trip-basics-support-row { width: 100%; grid-template-columns: 1fr; gap: 7px; }
+  .trip-basics-end-showcase { margin-bottom: 10px; padding-top: 11px; }
+  .trip-basics-end-showcase .home-deliverables-heading { align-items: flex-start; }
+  .trip-basics-end-showcase .home-deliverables-cards {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 1px 2px 5px;
+    scroll-snap-type: x proximity;
+    scrollbar-width: thin;
+    -webkit-overflow-scrolling: touch;
+  }
+  .trip-basics-end-showcase .home-deliverable-card {
+    flex: 0 0 144px;
+    min-height: 66px;
+    scroll-snap-align: start;
+  }
+  .trip-basics-end-showcase + .compact-next-button { min-width: 190px; }
+}
+
+/* Trip Basics hero: the animated product mark is the main visual, positioned
+   beside the opening message without the previous airplane or sun decoration. */
+.builder:not(.builder-wide) .builder-copy {
+  min-height: 330px;
+  background: linear-gradient(135deg, rgba(28, 31, 38, .99), rgba(37, 75, 122, .94));
+}
+.builder:not(.builder-wide) .builder-copy::after {
+  content: none !important;
+  display: none !important;
+}
+.builder:not(.builder-wide) .builder-hero-lockup {
+  display: grid;
+  grid-template-columns: clamp(180px, 19vw, 260px) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(28px, 5vw, 76px);
+  width: 100%;
+}
+.builder:not(.builder-wide) .builder-hero-message {
+  min-width: 0;
+}
+.builder:not(.builder-wide) .home-brand-lockup {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 0;
+  text-align: center;
+}
+.builder:not(.builder-wide) .home-brand-lockup > span {
+  flex: 0 0 auto;
+  width: clamp(160px, 17vw, 230px);
+  height: clamp(160px, 17vw, 230px);
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, .24));
+}
+.builder:not(.builder-wide) .home-brand-lockup img {
+  animation: mainLogoFloat 5.2s ease-in-out infinite;
+}
+.builder:not(.builder-wide) .home-brand-lockup strong {
+  font-size: clamp(22px, 2.2vw, 32px);
+}
+.builder:not(.builder-wide) .home-brand-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: .16em;
+  color: #ffd65a;
+  font-family: "DM Sans", sans-serif;
+  font-weight: 850;
+  line-height: 1;
+  letter-spacing: .035em;
+  text-shadow: 0 4px 18px rgba(0, 0, 0, .24);
+  white-space: nowrap;
+}
+.builder:not(.builder-wide) .home-brand-wordmark > span {
+  position: relative;
+  display: inline-block;
+  transform-origin: 50% 80%;
+  animation: heroBrandWordIn .72s cubic-bezier(.2,.85,.24,1.2) both;
+}
+.builder:not(.builder-wide) .home-brand-plan { color: #ffd65a; animation-delay: .22s; }
+.builder:not(.builder-wide) .home-brand-to { color: #fff3b5; animation-delay: .5s; }
+.builder:not(.builder-wide) .home-brand-guide { color: #83dcff; animation-delay: .78s; }
+.builder:not(.builder-wide) .home-brand-guide::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: -.12em;
+  left: 0;
+  height: .08em;
+  border-radius: 999px;
+  background: linear-gradient(90deg,#ffd65a,#83dcff);
+  transform: scaleX(0);
+  transform-origin: left;
+  animation: heroBrandUnderline .65s ease-out 1.35s forwards;
+}
+.builder:not(.builder-wide) .builder-hero-message .eyebrow {
+  margin-bottom: 10px;
+}
+.builder:not(.builder-wide) .builder-hero-message h1 {
+  width: 100%;
+  max-width: 920px;
+  font-size: clamp(44px, 5.3vw, 76px);
+}
+.builder:not(.builder-wide) .builder-hero-message .lede {
+  width: min(100%, 760px);
+  margin-top: 18px;
+}
+.builder:not(.builder-wide) .journey-line,
+.builder:not(.builder-wide) .trust-note {
+  display: none;
+}
+@keyframes mainLogoFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-7px); }
+}
+
+@media (max-width: 760px) {
+  .builder:not(.builder-wide) .builder-copy {
+    min-height: 0;
+    padding: 24px 18px 26px;
+  }
+  .builder:not(.builder-wide) .builder-hero-lockup {
+    grid-template-columns: 92px minmax(0, 1fr);
+    align-items: center;
+    gap: 16px;
+  }
+  .builder:not(.builder-wide) .home-brand-lockup {
+    gap: 7px;
+  }
+  .builder:not(.builder-wide) .home-brand-lockup > span {
+    width: 88px;
+    height: 88px;
+  }
+  .builder:not(.builder-wide) .home-brand-lockup strong {
+    font-size: 10px;
+    letter-spacing: .025em;
+  }
+  .builder:not(.builder-wide) .home-brand-wordmark {
+    gap: .1em;
+  }
+  .builder:not(.builder-wide) .builder-hero-message .eyebrow {
+    margin-bottom: 6px;
+    font-size: 8px;
+    line-height: 1.35;
+  }
+  .builder:not(.builder-wide) .builder-hero-message h1 {
+    font-size: clamp(28px, 8.1vw, 38px);
+    line-height: 1.02;
+  }
+  .builder:not(.builder-wide) .builder-hero-message .lede {
+    margin-top: 10px;
+    font-size: 11px;
+    line-height: 1.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .builder:not(.builder-wide) .home-brand-lockup img { animation: none; }
+  .builder:not(.builder-wide) .home-brand-wordmark > span,
+  .builder:not(.builder-wide) .home-brand-guide::after { animation: none; opacity: 1; transform: none; filter: none; }
+}
+
+/* Adventure layout stability at every desktop height. Fixed-height image lists
+   previously forced the title and helper rows to collapse into each other.
+   The recommendation board is now the only row allowed to flex and scroll. */
+@media (min-width: 681px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+    height: 100%;
+    grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+    align-content: stretch;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board {
+    height: auto;
+  }
+}
+
+@media (min-width: 681px) and (max-height: 620px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+    grid-template-rows: auto auto minmax(70px, 1fr) auto auto auto;
   }
 }
