@@ -366,11 +366,24 @@
     return [...titles].slice(0, 5);
   }
 
-  async function wikivoyagePageTitle(destination, signal) {
+  // The search query includes the country for disambiguation, but Wikivoyage often ranks the
+  // COUNTRY article above the city for such queries ("London United Kingdom" → "United
+  // Kingdom"), and country pages have no dining/shopping listings or district subpages.
+  // Prefer the result whose title matches the geocoded city name.
+  async function wikivoyagePageTitle(destination, preferredTitle, signal) {
     const data = await fetchJson(makeUrl(WIKIVOYAGE_API, {
-      action: "query", list: "search", srsearch: destination, srlimit: "3", format: "json", origin: "*"
+      action: "query", list: "search", srsearch: destination, srlimit: "5", format: "json", origin: "*"
     }), signal);
-    return data?.query?.search?.[0]?.title || null;
+    const results = data?.query?.search || [];
+    if (!results.length) return null;
+    const preferred = String(preferredTitle || "").trim().toLowerCase();
+    if (preferred) {
+      const exact = results.find((result) => String(result.title || "").toLowerCase() === preferred);
+      if (exact) return exact.title;
+      const prefixed = results.find((result) => String(result.title || "").toLowerCase().startsWith(preferred));
+      if (prefixed) return prefixed.title;
+    }
+    return results[0].title;
   }
 
   async function fetchWikivoyageWikitext(title, signal) {
@@ -380,8 +393,8 @@
     return data?.parse?.wikitext?.["*"] || "";
   }
 
-  async function fetchWikivoyageListings(destination, signal) {
-    const title = await wikivoyagePageTitle(destination, signal);
+  async function fetchWikivoyageListings(destination, preferredTitle, signal) {
+    const title = await wikivoyagePageTitle(destination, preferredTitle, signal);
     if (!title) return { title: "", items: [] };
     const wikitext = await fetchWikivoyageWikitext(title, signal);
     let items = parseWikivoyageListings(wikitext, title);
@@ -1043,7 +1056,7 @@ out center tags 80;`;
         return recordOutcome({ ...cached, matchPattern, matchFlags: cached.matchFlags || "iu", match: new RegExp(matchPattern, cached.matchFlags || "iu") });
       }
       const [voyage, wikiGeo, wikiCategory, osm] = await Promise.all([
-        fetchWikivoyageListings([geocode.name, geocode.country].filter(Boolean).join(" "), controller.signal).catch(() => ({ title: "", items: [] })),
+        fetchWikivoyageListings([geocode.name, geocode.country].filter(Boolean).join(" "), geocode.name, controller.signal).catch(() => ({ title: "", items: [] })),
         fetchWikipediaGeoPlaces(geocode, controller.signal).catch(() => []),
         fetchWikipediaCategoryPlaces(destination, geocode, controller.signal).catch(() => []),
         fetchOpenStreetMapRecommendations(destination, geocode, controller.signal).catch(() => [])

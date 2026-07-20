@@ -22,7 +22,7 @@
  * research day degrades the catalog instead of breaking the deploy.
  */
 
-import { readFile, writeFile } from "node:fs/promises";
+import { writeFile } from "node:fs/promises";
 
 // Importing the browser IIFE as an ESM side-effect module attaches the api to globalThis.
 await import("./dynamic-catalog.js");
@@ -34,10 +34,11 @@ const REFRESH_AFTER_MS = 14 * 24 * 60 * 60 * 1000;
 const PREVIOUS_CATALOGS_URL = process.env.PREVIOUS_CATALOGS_URL
   || "https://christopher-013.github.io/PlanToGuide/precomputed-catalogs.json";
 
-// Top tourist destinations not already covered by the hand-curated catalogs.json entries.
-// Curated coverage (checked again against catalogs.json at runtime): Tokyo, Paris, London,
-// New York, Rome, Lisbon, Honolulu/Oahu, Vancouver, Seattle.
+// Top tourist destinations. Curated catalogs.json cities are included on purpose: their
+// hand-written catalogs are authoritative but thin on dining and shopping (~9 eat / 3 shop),
+// and the client merges these researched catalogs into them as enrichment.
 const CITIES = [
+  "London", "Paris", "Tokyo", "New York", "Rome", "Lisbon", "Honolulu", "Vancouver", "Seattle",
   "Las Vegas", "Los Angeles", "San Diego", "San Francisco", "Chicago", "Miami", "Orlando",
   "New Orleans", "Boston", "Washington", "Austin", "Nashville", "Denver", "Philadelphia",
   "Barcelona", "Madrid", "Seville", "Amsterdam", "Berlin", "Munich", "Vienna", "Prague",
@@ -56,17 +57,6 @@ function parseArgs(argv) {
     else if (argv[index] === "--limit" && argv[index + 1]) args.limit = Math.max(1, Number(argv[++index]) || CITIES.length);
   }
   return args;
-}
-
-async function loadCuratedMatchers() {
-  try {
-    const data = JSON.parse(await readFile(new URL("./catalogs.json", import.meta.url), "utf8"));
-    return (data.destinationCatalogs || [])
-      .map((catalog) => { try { return new RegExp(catalog.matchPattern, catalog.matchFlags || "i"); } catch (_) { return null; } })
-      .filter(Boolean);
-  } catch (_) {
-    return [];
-  }
 }
 
 function isRealItem(item) {
@@ -136,7 +126,6 @@ function augmentedMatchPattern(city, catalog) {
 
 async function main() {
   const { out, limit } = parseArgs(process.argv);
-  const curatedMatchers = await loadCuratedMatchers();
   const previousGood = await loadPreviousGoodCatalogs();
   const started = Date.now();
   const catalogs = [];
@@ -159,10 +148,6 @@ async function main() {
     if (Date.now() - started > TOTAL_TIME_BUDGET_MS) {
       if (previous) carry(previous, "budget", city);
       else failures.push(city);
-      continue;
-    }
-    if (curatedMatchers.some((matcher) => { matcher.lastIndex = 0; return matcher.test(city); })) {
-      console.log(`skip (curated): ${city}`);
       continue;
     }
     if (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()) {

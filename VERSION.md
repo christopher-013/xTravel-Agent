@@ -1,5 +1,12 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.7.0 curated catalog enrichment
+
+- Extends thin curated destinations (London, Paris, Tokyo, and the other hand-written catalogs, which carry only ~9 dining and 3 shopping entries) with real researched places from the same public-source pipeline used for uncataloged cities, replacing the generic "top-rated local restaurant"-style filler in Places to Eat and Places to Shop.
+- Curated entries stay first and authoritative; enrichment items are deduplicated against them, keep their Wikivoyage/Wikipedia/OpenStreetMap source credits, and generic research filler is never merged in.
+- Builds curated cities in the deploy-time catalog job too, so the live site enriches instantly from precomputed data; the browser falls back to a quiet background research pass (no loading takeover, curated board renders immediately) when no precomputed enrichment exists.
+- Enrichment flows into the whole trip: suggestion board, itinerary meal/shopping backfill, and the Food and Shop tabs.
+
 ## v3.6.6 itinerary-derived day-navigation icons
 
 - Derives each date-navigation emoji from that day's own itinerary (temples, castles, museums, markets, beaches, casinos, theme parks, and more), with the arrival day marked by a departure-flight icon.

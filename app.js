@@ -461,7 +461,9 @@ async function goToPreferencesStep() {
   if (knownDestination) {
     destinationInput.value = knownDestination.label;
     destinationError.textContent = "";
-    if (!getLiveOrCuratedCatalog(knownDestination.label)) startOrReuseDynamicCatalogResearch(knownDestination.label);
+    const curatedCatalog = getLiveOrCuratedCatalog(knownDestination.label);
+    if (!curatedCatalog) startOrReuseDynamicCatalogResearch(knownDestination.label);
+    else if (curatedNeedsEnrichment(knownDestination.label, curatedCatalog)) startOrReuseDynamicCatalogResearch(knownDestination.label, { enrich: true });
   } else {
     const researchDestination = destinationInput.value.trim();
     if (getLiveOrCuratedCatalog(researchDestination)) {
@@ -498,9 +500,11 @@ async function goToPreferencesStep() {
 }
 document.querySelector("#nextStepButton").addEventListener("click", () => { goToPreferencesStep(); });
 
-async function ensureDynamicCatalog(destination) {
+async function ensureDynamicCatalog(destination, options = {}) {
   const existingStatic = getLiveOrCuratedCatalog(destination);
-  if (!destination || (existingStatic && !existingStatic.dynamic) || typeof buildDynamicCatalog !== "function") return existingStatic || null;
+  // A curated catalog normally short-circuits research, but enrichment mode builds a dynamic
+  // catalog alongside it so thin curated eat/shop lists gain real researched places.
+  if (!destination || (existingStatic && !existingStatic.dynamic && !options.enrich) || typeof buildDynamicCatalog !== "function") return existingStatic || null;
   const availableGeocode = destinationResearchState.geocode && sameResearchQuery(destination) ? destinationResearchState.geocode : null;
   const existing = destinationCatalogs.find((catalog) => catalog.dynamic && catalog.match.test(destination));
   if (existing && (typeof catalogHasSeededAnchors !== "function" || catalogHasSeededAnchors(existing, destination))) {
@@ -543,18 +547,22 @@ function researchWasRateLimited(destination) {
   return matchesDestination && (outcome.rateLimited || (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()));
 }
 
-function startOrReuseDynamicCatalogResearch(destination) {
+function startOrReuseDynamicCatalogResearch(destination, options = {}) {
   if (pendingDynamicCatalog && pendingDynamicCatalog.destination === destination) return pendingDynamicCatalog.promise;
-  const promise = ensureDynamicCatalog(destination).then((catalog) => {
+  const promise = ensureDynamicCatalog(destination, options).then((catalog) => {
     if (pendingDynamicCatalog && pendingDynamicCatalog.promise === promise) pendingDynamicCatalog = null;
     const stillOnThisDestination = currentFormStep >= 2 && destinationInput.value.trim() === destination;
     if (stillOnThisDestination) {
-      destinationError.textContent = catalog
-        ? "Live research catalog created from keyless public sources. Verify hours, closures, ratings, tickets, and availability before travel."
-        : researchWasRateLimited(destination)
-          ? "Live research is busy right now — showing starter suggestions. Retry in a minute."
-          : "Starter mode is available for this destination: PlanToGuide will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
-      updateDestinationModeBadge();
+      // Enrichment runs quietly behind an already-good curated catalog: keep the curated
+      // status messaging and only refresh the board with the newly merged places.
+      if (!options.enrich) {
+        destinationError.textContent = catalog
+          ? "Live research catalog created from keyless public sources. Verify hours, closures, ratings, tickets, and availability before travel."
+          : researchWasRateLimited(destination)
+            ? "Live research is busy right now — showing starter suggestions. Retry in a minute."
+            : "Starter mode is available for this destination: PlanToGuide will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
+        updateDestinationModeBadge();
+      }
       renderSuggestionPicker(destination);
     }
     return catalog;
@@ -1382,7 +1390,9 @@ function renderSuggestionPicker(destination) {
   suggestionDestination = normalizedDestination;
   document.querySelector("#suggestionDestination").textContent = destination;
   const starterSuggestionNote = document.querySelector("#starterSuggestionNote");
-  const isResearching = Boolean(pendingDynamicCatalog && pendingDynamicCatalog.destination === destination.trim());
+  // Background enrichment of an existing curated catalog must not replace the board with a
+  // loading state — curated content renders immediately and gains places when research lands.
+  const isResearching = Boolean(pendingDynamicCatalog && pendingDynamicCatalog.destination === destination.trim() && !getLiveOrCuratedCatalog(destination));
   if (starterSuggestionNote) {
     if (isResearching) {
       starterSuggestionNote.hidden = false;
@@ -2524,7 +2534,59 @@ function getDestinationGuide(destination) {
       dinner: Array.isArray(knownFood.dinner) && knownFood.dinner.length ? knownFood.dinner : fallback.food.dinner
     }
   };
+  if (!known.dynamic) {
+    // Curated catalogs are authoritative but often thin on dining and shopping (hand-written
+    // lists of ~9 eat / 3 shop). Extend them with real researched places from a matching
+    // dynamic catalog (deploy-time precomputed or runtime enrichment) instead of generic filler.
+    const enrichment = getEnrichmentCatalog(destination, known);
+    if (enrichment) {
+      const enrichmentFood = enrichment.food || {};
+      merged.attractions = mergePlaceLists(merged.attractions, enrichment.attractions, 24);
+      merged.food = {
+        breakfast: mergePlaceLists(merged.food.breakfast, enrichmentFood.breakfast, 6),
+        lunch: mergePlaceLists(merged.food.lunch, enrichmentFood.lunch, 6),
+        dinner: mergePlaceLists(merged.food.dinner, enrichmentFood.dinner, 6)
+      };
+      merged.shopping = mergePlaceLists(merged.shopping, enrichment.shopping, 18);
+    }
+  }
   return merged;
+}
+
+function getEnrichmentCatalog(destination, primary) {
+  const candidate = String(destination || "").trim();
+  if (!candidate) return null;
+  return destinationCatalogs.find((catalog) => {
+    if (!catalog.dynamic || catalog === primary || !(catalog.match instanceof RegExp)) return false;
+    catalog.match.lastIndex = 0;
+    return catalog.match.test(candidate);
+  }) || null;
+}
+
+function countGuideFood(guide) {
+  const food = guide?.food || {};
+  return ["breakfast", "lunch", "dinner"].reduce((sum, slot) => sum + ((food[slot] || []).length), 0);
+}
+
+function curatedNeedsEnrichment(destination, curated) {
+  if (!curated || curated.dynamic) return false;
+  if (getEnrichmentCatalog(destination, curated)) return false;
+  return countGuideFood(curated) < 12 || (curated.shopping || []).length < 8;
+}
+
+function mergePlaceLists(primaryItems = [], extraItems = [], cap) {
+  const seen = new Set(primaryItems.map((item) => normalizeDestinationName(item?.name || "")));
+  const merged = [...primaryItems];
+  (extraItems || []).forEach((item) => {
+    const key = normalizeDestinationName(item?.name || "");
+    // Skip duplicates of curated entries plus the dynamic catalog's own generic filler and
+    // research-prompt placeholders — only genuinely sourced places extend a curated list.
+    if (!key || seen.has(key) || item.placeholder || item.researchPrompt) return;
+    if (/^plantoguide$/i.test(String(item.sourceLabel || "").trim())) return;
+    seen.add(key);
+    merged.push(item);
+  });
+  return merged.slice(0, cap);
 }
 
 function renderTrip() {
