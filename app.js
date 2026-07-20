@@ -1478,6 +1478,7 @@ function renderSuggestionPicker(destination) {
   });
   renderSuggestionCategory();
   updateSelectionCount();
+  scheduleSuggestionImageRetry(destination);
 }
 
 function sourceCreditHtml(item = {}) {
@@ -1642,6 +1643,14 @@ function resolvedPageImage(page) {
   return page?.thumbnail?.source || page?.imageinfo?.[0]?.thumburl || page?.imageinfo?.[0]?.url || "";
 }
 
+// Curated entries often combine landmarks ("Westminster Abbey, Big Ben, and the London Eye").
+// The leading landmark gives a clean, high-relevance Wikipedia image query and a title the
+// matcher can actually score — the full combined string matches no single article.
+function primaryImageQueryName(name = "") {
+  const primary = String(name).split(/,| and | & | \/ | \+ /i)[0].trim();
+  return primary || String(name).trim();
+}
+
 function isRemoteSuggestionImage(value = "") {
   return /^https:\/\//i.test(String(value));
 }
@@ -1724,14 +1733,16 @@ async function hydrateSuggestionImage(imageElement, suggestion, destination) {
   try {
     // The Commons fallback runs inside the same queued task so the whole lookup
     // (Wikipedia, then Commons when needed) respects the shared concurrency cap.
+    const queryName = primaryImageQueryName(suggestion.name);
+    const matchTarget = { ...suggestion, name: queryName };
     const { source, imageSource } = await queueSuggestionImageLookup(cacheKey, async () => {
-      const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${suggestion.name} ${destination}`, gsrlimit: "5", prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
+      const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${queryName} ${destination}`, gsrlimit: "6", prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
       const payload = await fetchSuggestionImage(`https://en.wikipedia.org/w/api.php?${params}`);
-      const wikipediaSource = resolvedPageImage(bestMatchingImagePage(payload, suggestion, destination));
+      const wikipediaSource = resolvedPageImage(bestMatchingImagePage(payload, matchTarget, destination));
       if (wikipediaSource) return { source: wikipediaSource, imageSource: "wikipedia" };
-      const commonsParams = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${suggestion.name} ${destination}`, gsrnamespace: "6", gsrlimit: "8", prop: "imageinfo", iiprop: "url", iiurlwidth: "520", format: "json", origin: "*" });
+      const commonsParams = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${queryName} ${destination}`, gsrnamespace: "6", gsrlimit: "8", prop: "imageinfo", iiprop: "url", iiurlwidth: "520", format: "json", origin: "*" });
       const commonsPayload = await fetchSuggestionImage(`https://commons.wikimedia.org/w/api.php?${commonsParams}`);
-      return { source: resolvedPageImage(bestMatchingImagePage(commonsPayload, suggestion, destination)), imageSource: "wikimedia-commons" };
+      return { source: resolvedPageImage(bestMatchingImagePage(commonsPayload, matchTarget, destination)), imageSource: "wikimedia-commons" };
     });
     suggestionImageCache.set(cacheKey, source);
     if (source) applyImage(source, imageSource);
@@ -1741,6 +1752,31 @@ async function hydrateSuggestionImage(imageElement, suggestion, destination) {
   } finally {
     imageElement.dataset.imageLookup = "ready";
   }
+}
+
+// Cards rendered during a rate-limit window (or before the initial lookup burst resolved) stay
+// on their placeholder even after the image is cached. Sweep the still-placeholder cards a few
+// times so every fetched or cached image lands on a visible card once the window clears.
+let suggestionImageRetryToken = 0;
+function scheduleSuggestionImageRetry(destination, attempt = 0) {
+  if (attempt >= 5) return;
+  const token = ++suggestionImageRetryToken;
+  const throttleWait = typeof wikimediaRetryAfterMs === "function" ? wikimediaRetryAfterMs() : 0;
+  // While rate limited, wait out the throttle window so the retry actually reaches the network;
+  // otherwise use a short delay to catch the initial lookup burst resolving into the cache.
+  const delay = throttleWait > 0 ? throttleWait + 800 : (attempt === 0 ? 1800 : 3500 + attempt * 2500);
+  setTimeout(() => {
+    if (token !== suggestionImageRetryToken) return; // a newer render superseded this sweep
+    if (normalizeDestinationName(destination) !== normalizeDestinationName(suggestionDestination || "")) return;
+    const pending = Array.from(suggestionBoard.querySelectorAll(".suggestion-card-image.is-placeholder"));
+    if (!pending.length) return;
+    pending.forEach((image) => {
+      const key = image.closest(".suggestion-bubble")?.dataset.suggestionKey;
+      const suggestion = key ? suggestionLookup.get(key) : null;
+      if (suggestion) hydrateSuggestionImage(image, suggestion, destination);
+    });
+    scheduleSuggestionImageRetry(destination, attempt + 1);
+  }, delay);
 }
 
 function updateSelectionCount() {

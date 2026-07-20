@@ -1,5 +1,11 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.7.3 reliable suggestion images
+
+- Fixes curated Places to See showing mostly placeholder images even after their real photos were fetched: cards rendered during a Wikimedia rate-limit window now retry and pick up the cached or freshly fetched image once the window clears (retry sweeps wait out the actual Retry-After window).
+- Searches for images by the leading landmark in combined curated titles ("Westminster Abbey, Big Ben, and the London Eye" → "Westminster Abbey"), which finds a relevant photo and reduces the Wikimedia Commons fallback traffic that was tripping the rate limit.
+- Result on London: Places to See image coverage rose from ~5/20 to 20/20.
+
 ## v3.7.2 curated destination priority
 
 - Makes curated catalogs the explicit editorial source of truth whenever curated, precomputed, cached, and live-researched catalogs all match the same destination.
