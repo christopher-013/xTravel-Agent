@@ -2575,7 +2575,8 @@ function curatedNeedsEnrichment(destination, curated) {
 }
 
 function mergePlaceLists(primaryItems = [], extraItems = [], cap) {
-  const seen = new Set(primaryItems.map((item) => normalizeDestinationName(item?.name || "")));
+  const primaryKeys = primaryItems.map((item) => normalizeDestinationName(item?.name || ""));
+  const seen = new Set(primaryKeys);
   const merged = [...primaryItems];
   (extraItems || []).forEach((item) => {
     const key = normalizeDestinationName(item?.name || "");
@@ -2583,6 +2584,9 @@ function mergePlaceLists(primaryItems = [], extraItems = [], cap) {
     // research-prompt placeholders — only genuinely sourced places extend a curated list.
     if (!key || seen.has(key) || item.placeholder || item.researchPrompt) return;
     if (/^plantoguide$/i.test(String(item.sourceLabel || "").trim())) return;
+    // Containment dedupe: curated entries often combine places ("Tower of London and Tower
+    // Bridge"), so a researched "Tower Bridge" would otherwise appear twice.
+    if (key.length >= 6 && primaryKeys.some((primaryKey) => primaryKey.includes(key))) return;
     seen.add(key);
     merged.push(item);
   });

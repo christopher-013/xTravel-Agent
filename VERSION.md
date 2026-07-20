@@ -1,5 +1,14 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.7.1 notability-ranked Places to See
+
+- Queries Wikipedia categories through incoming-links-ranked search instead of alphabetical member listing, so huge categories ("Tourist attractions in London") surface Tower of London and Trafalgar Square instead of obscure A–B articles, and records that rank as a scoring boost.
+- Adds average daily Wikipedia pageviews (fetched inside the existing page-details request, no extra API calls) as a secondary notability signal.
+- Adds classic sight keywords (castle, palace, cathedral, tower, bridge, abbey, gallery, square) to the ranking vocabulary.
+- Filters more non-attraction noise: tube stations, administrative authorities and tourism boards, suburban "Borough of …" categories, and broad city-container articles ("Central London").
+- Deduplicates researched places against curated combination entries ("Tower Bridge" no longer duplicates "Tower of London and Tower Bridge").
+- Carries the popularity and rank signals into cached and precomputed catalogs.
+
 ## v3.7.0 curated catalog enrichment
 
 - Extends thin curated destinations (London, Paris, Tokyo, and the other hand-written catalogs, which carry only ~9 dining and 3 shopping entries) with real researched places from the same public-source pipeline used for uncataloged cities, replacing the generic "top-rated local restaurant"-style filler in Places to Eat and Places to Shop.

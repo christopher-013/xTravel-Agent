@@ -415,8 +415,8 @@
   // Tuned to drop Wikipedia geosearch noise that isn't a visitable attraction — transit infrastructure,
   // schools/faculties, and administrative-boundary articles — while still keeping the single nearest
   // station (travelers use the main station) and legitimate "University of X" main-campus articles.
-  const NON_ATTRACTION_TITLE_PATTERN = /railway station|train station|metro station|bus station|school|faculty|district of|municipality|province of|county of|\(company\)|corporation|timeline of|history of|list of|diocese|archdiocese|city hall|courthouse|court house|post office|fire (department|station|& rescue)|police|\(tv series\)|\(film\)|\(series\)|season \d|city council|school district|library district/i;
-  const STATION_TITLE_PATTERN = /railway station|train station|metro station|bus station/i;
+  const NON_ATTRACTION_TITLE_PATTERN = /railway station|train station|metro station|tube station|bus station|school|faculty|district of|municipality|province of|county of|\(company\)|corporation|timeline of|history of|list of|diocese|archdiocese|city hall|courthouse|court house|post office|fire (department|station|& rescue)|police|\(tv series\)|\(film\)|\(series\)|season \d|city council|school district|library district|\bauthority\b|tourism board/i;
+  const STATION_TITLE_PATTERN = /railway station|train station|metro station|tube station|bus station/i;
 
   async function fetchWikipediaGeoPlaces(geocode, signal) {
     if (!geocode?.latitude || !geocode?.longitude) return [];
@@ -427,7 +427,7 @@
     const ids = (geo?.query?.geosearch || []).map((item) => item.pageid).filter(Boolean).slice(0, 50);
     if (!ids.length) return [];
     const pages = await fetchJson(makeUrl(WIKIPEDIA_API, {
-      action: "query", pageids: ids.join("|"), prop: "pageimages|extracts|info", exintro: "1", explaintext: "1",
+      action: "query", pageids: ids.join("|"), prop: "pageviews|pageimages|extracts|info", exintro: "1", explaintext: "1",
       piprop: "thumbnail", pithumbsize: "640", inprop: "url", format: "json", origin: "*"
     }), signal);
     const pageMap = pages?.query?.pages || {};
@@ -454,6 +454,7 @@
       image: page.thumbnail?.source || "",
       lat: coordinate(geoMap.get(Number(page.pageid))?.lat),
       lon: coordinate(geoMap.get(Number(page.pageid))?.lon),
+      popularity: averageDailyPageviews(page),
       sourceLabel: "Wikipedia",
       sourceUrl: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(String(page.title || "").replace(/\s+/g, "_"))}`,
       sourceId: `wikipedia:${page.pageid || slugify(page.title)}`,
@@ -462,11 +463,20 @@
     }));
   }
 
+  // Average daily Wikipedia pageviews (~60-day window from prop=pageviews). This is the
+  // notability signal that keeps world-famous sights above obscure keyword-heavy articles
+  // (St Paul's Cathedral ~1,300 views/day vs a suburban park's ~10).
+  function averageDailyPageviews(page) {
+    const days = Object.values(page?.pageviews || {}).filter((views) => Number.isFinite(views));
+    if (!days.length) return 0;
+    return Math.round(days.reduce((sum, views) => sum + views, 0) / days.length);
+  }
+
   // Topics used to discover the destination's real category names. Many metro areas file their
   // headline attractions under regional categories ("Tourist attractions in the Las Vegas Valley",
   // not "... in Las Vegas"), so a fixed "in {city}" list misses them entirely.
   const CATEGORY_TOPICS = ["Tourist attractions", "Landmarks", "Museums", "Parks", "Beaches", "Shopping malls", "Casinos", "Amusement parks"];
-  const CATEGORY_TITLE_EXCLUDE = /defunct|former|proposed|demolished|planned|unbuilt|people|history of|companies|images/i;
+  const CATEGORY_TITLE_EXCLUDE = /defunct|former|proposed|demolished|planned|unbuilt|people|history of|companies|images|borough of/i;
 
   function filterDiscoveredCategoryTitles(results, city) {
     const perTopic = new Map();
@@ -519,30 +529,47 @@
     const categoryNames = [...new Set([...discovered, ...remainingStatic])].slice(0, 8);
     const categoryResults = await Promise.all(categoryNames.map(async (category) => {
       try {
+        // incategory: search sorted by incoming links instead of list=categorymembers: the
+        // latter returns members ALPHABETICALLY, so huge categories ("Tourist attractions in
+        // London") yielded obscure A–B articles while Tower Bridge and Trafalgar Square never
+        // made the cut. Incoming-link order surfaces the most notable members first.
         const data = await fetchJson(makeUrl(WIKIPEDIA_API, {
-          action: "query", list: "categorymembers", cmtitle: `Category:${category}`, cmnamespace: "0",
-          cmlimit: "18", format: "json", origin: "*"
+          action: "query", list: "search", srsearch: `incategory:"${category}"`,
+          srsort: "incoming_links_desc", srnamespace: "0", srlimit: "18", format: "json", origin: "*"
         }), signal);
-        return data?.query?.categorymembers || [];
+        return data?.query?.search || [];
       } catch (_) {
         // Many destinations do not have every category. Keep going with the categories that exist.
         return [];
       }
     }));
     // Interleave round-robin across categories so a long first category can't crowd the later
-    // ones (e.g. casinos, malls) out of the overall cap.
+    // ones (e.g. casinos, malls) out of the overall cap. Each category list arrives sorted by
+    // incoming links, so the position within its list is a notability rank — recorded as a
+    // score boost, because prop=pageviews only returns data for a handful of pages per batch.
+    const cityContainerPattern = new RegExp(`^(?:central |greater |downtown |inner )?${escapeRegExp(city)}(?: city cent(?:re|er))?$`, "i");
+    const categoryNameSet = new Set(categoryNames.map((name) => name.toLowerCase()));
+    const rankBoosts = new Map();
     const pageIds = new Set();
     const maxLength = Math.max(0, ...categoryResults.map((list) => list.length));
     for (let position = 0; position < maxLength; position += 1) {
       for (const list of categoryResults) {
         const item = list[position];
-        if (item && item.pageid && !/list of|timeline of|history of/i.test(item.title || "")) pageIds.add(item.pageid);
+        if (!item || !item.pageid) continue;
+        const title = String(item.title || "");
+        if (/list of|timeline of|history of/i.test(title)) continue;
+        if (NON_ATTRACTION_TITLE_PATTERN.test(title) || cityContainerPattern.test(title)) continue;
+        // Skip category-container articles ("Parks and open spaces in London") whether or not
+        // that exact category was queried this run — they describe groups, not visitable places.
+        if (categoryNameSet.has(title.toLowerCase()) || /^(tourist attractions|landmarks|museums|parks(?: and open spaces)?|beaches|shopping (?:malls|centres|centers)|casinos|amusement parks)\b.*\b(?:in|of)\b/i.test(title)) continue;
+        pageIds.add(item.pageid);
+        if (!rankBoosts.has(item.pageid)) rankBoosts.set(item.pageid, Math.max(0, 44 - position * 3));
       }
     }
     const ids = [...pageIds].slice(0, 45);
     if (!ids.length) return [];
     const pages = await fetchJson(makeUrl(WIKIPEDIA_API, {
-      action: "query", pageids: ids.join("|"), prop: "coordinates|pageimages|extracts|info", exintro: "1", explaintext: "1",
+      action: "query", pageids: ids.join("|"), prop: "pageviews|coordinates|pageimages|extracts|info", exintro: "1", explaintext: "1",
       piprop: "thumbnail", pithumbsize: "640", inprop: "url", format: "json", origin: "*"
     }), signal);
     return Object.values(pages?.query?.pages || {}).map((page) => ({
@@ -553,6 +580,8 @@
       image: page.thumbnail?.source || "",
       lat: coordinate(page.coordinates?.[0]?.lat),
       lon: coordinate(page.coordinates?.[0]?.lon),
+      popularity: averageDailyPageviews(page),
+      rankBoost: rankBoosts.get(page.pageid) || 0,
       sourceLabel: "Wikipedia category",
       sourceUrl: page.fullurl || `https://en.wikipedia.org/wiki/${encodeURIComponent(String(page.title || "").replace(/\s+/g, "_"))}`,
       sourceId: `wikipedia:${page.pageid || slugify(page.title)}`,
@@ -684,10 +713,11 @@ out center tags 80;`;
   const TOURISM_KEYWORD_WEIGHTS = new Map([
     ["zoo", 34], ["beach", 32], ["park", 30], ["balboa", 30], ["griffith", 30],
     ["observatory", 30], ["getty", 30], ["universal studios", 30], ["hollywood", 28],
-    ["seaworld", 30], ["sea world", 30], ["casino", 28], ["museum", 26], ["aquarium", 25], ["monument", 24],
-    ["historic", 22], ["old town", 22], ["waterfront", 20], ["pier", 20], ["cove", 20],
-    ["view", 18], ["garden", 18], ["resort", 16], ["market", 16], ["fountain", 16], ["village", 14],
-    ["mall", 12], ["shopping", 12], ["district", 10], ["studio", 10]
+    ["seaworld", 30], ["sea world", 30], ["casino", 28], ["castle", 26], ["museum", 26], ["aquarium", 25],
+    ["palace", 24], ["cathedral", 24], ["monument", 24], ["abbey", 22], ["gallery", 22],
+    ["historic", 22], ["old town", 22], ["waterfront", 20], ["tower", 20], ["pier", 20], ["cove", 20],
+    ["view", 18], ["garden", 18], ["bridge", 16], ["resort", 16], ["market", 16], ["fountain", 16],
+    ["square", 14], ["village", 14], ["mall", 12], ["shopping", 12], ["district", 10], ["studio", 10]
   ]);
 
   const SEEDED_DESTINATION_CATALOGS = [
@@ -814,6 +844,11 @@ out center tags 80;`;
     TOURISM_KEYWORD_MATCHERS.forEach((weight, matcher) => {
       if (matcher.test(text)) score += weight;
     });
+    // Real-world notability dominates keyword heuristics: the incoming-links search rank
+    // (always available for category items) plus log-scaled average daily Wikipedia
+    // pageviews when present, so famous landmarks outrank obscure keyword-heavy pages.
+    score += Number(item.rankBoost) || 0;
+    if (Number(item.popularity) > 0) score += Math.min(80, Math.round(Math.log10(Number(item.popularity) + 1) * 26));
     if (item.seeded) score += 60;
     if (item.image) score += 8;
     if (/wikipedia|wikivoyage/i.test(item.sourceLabel || "")) score += 4;
@@ -942,6 +977,8 @@ out center tags 80;`;
       sourceLicense: item.sourceLicense || "",
       sourceAttribution: item.sourceAttribution || "",
       sources: itemSources(item),
+      popularity: Number(item.popularity) || 0,
+      rankBoost: Number(item.rankBoost) || 0,
       placeholder: Boolean(item.placeholder)
     };
   }
