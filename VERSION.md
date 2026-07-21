@@ -1,5 +1,17 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.1.0 beta instrumentation and adventure-card polish
+
+- Adds `beta-tools.js`: a privacy-first, dependency-free public-beta toolkit.
+  - **Cloudflare Web Analytics** beacon for aggregate visitor counts (off until a token is pasted into `beta-tools.js`; no third-party request is made while empty). CSP updated to allow `static.cloudflareinsights.com` and `cloudflareinsights.com`.
+  - **In-app feedback form** (💬 Send feedback) that composes a pre-filled GitHub issue with type, summary, details, optional contact, page, viewport, version, and user agent — filed to `christopher-013/PlanToGuide` under `feedback,beta` labels. Every "send feedback" link and the trip header Feedback button now open this form.
+  - **Local usage log + hidden metrics report** (open with `#beta-metrics` or Ctrl/Cmd+Shift+M): a this-browser-only funnel (sessions → adventure → swipe decisions → constraints → trip generated → export → feedback), with Copy JSON / Reset and a link to the Cloudflare dashboard. Cross-visitor totals live in Cloudflare; interaction detail is per-browser by design (no server, no tracking of individuals).
+- Adds the public-beta footnote ("No account needed. Your draft stays in this browser. · Public beta — send feedback ↗") to the generated trip app, above the bottom nav on every tab.
+- Moves the Adventure card's Favorite / Already-included badge to its own line directly under the place title.
+- Removes the "Needs verification" status pill from generated itinerary activity cards (the trip-wide verify disclaimers and per-place source links already cover it); the status value is preserved in the data for the AI-export research prompts.
+- Fixes the Step 2 (Adventure) progress chevron sitting 2px above the row — the current step now aligns with the others.
+- Rebuilds `export-styles.js` from the updated `styles.css`.
+
 ## v4.0.2 splash-first workflow restarts
 
 - Shows the PlanToGuide title page on every page load, including when a generated or imported trip is saved locally.

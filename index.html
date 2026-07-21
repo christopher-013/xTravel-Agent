@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#f5f1e8">
   <meta name="referrer" content="no-referrer">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://en.wikipedia.org https://en.wikivoyage.org https://commons.wikimedia.org https://overpass-api.de; frame-src 'self' https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://en.wikipedia.org https://en.wikivoyage.org https://commons.wikimedia.org https://overpass-api.de https://cloudflareinsights.com; frame-src 'self' https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
   <title>PlanToGuide — Turn your trip plan into a mobile travel guide</title>
   <meta name="description" content="Create a shareable trip website, mobile travel guide, and AI-ready planning file.">
   <link rel="canonical" href="https://christopher-013.github.io/PlanToGuide/">
@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=4.0.2">
+  <link rel="stylesheet" href="styles.css?v=4.1.0">
 </head>
 <body>
   <main class="page-shell">
@@ -338,6 +338,8 @@
           </section>
         </div>
 
+        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="https://github.com/christopher-013/PlanToGuide/issues" target="_blank" rel="noopener noreferrer">send feedback ↗</a></p>
+
         <nav class="app-nav" aria-label="Trip sections">
           <button class="app-nav-button active" type="button" data-tab="home"><span>🏠</span><small>Home</small></button>
           <button class="app-nav-button" type="button" data-tab="itinerary"><span>📅</span><small>Itinerary</small></button>
@@ -400,6 +402,30 @@
     </div>
   </dialog>
 
+  <dialog class="export-dialog feedback-dialog" id="feedbackDialog" aria-labelledby="feedbackDialogTitle">
+    <button class="export-dialog-close" id="feedbackDialogClose" type="button" aria-label="Close">×</button>
+    <span class="export-dialog-icon" aria-hidden="true">💬</span>
+    <p class="eyebrow">Public beta</p>
+    <h2 id="feedbackDialogTitle">Send feedback</h2>
+    <p>Tell us what worked or what broke. Submitting opens a pre-filled GitHub issue in a new tab so we can track and reply. No account details are collected here.</p>
+    <form id="feedbackForm">
+      <fieldset class="feedback-category" aria-label="Feedback type">
+        <label><input type="radio" name="feedbackCategory" value="bug" checked> 🐞 Bug</label>
+        <label><input type="radio" name="feedbackCategory" value="idea"> 💡 Idea</label>
+        <label><input type="radio" name="feedbackCategory" value="praise"> 🎉 Praise</label>
+        <label><input type="radio" name="feedbackCategory" value="other"> 💬 Other</label>
+      </fieldset>
+      <label class="feedback-field" for="feedbackSummary"><span>Summary</span><input id="feedbackSummary" type="text" maxlength="120" placeholder="One line — e.g. Weather card overlaps banner" required></label>
+      <label class="feedback-field" for="feedbackMessage"><span>Details</span><textarea id="feedbackMessage" rows="5" maxlength="2000" placeholder="What happened, what you expected, and any steps to reproduce."></textarea></label>
+      <label class="feedback-field" for="feedbackEmail"><span>Email <em>(optional, only if you want a reply)</em></span><input id="feedbackEmail" type="email" maxlength="120" placeholder="you@example.com" autocomplete="off"></label>
+      <p class="feedback-status" id="feedbackStatus" role="status" aria-live="polite"></p>
+      <div class="import-actions">
+        <button class="secondary-button" id="feedbackCancel" type="button">Cancel</button>
+        <button class="primary-button" type="submit">Open GitHub issue →</button>
+      </div>
+    </form>
+  </dialog>
+
   <template id="activityTemplate">
     <article class="activity-card" tabindex="0">
       <div class="activity-time"></div>
@@ -426,12 +452,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=4.0.2"></script>
-  <script src="dynamic-catalog.js?v=4.0.2"></script>
-  <script src="export-styles.js?v=4.0.2"></script>
-  <script src="icon-source.js?v=4.0.2"></script>
-  <script src="photo-store.js?v=4.0.2"></script>
-  <script src="trip-schema.js?v=4.0.2"></script>
-  <script src="app.js?v=4.0.2"></script>
+  <script src="version.js?v=4.1.0"></script>
+  <script src="dynamic-catalog.js?v=4.1.0"></script>
+  <script src="export-styles.js?v=4.1.0"></script>
+  <script src="icon-source.js?v=4.1.0"></script>
+  <script src="photo-store.js?v=4.1.0"></script>
+  <script src="trip-schema.js?v=4.1.0"></script>
+  <script src="beta-tools.js?v=4.1.0"></script>
+  <script src="app.js?v=4.1.0"></script>
 </body>
 </html>

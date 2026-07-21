@@ -1301,6 +1301,7 @@ startSplashContinue?.addEventListener("click", () => dismissStartSplash({ focusD
 
 function showFormStep(stepNumber) {
   currentFormStep = stepNumber;
+  window.ptgTrack?.(`step_reached_${stepNumber}`);
   builder.classList.toggle("builder-wide", stepNumber > 1);
   builder.classList.toggle("builder-adventure", stepNumber === 2);
   form.dataset.currentStep = String(stepNumber);
@@ -1623,7 +1624,7 @@ function renderSuggestionDeckCard(group, section) {
   const favorite = Boolean(selectedValue?.favorite);
   const meta = suggestionMeta(suggestion).filter(Boolean).map(escapeHtml).join(" · ");
   const remaining = group.items.length - reviewed.size;
-  deck.innerHTML = `<article class="suggestion-bubble suggestion-swipe-card${selected ? " selected" : ""}${favorite ? " favorite" : ""}" data-suggestion-key="${escapeHtml(suggestion.key)}" tabindex="0" aria-label="${escapeHtml(suggestion.name)}. Swipe right or press the right arrow to include. Swipe left or press the left arrow to skip. Press F to favorite."><div class="suggestion-swipe-image-wrap"><img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="" aria-hidden="true" loading="eager" draggable="false"><span class="suggestion-deck-progress">${reviewed.size + 1} of ${group.items.length}</span></div><div class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong>${favorite ? '<span class="suggestion-selected-badge favorite">★ Favorite</span>' : selected ? '<span class="suggestion-selected-badge">Already included</span>' : ""}</span><span class="suggestion-card-meta">${meta}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span><span class="suggestion-card-links">${sourceCreditHtml(suggestion)}<a class="suggestion-map-link" href="${googleMapsSearchUrl(suggestion.name, "", destinationInput.value.trim())}" target="_blank" rel="noopener noreferrer">Verify current details on Google Maps ↗</a></span></div><span class="suggestion-decision-overlay skip" aria-hidden="true"><span>✕</span><strong>Skip</strong></span><span class="suggestion-decision-overlay include" aria-hidden="true"><span>♥</span><strong>Include</strong></span><span class="suggestion-decision-overlay favorite" aria-hidden="true"><span>★</span><strong>Favorite</strong></span></article>`;
+  deck.innerHTML = `<article class="suggestion-bubble suggestion-swipe-card${selected ? " selected" : ""}${favorite ? " favorite" : ""}" data-suggestion-key="${escapeHtml(suggestion.key)}" tabindex="0" aria-label="${escapeHtml(suggestion.name)}. Swipe right or press the right arrow to include. Swipe left or press the left arrow to skip. Press F to favorite."><div class="suggestion-swipe-image-wrap"><img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="" aria-hidden="true" loading="eager" draggable="false"><span class="suggestion-deck-progress">${reviewed.size + 1} of ${group.items.length}</span></div><div class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong></span>${favorite ? '<span class="suggestion-selected-badge favorite">★ Favorite</span>' : selected ? '<span class="suggestion-selected-badge">Already included</span>' : ""}<span class="suggestion-card-meta">${meta}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span><span class="suggestion-card-links">${sourceCreditHtml(suggestion)}<a class="suggestion-map-link" href="${googleMapsSearchUrl(suggestion.name, "", destinationInput.value.trim())}" target="_blank" rel="noopener noreferrer">Verify current details on Google Maps ↗</a></span></div><span class="suggestion-decision-overlay skip" aria-hidden="true"><span>✕</span><strong>Skip</strong></span><span class="suggestion-decision-overlay include" aria-hidden="true"><span>♥</span><strong>Include</strong></span><span class="suggestion-decision-overlay favorite" aria-hidden="true"><span>★</span><strong>Favorite</strong></span></article>`;
   actions.innerHTML = `<button type="button" class="suggestion-action-button suggestion-redo-button suggestion-undo-button"${history.length ? "" : " disabled"} aria-label="Redo last recommendation choice" title="Redo"><span aria-hidden="true">↶</span></button><button type="button" class="suggestion-action-button suggestion-skip-button" aria-label="Skip ${escapeHtml(suggestion.name)}" title="Skip"><span aria-hidden="true">✕</span></button><button type="button" class="suggestion-action-button suggestion-include-button" aria-label="Include ${escapeHtml(suggestion.name)}" title="Include"><span aria-hidden="true">♥</span></button><button type="button" class="suggestion-action-button suggestion-favorite-button" aria-label="Favorite ${escapeHtml(suggestion.name)} and prioritize it earlier" title="Favorite"><span aria-hidden="true">★</span></button>`;
   if (status) status.textContent = `${suggestion.name}. ${remaining} recommendations remain in ${group.label}.`;
 
@@ -1647,6 +1648,7 @@ function applySuggestionDecision(key, decision, card, renderToken) {
   const position = group?.items.findIndex((item) => item.key === key) ?? -1;
   if (!group || position < 0) return;
   const suggestion = group.items[position];
+  window.ptgTrack?.("suggestion_decision", { decision, category: group.key || String(activeSuggestionCategory) });
   const selectedValueBefore = selectedSuggestions.get(key) || null;
   const rejectedValueBefore = rejectedSuggestions.get(key) || null;
   suggestionDeckHistory[activeSuggestionCategory].push({ key, position, selectedValueBefore, rejectedValueBefore, suggestion });
@@ -2901,6 +2903,7 @@ function mergePlaceLists(primaryItems = [], extraItems = [], cap) {
 }
 
 function renderTrip() {
+  window.ptgTrack?.("trip_generated", { days: trip.days.length, mode: trip.preferences.appMode || "free", research: Boolean(trip.researchMode) });
   document.querySelector(".trip-app").dataset.template = "complete";
   document.querySelector(".trip-app").dataset.mode = trip.preferences.appMode || "free";
   document.querySelector("#appDestination").textContent = "";
@@ -3935,8 +3938,16 @@ function renderActivity(activity) {
   fragment.querySelector(".activity-icon").textContent = activity.icon;
   fragment.querySelector(".activity-type").textContent = activity.type;
   const status = fragment.querySelector(".activity-status");
-  status.textContent = activity.status || "Recommended";
-  status.className = `activity-status status-${normalizeStatus(activity.status).replace(/\s+/g, "-")}`;
+  const normalizedActivityStatus = normalizeStatus(activity.status);
+  if (normalizedActivityStatus === "needs verification") {
+    // "Needs verification" is planning noise on the generated itinerary; the trip-wide
+    // "verify details" disclaimers and per-place source links already cover this. The
+    // status value is preserved on the data for the AI-export research prompts.
+    status.hidden = true;
+  } else {
+    status.textContent = activity.status || "Recommended";
+    status.className = `activity-status status-${normalizedActivityStatus.replace(/\s+/g, "-")}`;
+  }
   fragment.querySelector("h4").textContent = activity.title;
   const originBadge = fragment.querySelector(".activity-origin-badge");
   const selectionState = activitySelectionState(activity);

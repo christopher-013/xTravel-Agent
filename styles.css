@@ -766,8 +766,7 @@ body.trip-mode { display: block; }
   z-index:2;
   color:#17191b;
   background:#d9a62e;
-  transform:translateY(-2px);
-  filter:drop-shadow(0 5px 6px rgba(112,77,7,.24));
+  filter:drop-shadow(0 3px 5px rgba(112,77,7,.2));
 }
 .trip-form .form-progress span.current b {
   color:#fff;
@@ -5961,4 +5960,103 @@ body.start-splash-active { overflow: hidden; }
   .trip-form.v4-reveal,
   .suggestion-swipe-card,
   .suggestion-decision-overlay { animation: none !important; transition-duration: .01ms !important; }
+}
+
+/* ── Public-beta tooling: in-app footnote, feedback form, hidden metrics report ── */
+.app-footnote {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 6px 12px max(6px, env(safe-area-inset-bottom));
+  border-top: 1px solid var(--line);
+  background: rgba(255,255,255,.9);
+  font-size: 10px;
+}
+
+/* Feedback dialog (reuses .export-dialog base) */
+.feedback-dialog .feedback-category {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 4px 0 14px;
+  padding: 0;
+  border: 0;
+}
+.feedback-dialog .feedback-category label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.feedback-dialog .feedback-category input { accent-color: var(--forest); }
+.feedback-dialog .feedback-category label:has(input:checked) {
+  border-color: var(--forest);
+  color: var(--forest);
+  background: var(--sage);
+}
+.feedback-dialog .feedback-field { display: block; margin-bottom: 12px; }
+.feedback-dialog .feedback-field > span { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 700; color: var(--ink); }
+.feedback-dialog .feedback-field > span em { color: var(--muted); font-weight: 500; }
+.feedback-dialog .feedback-field input,
+.feedback-dialog .feedback-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  font: inherit;
+  font-size: 13px;
+  resize: vertical;
+}
+.feedback-dialog .feedback-field input:focus,
+.feedback-dialog .feedback-field textarea:focus { outline: 2px solid rgba(36,89,76,.4); outline-offset: 1px; }
+.feedback-dialog .feedback-status { min-height: 16px; margin: 4px 0 10px; color: var(--forest); font-size: 12px; font-weight: 600; }
+
+/* Hidden metrics report overlay (opened via #beta-metrics or Ctrl/Cmd+Shift+M) */
+#ptgMetricsOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: start center;
+  padding: 24px 16px;
+  overflow-y: auto;
+  background: rgba(8,18,15,.72);
+  backdrop-filter: blur(4px);
+}
+#ptgMetricsOverlay .ptg-metrics-card {
+  position: relative;
+  width: min(720px, 100%);
+  padding: 26px clamp(18px,3vw,32px) 30px;
+  border-radius: 16px;
+  color: #16211d;
+  background: #fffdf8;
+  box-shadow: 0 28px 90px rgba(0,0,0,.4);
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+#ptgMetricsOverlay h2 { margin: 0 0 6px; font: 600 24px/1.1 "Fraunces", serif; }
+#ptgMetricsOverlay h3 { margin: 20px 0 6px; font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #6b7b6f; }
+#ptgMetricsOverlay .ptg-metrics-note { margin: 0 0 14px; font-size: 12px; line-height: 1.5; color: #4b5750; }
+#ptgMetricsOverlay .ptg-metrics-note a { color: var(--forest); font-weight: 700; }
+#ptgMetricsOverlay .ptg-metrics-stats { display: flex; flex-wrap: wrap; gap: 10px; }
+#ptgMetricsOverlay .ptg-metrics-stats span {
+  display: flex; flex-direction: column; flex: 1 1 140px;
+  padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: #f7f5ee; font-size: 11px; color: #6b7b6f;
+}
+#ptgMetricsOverlay .ptg-metrics-stats b { font-family: "Fraunces", serif; font-size: 18px; color: #16211d; }
+#ptgMetricsOverlay .ptg-metrics-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+#ptgMetricsOverlay .ptg-metrics-table td { padding: 6px 8px; border-top: 1px solid var(--line); vertical-align: top; }
+#ptgMetricsOverlay .ptg-metrics-table .ptg-num { text-align: right; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#ptgMetricsOverlay .ptg-metrics-events td { font-size: 11px; color: #4b5750; word-break: break-word; }
+#ptgMetricsOverlay .ptg-metrics-actions { display: flex; gap: 10px; margin-top: 18px; }
+#ptgMetricsOverlay .ptg-metrics-actions button {
+  padding: 9px 16px; border: 1px solid var(--line); border-radius: 999px; background: #fff; cursor: pointer; font: 700 12px "DM Sans", sans-serif;
+}
+#ptgMetricsOverlay .ptg-metrics-actions button:hover { border-color: var(--forest); color: var(--forest); }
+#ptgMetricsOverlay .ptg-metrics-close {
+  position: absolute; right: 14px; top: 10px; border: 0; background: transparent; color: #6b7b6f; font-size: 26px; line-height: 1; cursor: pointer;
 }
