@@ -1,5 +1,12 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.7.6 synced-build safeguards
+
+- Removes the duplicate `researchModeNotice` element introduced while relocating the live-research card into the Home hero.
+- Adds a deterministic export-styles build step and smoke test so the embedded `file://` fallback cannot drift behind `styles.css`.
+- Raises the compact Itinerary weather metrics from 6–8px to a more readable 8–10px while keeping the card inside the day banner.
+- Adds markup checks for duplicate IDs and cache-version drift across every local asset reference.
+
 ## v3.7.5 itinerary banner weather fit
 
 - Fixes the day-by-day Itinerary weather card spilling below the banner on desktop: the golden-reference report type sizing was enlarging the compact banner card, so at desktop widths it wrapped tall and overflowed the shorter day hero (up to ~80px past the banner at ~1000–1100px).

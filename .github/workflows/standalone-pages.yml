@@ -25,6 +25,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - name: Verify application and export fallbacks
+        run: |
+          npm run check
+          npm run smoke
       - name: Precompute destination catalogs
         # Runs the browser research pipeline server-side for top tourist cities so most real
         # queries never hit the rate-limited runtime path. The script quality-gates every

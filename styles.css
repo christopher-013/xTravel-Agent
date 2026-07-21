@@ -2798,11 +2798,11 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
    intended compact size. (The Home banner keeps its larger card: its hero is taller
    because of the export button/research card, so the bigger card fills it cleanly.) */
 @media(min-width:901px) {
-  .trip-app .itinerary-weather-wrap .weather-location { font-size:14px; }
-  .trip-app .itinerary-weather-wrap .weather-summary { margin:4px 0 6px; font-size:9px; line-height:1.35; }
-  .trip-app .itinerary-weather-wrap .weather-metrics-row small { font-size:6px; }
-  .trip-app .itinerary-weather-wrap .weather-metrics-row strong { font-size:8px; }
-  .trip-app .itinerary-weather-wrap .weather-disclaimer { margin-top:4px; font-size:6px; }
+  .trip-app .itinerary-weather-wrap .weather-location { font-size:15px; }
+  .trip-app .itinerary-weather-wrap .weather-summary { margin:4px 0 6px; font-size:10px; line-height:1.35; }
+  .trip-app .itinerary-weather-wrap .weather-metrics-row small { font-size:8px; }
+  .trip-app .itinerary-weather-wrap .weather-metrics-row strong { font-size:10px; }
+  .trip-app .itinerary-weather-wrap .weather-disclaimer { margin-top:4px; font-size:7px; }
 }
 .itinerary-day-hero {
   display:block;

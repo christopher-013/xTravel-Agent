@@ -14,7 +14,7 @@ For unsupported destinations, hosted/http deployments can also build a keyless l
 - `styles.css` — full-screen responsive presentation
 - `app.js` — destination catalog, itinerary generation, navigation, weather estimates, and browser storage
 - `trip-schema.js` — versioned export/import schema and AI handoff
-- `export-styles.js` — bundled stylesheet fallback used by ZIP export
+- `export-styles.js` — bundled stylesheet fallback used by ZIP export; regenerate it with `npm run build:export-styles` whenever `styles.css` changes
 - `icon-source.js` — bundled logo fallback used by standalone export
 - `photo-store.js` — IndexedDB photo payload storage used by the browser app
 - `plan-x-guide-centered-compass-morph-clean-x.svg` — animated application logo
