@@ -1,5 +1,13 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.2.0 clearer wizard, smoother swipes, fewer typed answers
+
+- **Wizard buttons name their destination:** Trip basics → "Places to See", then the Adventure Next button reads "Places to Eat", "Places to Shop", and "Travel style" as you advance.
+- **Home weather card fixed:** on wide screens the home hero collapses to its min-height, so the golden-report-sized weather card overflowed the banner. The compact banner sizing now applies to the Home card too (as it already did for the Itinerary), so it always sits inside the banner.
+- **Swipe deck feel:** the SKIP / INCLUDE / FAVORITE label now holds on-screen (~360ms) before the card glides off in the swipe direction from wherever it was dragged — no more snap-back/reappear, and the decision is readable. **Double-tap a card on touch to Favorite.**
+- **Fewer typed answers — quick-pick chips:** Travel style (Home base, Group size, Traveler ages, Trip purpose) and Constraints (Food restrictions, Mobility, Must-do, Things to avoid) now offer tappable common answers; free typing still works. Home-base chips are location-aware (popular areas to stay, from where the destination's top sights cluster). "None"/"No limits" clear the rest; list fields toggle.
+- **Removed "Already booked items"** from the wizard — bookings can be added later from the Bookings tab. Existing saved/imported bookings are still honored.
+
 ## v4.1.4 fix Step 2 progress sub-labels clipping
 
 - On the Adventure (Step 2) progress bar, the two-line step labels (e.g. "Adventure / See, eat & shop") were overflowing below each chevron and getting clipped, because a fixed chevron height was shorter than the step number + label needed.

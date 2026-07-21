@@ -26,7 +26,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
   <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=4.1.4">
+  <link rel="stylesheet" href="styles.css?v=4.2.0">
 </head>
 <body>
   <main class="page-shell">
@@ -131,7 +131,7 @@
               </div>
             </div>
             <button class="primary-button compact-next-button" id="nextStepButton" type="button">
-              <span>Next Step</span>
+              <span>Places to See</span>
               <span aria-hidden="true">→</span>
             </button>
           </div>
@@ -166,10 +166,10 @@
             <p>These answers set the number of stops, timing, meal style, and how much walking we build into every day.</p>
           </div>
           <div class="trip-style-grid">
-            <label class="style-question"><span>Home base / hotel area</span><small>Used to optimize the start and end of routes.</small><input id="homeBase" type="text" placeholder="e.g. Shinjuku Station area"></label>
-            <label class="style-question"><span>Group size</span><small>Helps with seating, taxis, and timing.</small><input id="groupSize" type="number" min="1" max="30" value="2"></label>
-            <label class="style-question"><span>Traveler ages</span><small>Especially useful for family pacing.</small><input id="travelerAges" type="text" placeholder="e.g. 42, 40, 12, 8"></label>
-            <label class="style-question"><span>Trip purpose</span><small>Sets the tone and priorities.</small><input id="tripPurpose" type="text" placeholder="e.g. first visit, anniversary, graduation"></label>
+            <label class="style-question"><span>Home base / hotel area</span><small>Pick a popular area to stay, or type a specific hotel or address.</small><input id="homeBase" type="text" placeholder="e.g. a neighborhood, hotel, or address"><div class="quick-picks" data-picks="homeBase" aria-label="Popular areas to stay"></div></label>
+            <label class="style-question"><span>Group size</span><small>Pick a common size or type your own.</small><input id="groupSize" type="number" min="1" max="30" value="2"><div class="quick-picks" data-picks="groupSize" aria-label="Common group sizes"></div></label>
+            <label class="style-question"><span>Traveler ages</span><small>Choose a common mix, or type specific ages.</small><input id="travelerAges" type="text" placeholder="e.g. 42, 40, 12, 8"><div class="quick-picks" data-picks="travelerAges" aria-label="Common traveler mixes"></div></label>
+            <label class="style-question"><span>Trip purpose</span><small>Pick one or type your own.</small><input id="tripPurpose" type="text" placeholder="e.g. first visit, anniversary, graduation"><div class="quick-picks" data-picks="tripPurpose" aria-label="Common trip purposes"></div></label>
             <label class="style-question"><span>Trip pace</span><small>How full should each day feel?</small><select id="tripPace"><option value="relaxed">Relaxed · 6 stops</option><option value="balanced" selected>Balanced · 8 stops</option><option value="packed">Packed · 10 stops</option></select></label>
             <label class="style-question"><span>Who is traveling?</span><small>Helps tune breaks and activities.</small><select id="tripParty"><option value="solo">Solo</option><option value="couple" selected>Couple</option><option value="family">Family</option><option value="friends">Friends</option></select></label>
             <label class="style-question"><span>When should days begin?</span><small>We will shift the morning schedule.</small><select id="dayStart"><option value="early">Early · around 7:30</option><option value="standard" selected>Standard · around 8:30</option><option value="slow">Slow · around 10:00</option></select></label>
@@ -186,11 +186,10 @@
         <section class="form-step" data-form-step="4" hidden>
           <div class="suggestion-intro"><p class="eyebrow">Protect the important details</p><h2>Bookings & real-world constraints</h2><p>Add locked reservations and practical limits so the itinerary builds around reality.</p></div>
           <div class="trip-style-grid">
-            <label class="style-question"><span>Food restrictions</span><small>Allergies, vegetarian needs, picky eaters, or foods to avoid.</small><textarea id="foodRestrictions" rows="1" placeholder="e.g. shellfish allergy; one vegetarian"></textarea></label>
-            <label class="style-question"><span>Mobility / walking tolerance</span><small>Stairs, step-free needs, daily walking limit, or rest requirements.</small><textarea id="mobilityNeeds" rows="1" placeholder="e.g. maximum 8,000 steps; avoid steep hills"></textarea></label>
-            <label class="style-question"><span>Must-do activities</span><small>These priorities remain locked in the plan.</small><textarea id="mustDos" rows="1" placeholder="One per line"></textarea></label>
-            <label class="style-question"><span>Things to avoid</span><small>Museums, nightlife, early mornings, long train rides, crowds, etc.</small><textarea id="avoidList" rows="1" placeholder="One per line"></textarea></label>
-            <label class="style-question booking-input"><span>Already booked items</span><small>One per line: Name | YYYY-MM-DD | time | status. Status can be confirmed, needs booking, optional, backup, or needs verification.</small><textarea id="bookedItems" rows="1" placeholder="Shibuya Sky | 2026-06-12 | 5:40 PM | confirmed"></textarea></label>
+            <label class="style-question"><span>Food restrictions</span><small>Tap any that apply, or add your own.</small><textarea id="foodRestrictions" rows="1" placeholder="e.g. shellfish allergy; one vegetarian"></textarea><div class="quick-picks" data-picks="foodRestrictions" aria-label="Common food restrictions"></div></label>
+            <label class="style-question"><span>Mobility / walking tolerance</span><small>Tap any that apply, or add your own.</small><textarea id="mobilityNeeds" rows="1" placeholder="e.g. maximum 8,000 steps; avoid steep hills"></textarea><div class="quick-picks" data-picks="mobilityNeeds" aria-label="Common mobility needs"></div></label>
+            <label class="style-question"><span>Must-do activities</span><small>Tap common ideas, or add your own (one per line).</small><textarea id="mustDos" rows="1" placeholder="One per line"></textarea><div class="quick-picks" data-picks="mustDos" aria-label="Common must-do ideas"></div></label>
+            <label class="style-question"><span>Things to avoid</span><small>Tap any to avoid, or add your own (one per line).</small><textarea id="avoidList" rows="1" placeholder="One per line"></textarea><div class="quick-picks" data-picks="avoidList" aria-label="Common things to avoid"></div></label>
           </div>
           <div class="wizard-actions final-actions">
             <button class="secondary-button" id="constraintsBackButton" type="button">← Back</button>
@@ -452,13 +451,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=4.1.4"></script>
-  <script src="dynamic-catalog.js?v=4.1.4"></script>
-  <script src="export-styles.js?v=4.1.4"></script>
-  <script src="icon-source.js?v=4.1.4"></script>
-  <script src="photo-store.js?v=4.1.4"></script>
-  <script src="trip-schema.js?v=4.1.4"></script>
-  <script src="beta-tools.js?v=4.1.4"></script>
-  <script src="app.js?v=4.1.4"></script>
+  <script src="version.js?v=4.2.0"></script>
+  <script src="dynamic-catalog.js?v=4.2.0"></script>
+  <script src="export-styles.js?v=4.2.0"></script>
+  <script src="icon-source.js?v=4.2.0"></script>
+  <script src="photo-store.js?v=4.2.0"></script>
+  <script src="trip-schema.js?v=4.2.0"></script>
+  <script src="beta-tools.js?v=4.2.0"></script>
+  <script src="app.js?v=4.2.0"></script>
 </body>
 </html>

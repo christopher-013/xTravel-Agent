@@ -287,6 +287,9 @@ let suggestionDeckDestination = "";
 let suggestionSwipeInFlight = false;
 let suggestionDeckRenderToken = 0;
 let focusNextSuggestionCard = false;
+// Swipe decision pacing: hold the SKIP/INCLUDE/FAVORITE label on-screen, then glide off.
+const SUGGESTION_DECISION_HOLD_MS = 360;
+const SUGGESTION_DECISION_EXIT_MS = 500;
 let currentFormStep = 1;
 const TRIP_BASICS_BRAND_REPLAY_INTERVAL_MS = 60_000;
 const START_SPLASH_DURATION_MS = 3600;
@@ -1319,6 +1322,7 @@ function showFormStep(stepNumber) {
   });
   document.querySelector("#formStepTitle").textContent = ["", "Trip basics", "Choose your adventure", "Travelers & style", "Bookings & constraints"][stepNumber];
   document.querySelector("#formStepCount").textContent = `Step ${displayedStep} of 4`;
+  if (stepNumber === 3 || stepNumber === 4) renderQuickPicks();
   forceWizardTop();
   requestAnimationFrame(() => {
     const heading = document.querySelector(`[data-form-step="${stepNumber}"] h1, [data-form-step="${stepNumber}"] h2, [data-form-step="${stepNumber}"] h3`);
@@ -1447,7 +1451,7 @@ function getTripPreferences() {
     mobilityNeeds: document.querySelector("#mobilityNeeds").value.trim(),
     mustDos: document.querySelector("#mustDos").value.trim(),
     avoid: document.querySelector("#avoidList").value.trim(),
-    bookedItems: document.querySelector("#bookedItems").value.trim(),
+    bookedItems: document.querySelector("#bookedItems")?.value.trim() || "",
     outputTemplate: "complete",
     appMode: "free"
   };
@@ -1455,7 +1459,104 @@ function getTripPreferences() {
 
 function setTripPreferences(preferences = {}) {
   const fields = { tripPace: "pace", tripParty: "party", dayStart: "start", eveningStyle: "evening", transportStyle: "transport", tripBudget: "budget", mobilityNotes: "notes", homeBase: "homeBase", groupSize: "groupSize", travelerAges: "travelerAges", tripPurpose: "purpose", foodRestrictions: "foodRestrictions", mobilityNeeds: "mobilityNeeds", mustDos: "mustDos", avoidList: "avoid", bookedItems: "bookedItems" };
-  Object.entries(fields).forEach(([id, key]) => { if (preferences[key]) document.querySelector(`#${id}`).value = preferences[key]; });
+  Object.entries(fields).forEach(([id, key]) => { if (preferences[key]) { const el = document.querySelector(`#${id}`); if (el) el.value = preferences[key]; } });
+  renderQuickPicks();
+}
+
+// ── Quick-pick prefills ──────────────────────────────────────────────────────
+// Reduce free-typing in Travel style / Constraints: tappable common answers that
+// fill (mode "set") or toggle within a list (mode "list") each field, while custom
+// typing still works. Home base picks are location-aware (popular areas to stay).
+const QUICK_PICKS = {
+  homeBase:         { mode: "set" },
+  groupSize:        { mode: "set", items: ["1", "2", "3", "4", "5", "6"] },
+  travelerAges:     { mode: "set", items: ["All adults", "Adults + teens", "Adults + kids under 12", "Multi-generational", "Includes seniors 65+"] },
+  tripPurpose:      { mode: "set", items: ["First visit", "Return visit", "Anniversary", "Honeymoon", "Birthday", "Family vacation", "Business + leisure", "Foodie trip", "Relaxation"] },
+  foodRestrictions: { mode: "list", sep: ", ", exclusive: /^none$/i, items: ["None", "Vegetarian", "Vegan", "Gluten-free", "Nut allergy", "Shellfish allergy", "Dairy-free", "Halal", "Kosher"] },
+  mobilityNeeds:    { mode: "list", sep: "; ", exclusive: /^no limits$/i, items: ["No limits", "Prefer less walking", "Step-free access needed", "Frequent rest breaks", "Max ~5,000 steps/day", "Avoid steep hills", "Stroller-friendly"] },
+  mustDos:          { mode: "list", sep: "\n", items: ["Local cuisine", "Iconic landmarks", "Museums & art", "Local markets", "Scenic viewpoints", "Live music", "A day trip"] },
+  avoidList:        { mode: "list", sep: "\n", items: ["Long transit rides", "Big crowds", "Early mornings", "Late nights", "Tourist traps", "Lots of stairs", "Museums"] }
+};
+
+// Popular areas to stay, derived from where the destination's top sights cluster,
+// with a sensible generic fallback for thin/uncatalogued destinations.
+function popularStayAreas() {
+  const counts = new Map();
+  const groups = typeof suggestionGroups !== "undefined" ? suggestionGroups : [];
+  const destinationName = String(document.querySelector("#destination")?.value || "").trim().toLowerCase();
+  (groups[0]?.items || []).forEach((item) => {
+    const area = String(item.area || "").trim();
+    if (!area || area.length > 38) return;
+    // Skip the bare destination name — it's not a useful "area to stay" chip.
+    if (area.toLowerCase() === destinationName) return;
+    counts.set(area, (counts.get(area) || 0) + 1);
+  });
+  const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([area]) => area);
+  if (ranked.length >= 3) return ranked.slice(0, 6);
+  return ["City center", "Near the main train station", "Historic old town", "A central, walkable area"];
+}
+
+function splitFieldValue(value, sep) {
+  return String(value || "").split(sep === "\n" ? /\r?\n/ : sep).map((part) => part.trim()).filter(Boolean);
+}
+
+function applyQuickPick(key, cfg, value) {
+  const field = document.querySelector(`#${key}`);
+  if (!field) return;
+  if (cfg.mode !== "list") {
+    field.value = value;
+  } else {
+    const sep = cfg.sep || ", ";
+    let parts = splitFieldValue(field.value, sep);
+    const existing = parts.findIndex((part) => part.toLowerCase() === value.toLowerCase());
+    if (existing >= 0) {
+      parts.splice(existing, 1);
+    } else if (cfg.exclusive && cfg.exclusive.test(value)) {
+      parts = [value];
+    } else {
+      if (cfg.exclusive) parts = parts.filter((part) => !cfg.exclusive.test(part));
+      parts.push(value);
+    }
+    field.value = parts.join(sep === "\n" ? "\n" : sep);
+  }
+  field.dispatchEvent(new Event("input", { bubbles: true }));
+  refreshQuickPickState(key, cfg);
+}
+
+function refreshQuickPickState(key, cfg) {
+  const field = document.querySelector(`#${key}`);
+  const container = document.querySelector(`.quick-picks[data-picks="${key}"]`);
+  if (!field || !container) return;
+  const sep = cfg.sep || ", ";
+  const present = cfg.mode === "list"
+    ? splitFieldValue(field.value, sep).map((part) => part.toLowerCase())
+    : [String(field.value || "").trim().toLowerCase()];
+  container.querySelectorAll(".quick-pick").forEach((chip) => {
+    chip.classList.toggle("is-active", present.includes(String(chip.dataset.value).toLowerCase()));
+  });
+}
+
+function renderQuickPicks() {
+  document.querySelectorAll(".quick-picks[data-picks]").forEach((container) => {
+    const key = container.dataset.picks;
+    const cfg = QUICK_PICKS[key];
+    if (!cfg) return;
+    const items = key === "homeBase" ? popularStayAreas() : (cfg.items || []);
+    container.innerHTML = items.map((item) => `<button type="button" class="quick-pick" data-value="${escapeHtml(item)}">${escapeHtml(item)}</button>`).join("");
+    container.querySelectorAll(".quick-pick").forEach((chip) => {
+      chip.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        applyQuickPick(key, cfg, chip.dataset.value);
+      });
+    });
+    const field = document.querySelector(`#${key}`);
+    if (field && !field.dataset.quickPickBound) {
+      field.dataset.quickPickBound = "1";
+      field.addEventListener("input", () => refreshQuickPickState(key, cfg));
+    }
+    refreshQuickPickState(key, cfg);
+  });
 }
 
 function renderSuggestionPicker(destination) {
@@ -1521,7 +1622,7 @@ function renderSuggestionPicker(destination) {
     section.className = "suggestion-group";
     section.dataset.suggestionCategory = groupIndex;
     section.hidden = groupIndex !== activeSuggestionCategory;
-    section.innerHTML = `<div class="suggestion-group-heading"><span aria-hidden="true">${displayIcon(group.icon)}</span><h3>${escapeHtml(group.label)}</h3><small>${group.items.length} ideas</small></div><div class="suggestion-swipe-shell"><div class="suggestion-swipe-deck" role="region" aria-label="${escapeHtml(group.label)} recommendation deck"></div><div class="suggestion-swipe-actions" role="group" aria-label="Recommendation actions"></div><p class="suggestion-swipe-hint">Swipe or press <strong>←</strong> to skip · swipe or press <strong>→</strong> to include · press <strong>F</strong> to favorite</p><p class="suggestion-swipe-status sr-only" aria-live="polite"></p></div>`;
+    section.innerHTML = `<div class="suggestion-group-heading"><span aria-hidden="true">${displayIcon(group.icon)}</span><h3>${escapeHtml(group.label)}</h3><small>${group.items.length} ideas</small></div><div class="suggestion-swipe-shell"><div class="suggestion-swipe-deck" role="region" aria-label="${escapeHtml(group.label)} recommendation deck"></div><div class="suggestion-swipe-actions" role="group" aria-label="Recommendation actions"></div><p class="suggestion-swipe-hint">Swipe or press <strong>←</strong> to skip · swipe or press <strong>→</strong> to include · press <strong>F</strong> or double-tap to favorite</p><p class="suggestion-swipe-status sr-only" aria-live="polite"></p></div>`;
     suggestionBoard.appendChild(section);
   });
   renderSuggestionCategory();
@@ -1554,6 +1655,11 @@ function renderSuggestionCategory() {
   ];
   document.querySelector("#adventureStepTitle").textContent = `Choose your own adventure · ${group.label}`;
   document.querySelector("#adventureStepCopy").textContent = descriptions[activeSuggestionCategory];
+  // The Next button names the destination it leads to: See -> Places to Eat ->
+  // Places to Shop -> (Travel style). Keeps the three-step flow legible.
+  const detailsLabels = ["Places to Eat", "Places to Shop", "Travel style"];
+  const detailsLabel = document.querySelector("#detailsStepButton span:first-child");
+  if (detailsLabel) detailsLabel.textContent = detailsLabels[activeSuggestionCategory] || "Next Step";
   suggestionBoard.querySelectorAll("[data-suggestion-category]").forEach((section) => {
     section.hidden = Number(section.dataset.suggestionCategory) !== activeSuggestionCategory;
   });
@@ -1624,7 +1730,7 @@ function renderSuggestionDeckCard(group, section) {
   const favorite = Boolean(selectedValue?.favorite);
   const meta = suggestionMeta(suggestion).filter(Boolean).map(escapeHtml).join(" · ");
   const remaining = group.items.length - reviewed.size;
-  deck.innerHTML = `<article class="suggestion-bubble suggestion-swipe-card${selected ? " selected" : ""}${favorite ? " favorite" : ""}" data-suggestion-key="${escapeHtml(suggestion.key)}" tabindex="0" aria-label="${escapeHtml(suggestion.name)}. Swipe right or press the right arrow to include. Swipe left or press the left arrow to skip. Press F to favorite."><div class="suggestion-swipe-image-wrap"><img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="" aria-hidden="true" loading="eager" draggable="false"><span class="suggestion-deck-progress">${reviewed.size + 1} of ${group.items.length}</span></div><div class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong></span>${favorite ? '<span class="suggestion-selected-badge favorite">★ Favorite</span>' : selected ? '<span class="suggestion-selected-badge">Already included</span>' : ""}<span class="suggestion-card-meta">${meta}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span><span class="suggestion-card-links">${sourceCreditHtml(suggestion)}<a class="suggestion-map-link" href="${googleMapsSearchUrl(suggestion.name, "", destinationInput.value.trim())}" target="_blank" rel="noopener noreferrer">Verify current details on Google Maps ↗</a></span></div><span class="suggestion-decision-overlay skip" aria-hidden="true"><span>✕</span><strong>Skip</strong></span><span class="suggestion-decision-overlay include" aria-hidden="true"><span>♥</span><strong>Include</strong></span><span class="suggestion-decision-overlay favorite" aria-hidden="true"><span>★</span><strong>Favorite</strong></span></article>`;
+  deck.innerHTML = `<article class="suggestion-bubble suggestion-swipe-card${selected ? " selected" : ""}${favorite ? " favorite" : ""}" data-suggestion-key="${escapeHtml(suggestion.key)}" tabindex="0" aria-label="${escapeHtml(suggestion.name)}. Swipe right or press the right arrow to include. Swipe left or press the left arrow to skip. Press F or double-tap to favorite."><div class="suggestion-swipe-image-wrap"><img class="suggestion-card-image" src="${escapeHtml(suggestion.image || suggestionImagePlaceholder(suggestion))}" alt="" aria-hidden="true" loading="eager" draggable="false"><span class="suggestion-deck-progress">${reviewed.size + 1} of ${group.items.length}</span></div><div class="suggestion-card-body"><span class="suggestion-card-top"><strong>${escapeHtml(suggestion.name)}</strong></span>${favorite ? '<span class="suggestion-selected-badge favorite">★ Favorite</span>' : selected ? '<span class="suggestion-selected-badge">Already included</span>' : ""}<span class="suggestion-card-meta">${meta}</span><span class="suggestion-card-detail">${escapeHtml(suggestion.detail)}</span><span class="suggestion-card-links">${sourceCreditHtml(suggestion)}<a class="suggestion-map-link" href="${googleMapsSearchUrl(suggestion.name, "", destinationInput.value.trim())}" target="_blank" rel="noopener noreferrer">Verify current details on Google Maps ↗</a></span></div><span class="suggestion-decision-overlay skip" aria-hidden="true"><span>✕</span><strong>Skip</strong></span><span class="suggestion-decision-overlay include" aria-hidden="true"><span>♥</span><strong>Include</strong></span><span class="suggestion-decision-overlay favorite" aria-hidden="true"><span>★</span><strong>Favorite</strong></span></article>`;
   actions.innerHTML = `<button type="button" class="suggestion-action-button suggestion-redo-button suggestion-undo-button"${history.length ? "" : " disabled"} aria-label="Redo last recommendation choice" title="Redo"><span aria-hidden="true">↶</span></button><button type="button" class="suggestion-action-button suggestion-skip-button" aria-label="Skip ${escapeHtml(suggestion.name)}" title="Skip"><span aria-hidden="true">✕</span></button><button type="button" class="suggestion-action-button suggestion-include-button" aria-label="Include ${escapeHtml(suggestion.name)}" title="Include"><span aria-hidden="true">♥</span></button><button type="button" class="suggestion-action-button suggestion-favorite-button" aria-label="Favorite ${escapeHtml(suggestion.name)} and prioritize it earlier" title="Favorite"><span aria-hidden="true">★</span></button>`;
   if (status) status.textContent = `${suggestion.name}. ${remaining} recommendations remain in ${group.label}.`;
 
@@ -1664,17 +1770,30 @@ function applySuggestionDecision(key, decision, card, renderToken) {
   preferenceError.textContent = "";
   updateSelectionCount();
   if (card) {
-    card.style.removeProperty("transform");
+    // Re-enable transitions (dragging disabled them) and reveal the full decision label.
+    card.classList.remove("is-dragging");
     card.style.removeProperty("--include-progress");
     card.style.removeProperty("--skip-progress");
     card.classList.add(`show-${decision}-decision`);
-    window.setTimeout(() => card.classList.add(decision === "skip" ? "is-skipping" : decision === "favorite" ? "is-favoriting" : "is-including"), 150);
+    // Hold the SKIP / INCLUDE / FAVORITE label on-screen long enough to read, then glide
+    // the card off in the swipe direction from wherever it currently sits — the inline
+    // transform transitions smoothly from the drag pose, so it never snaps back to center.
+    window.setTimeout(() => {
+      if (renderToken !== suggestionDeckRenderToken) return;
+      card.style.transition = "transform .5s cubic-bezier(.4,0,.2,1), opacity .5s ease";
+      card.style.opacity = "0";
+      card.style.transform = decision === "skip"
+        ? "translateX(-125%) rotate(-14deg)"
+        : decision === "favorite"
+          ? "translateY(-18%) scale(.68)"
+          : "translateX(125%) rotate(14deg)";
+    }, SUGGESTION_DECISION_HOLD_MS);
   }
   window.setTimeout(() => {
     if (renderToken !== suggestionDeckRenderToken) return;
     focusNextSuggestionCard = true;
     renderSuggestionCategory();
-  }, 460);
+  }, SUGGESTION_DECISION_HOLD_MS + SUGGESTION_DECISION_EXIT_MS);
 }
 
 function undoSuggestionDecision() {
@@ -1700,6 +1819,8 @@ function bindSuggestionSwipe(card, key, renderToken) {
   let startY = 0;
   let deltaX = 0;
   let deltaY = 0;
+  let isTouchPointer = false;
+  let tapTimer = null;
 
   const resetCard = () => {
     pointerId = null;
@@ -1712,13 +1833,28 @@ function bindSuggestionSwipe(card, key, renderToken) {
   };
   const finishGesture = () => {
     if (pointerId === null) return;
+    const movedX = Math.abs(deltaX);
+    const movedY = Math.abs(deltaY);
     const threshold = Math.min(105, card.getBoundingClientRect().width * .22);
-    const horizontalIntent = Math.abs(deltaX) > Math.abs(deltaY) * 1.15;
-    if (horizontalIntent && Math.abs(deltaX) >= threshold) {
+    const horizontalIntent = movedX > movedY * 1.15;
+    if (horizontalIntent && movedX >= threshold) {
       const decision = deltaX > 0 ? "include" : "skip";
       pointerId = null;
       applySuggestionDecision(key, decision, card, renderToken);
       return;
+    }
+    // Double-tap on touch = Favorite (two quick taps that barely moved). A timer,
+    // rather than clock math, keeps this reliable regardless of Date.now() precision.
+    if (isTouchPointer && movedX < 12 && movedY < 12) {
+      if (tapTimer !== null) {
+        clearTimeout(tapTimer);
+        tapTimer = null;
+        pointerId = null;
+        resetCard();
+        applySuggestionDecision(key, "favorite", card, renderToken);
+        return;
+      }
+      tapTimer = window.setTimeout(() => { tapTimer = null; }, 300);
     }
     resetCard();
   };
@@ -1726,6 +1862,7 @@ function bindSuggestionSwipe(card, key, renderToken) {
   card.addEventListener("pointerdown", (event) => {
     if (event.button !== 0 || event.target.closest("a, button")) return;
     pointerId = event.pointerId;
+    isTouchPointer = event.pointerType === "touch";
     startX = event.clientX;
     startY = event.clientY;
     card.classList.add("is-dragging");

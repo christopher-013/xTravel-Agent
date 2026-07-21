@@ -2791,16 +2791,21 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
 .home-overview-grid .weather-disclaimer,
 .itinerary-weather-wrap .weather-disclaimer { margin-top:4px; font-size:6px; }
 /* The golden-reference report sizing (`.trip-app .weather-*`) must not enlarge the
-   Itinerary banner weather card — at desktop widths the card is absolutely placed
-   inside the short day hero, so the report-size type wraps tall and spills below
-   the banner. These 3-class rules outrank the 2-class golden rules and restore the
-   intended compact size. (The Home banner keeps its larger card: its hero is taller
-   because of the export button/research card, so the bigger card fills it cleanly.) */
+   compact banner weather cards — at desktop widths each card is absolutely placed
+   inside a short hero, so the report-size type wraps tall and spills below the
+   banner. On wide screens the Home hero also collapses to its min-height (its title
+   fits on one line), so the Home card overflowed too. These 3-class rules outrank the
+   2-class golden rules and restore the intended compact size on both banners. */
 @media(min-width:901px) {
+  .trip-app .home-weather-wrap .weather-location,
   .trip-app .itinerary-weather-wrap .weather-location { font-size:15px; }
+  .trip-app .home-weather-wrap .weather-summary,
   .trip-app .itinerary-weather-wrap .weather-summary { margin:4px 0 6px; font-size:10px; line-height:1.35; }
+  .trip-app .home-weather-wrap .weather-metrics-row small,
   .trip-app .itinerary-weather-wrap .weather-metrics-row small { font-size:8px; }
+  .trip-app .home-weather-wrap .weather-metrics-row strong,
   .trip-app .itinerary-weather-wrap .weather-metrics-row strong { font-size:10px; }
+  .trip-app .home-weather-wrap .weather-disclaimer,
   .trip-app .itinerary-weather-wrap .weather-disclaimer { margin-top:4px; font-size:7px; }
 }
 .itinerary-day-hero {
@@ -5985,6 +5990,24 @@ body.start-splash-active { overflow: hidden; }
   .suggestion-swipe-card,
   .suggestion-decision-overlay { animation: none !important; transition-duration: .01ms !important; }
 }
+
+/* Quick-pick prefill chips (Travel style + Constraints steps) */
+.quick-picks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.quick-pick {
+  padding: 6px 11px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font: 600 12px "DM Sans", sans-serif;
+  line-height: 1.1;
+  cursor: pointer;
+  transition: border-color .15s ease, background .15s ease, color .15s ease;
+}
+.quick-pick:hover { border-color: var(--forest); }
+.quick-pick.is-active { border-color: var(--forest); color: #fff; background: var(--forest); }
+.quick-pick.is-active::before { content: "✓ "; }
+.quick-pick:focus-visible { outline: 2px solid rgba(37, 75, 122, .4); outline-offset: 1px; }
 
 /* ── Public-beta tooling: in-app footnote, feedback form, hidden metrics report ── */
 .app-footnote {
