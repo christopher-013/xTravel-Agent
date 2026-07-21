@@ -22,7 +22,7 @@
   //   "Manage site" → copy the token shown in the JS snippet's
   //   data-cf-beacon='{"token":"XXXXXXXX"}'. Paste that value below.
   //   Leave it "" to keep analytics OFF (no third-party request is made).
-  var CF_BEACON_TOKEN = "";
+  var CF_BEACON_TOKEN = "a7ddbdbdc90e436d98590a41f3cbf190";
 
   var GITHUB_REPO = "christopher-013/PlanToGuide";
   var METRICS_KEY = "ptg_beta_metrics_v1";

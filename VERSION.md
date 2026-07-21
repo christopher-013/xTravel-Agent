@@ -1,5 +1,9 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.1.1 activate Cloudflare Web Analytics
+
+- Sets the Cloudflare Web Analytics beacon token in `beta-tools.js`, turning on aggregate visitor / page-view counting for the public beta. Verified the beacon injects with no CSP violation.
+
 ## v4.1.0 beta instrumentation and adventure-card polish
 
 - Adds `beta-tools.js`: a privacy-first, dependency-free public-beta toolkit.
