@@ -5625,14 +5625,33 @@ body.start-splash-active { overflow: hidden; }
   min-height: 0;
   overflow: hidden;
 }
+/* Size the Step 2 progress chevrons to their content (step number + two-line label)
+   instead of a fixed height that was too short — the sub-label was overflowing below
+   each chevron and getting clipped. Auto height keeps every step readable and aligned. */
 .builder.builder-wide .trip-form[data-current-step="2"] .form-progress {
-  height: 54px;
-  margin: 4px 0 7px;
+  height: auto;
+  margin: 5px 0 9px;
 }
 .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span {
-  height: 54px;
+  height: auto;
   min-height: 0;
-  padding-block: 6px;
+  padding-block: 9px;
+  gap: 6px;
+  justify-content: center;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span b {
+  width: 26px;
+  height: 26px;
+  flex-basis: 26px;
+  font-size: 10px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small strong {
+  font-size: 12px;
+  line-height: 1.15;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small em {
+  font-size: 9px;
+  line-height: 1.2;
 }
 .builder.builder-wide .trip-form[data-current-step="2"] .security-note {
   display: none;

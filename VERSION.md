@@ -1,5 +1,10 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.1.4 fix Step 2 progress sub-labels clipping
+
+- On the Adventure (Step 2) progress bar, the two-line step labels (e.g. "Adventure / See, eat & shop") were overflowing below each chevron and getting clipped, because a fixed chevron height was shorter than the step number + label needed.
+- The Step 2 chevrons now size to their content (auto height) with a smaller step circle and balanced padding, so every step's title and sub-label are fully visible and aligned like the other steps. Desktop only; the compact mobile bar (which hides the sub-label by design) is unchanged.
+
 ## v4.1.3 direct feedback submission (no GitHub round-trip)
 
 - The feedback form's button is now **Submit**, and feedback is filed to GitHub Issues directly — the reporter never sees GitHub or needs an account/sign-in.
