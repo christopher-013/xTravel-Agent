@@ -1,5 +1,11 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.7.5 itinerary banner weather fit
+
+- Fixes the day-by-day Itinerary weather card spilling below the banner on desktop: the golden-reference report type sizing was enlarging the compact banner card, so at desktop widths it wrapped tall and overflowed the shorter day hero (up to ~80px past the banner at ~1000–1100px).
+- Restores the intended compact banner sizing with higher-specificity rules that outrank the report styling, so the Itinerary weather card now sits fully inside the day hero at every desktop width.
+- Scoped to the Itinerary banner only: the Home banner keeps its larger card, since its hero is taller (export button and research card) and the bigger card fills it cleanly. Desktop only (≥901px); the phone layout (bottom-pinned card) is unchanged.
+
 ## v3.7.4 home tab layout and readability
 
 - Shrinks the home banner weather card (tighter padding, spacing, and metric rows) so it fits fully inside the banner instead of spilling below it on desktop.

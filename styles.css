@@ -2791,6 +2791,19 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
 .itinerary-weather-wrap .weather-metrics-row strong { font-size:8px; }
 .home-overview-grid .weather-disclaimer,
 .itinerary-weather-wrap .weather-disclaimer { margin-top:4px; font-size:6px; }
+/* The golden-reference report sizing (`.trip-app .weather-*`) must not enlarge the
+   Itinerary banner weather card — at desktop widths the card is absolutely placed
+   inside the short day hero, so the report-size type wraps tall and spills below
+   the banner. These 3-class rules outrank the 2-class golden rules and restore the
+   intended compact size. (The Home banner keeps its larger card: its hero is taller
+   because of the export button/research card, so the bigger card fills it cleanly.) */
+@media(min-width:901px) {
+  .trip-app .itinerary-weather-wrap .weather-location { font-size:14px; }
+  .trip-app .itinerary-weather-wrap .weather-summary { margin:4px 0 6px; font-size:9px; line-height:1.35; }
+  .trip-app .itinerary-weather-wrap .weather-metrics-row small { font-size:6px; }
+  .trip-app .itinerary-weather-wrap .weather-metrics-row strong { font-size:8px; }
+  .trip-app .itinerary-weather-wrap .weather-disclaimer { margin-top:4px; font-size:6px; }
+}
 .itinerary-day-hero {
   display:block;
   min-height:300px;
