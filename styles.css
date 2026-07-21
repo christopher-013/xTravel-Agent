@@ -5991,6 +5991,86 @@ body.start-splash-active { overflow: hidden; }
   .suggestion-decision-overlay { animation: none !important; transition-duration: .01ms !important; }
 }
 
+/* Post-Step-4 creation transition — restyled to match the opening splash: dark navy
+   canvas with the animated logo and brand line, then the five "what we create" cards
+   fading in one after another in the same spot. Duration matches the splash (~3.6s).
+   These higher-specificity rules supersede the earlier orbiting-card treatment. */
+.trip-creation-transition {
+  background:
+    radial-gradient(circle at 13% 30%, rgba(131, 220, 255, .15), transparent 23rem),
+    radial-gradient(circle at 86% 15%, rgba(255, 214, 90, .11), transparent 26rem),
+    linear-gradient(125deg, #1c2430 0%, #2b4c70 100%);
+  color: #fff;
+}
+.trip-creation-transition::before,
+.trip-creation-transition::after { display: none; }
+.trip-creation-transition .trip-creation-transition-card {
+  grid-auto-flow: row;
+  gap: clamp(28px, 5.5vh, 60px);
+  place-content: center;
+  height: min(720px, calc(100dvh - 32px));
+}
+.trip-creation-transition .creation-center-stage { width: min(680px, 90vw); }
+.trip-creation-transition .creation-center-stage > img {
+  width: clamp(108px, 13vw, 158px);
+  height: clamp(108px, 13vw, 158px);
+}
+.trip-creation-transition .creation-center-stage > .eyebrow {
+  color: #ffd873;
+  font-size: clamp(9px, 1vw, 11px);
+}
+.trip-creation-transition .creation-center-stage .trip-creation-brand-line {
+  color: #fff;
+  font-size: clamp(30px, 5vw, 58px);
+}
+/* One fixed showcase spot; each card fades in after the previous, latest on top. */
+.trip-creation-transition .creation-output-stack {
+  position: relative;
+  inset: auto;
+  width: min(470px, 88vw);
+  height: clamp(104px, 16vh, 140px);
+  margin: 0 auto;
+}
+.trip-creation-transition .creation-output-card {
+  top: 50%;
+  left: 50%;
+  grid-template-columns: 1fr;
+  justify-items: start;
+  gap: 4px;
+  width: 100%;
+  min-height: 0;
+  padding: 15px 18px 15px 22px;
+  border: 1px solid rgba(255, 255, 255, .18);
+  border-radius: 16px;
+  color: #fff;
+  text-align: left;
+  background: linear-gradient(135deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06));
+  box-shadow: 0 20px 46px rgba(0, 0, 0, .32);
+  backdrop-filter: blur(10px);
+  filter: none;
+  transform: translate(-50%, -50%);
+  z-index: calc(1 + var(--creation-card-index));
+}
+.trip-creation-transition .creation-output-card strong { color: #fff; font-size: 14.5px; line-height: 1.25; }
+.trip-creation-transition .creation-output-card span { color: rgba(255, 255, 255, .74); font-size: 11px; line-height: 1.4; }
+.trip-creation-transition.is-running .creation-output-card {
+  animation: creationCardStackIn .48s cubic-bezier(.2, .8, .24, 1) both;
+  animation-delay: calc(.5s + (var(--creation-card-index) * .58s));
+}
+@keyframes creationCardStackIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) translateY(18px) scale(.93); filter: blur(4px); }
+  100% { opacity: 1; transform: translate(-50%, -50%) translateY(0) scale(1); filter: blur(0); }
+}
+@media (max-width: 760px) {
+  .trip-creation-transition .creation-output-stack { width: min(360px, calc(100vw - 30px)); height: clamp(94px, 15vh, 122px); }
+  .trip-creation-transition .creation-output-card { padding: 12px 14px 12px 18px; }
+  .trip-creation-transition .creation-output-card strong { font-size: 13px; }
+  .trip-creation-transition .creation-output-card span { font-size: 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .trip-creation-transition.is-running .creation-output-card { animation: none; opacity: 1; }
+}
+
 /* Quick-pick prefill chips (Travel style + Constraints steps) */
 .quick-picks { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .quick-pick {

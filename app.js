@@ -1422,7 +1422,8 @@ async function showTripCreationTransition() {
       resolve();
     };
     skipButton?.addEventListener("click", finish, { once: true });
-    timer = window.setTimeout(finish, reducedMotion ? 1100 : 6000);
+    // Match the opening splash's logo-screen time.
+    timer = window.setTimeout(finish, reducedMotion ? 1100 : START_SPLASH_DURATION_MS);
   });
   safeStorageSet(seenKey, "1");
   overlay.classList.add("finishing");
