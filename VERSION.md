@@ -1,5 +1,12 @@
 # PlanToGuide — Version 3 working copy
 
+## v3.7.4 home tab layout and readability
+
+- Shrinks the home banner weather card (tighter padding, spacing, and metric rows) so it fits fully inside the banner instead of spilling below it on desktop.
+- Moves the "Live research catalog / Real places found" status card out of the weather column and into the hero, directly beneath the Export complete trip button, where it reads as part of the primary trip summary.
+- Enlarges the Home tab at-a-glance content on desktop (day-plan stop names and times, checklist, route legs, section labels, and headings) for more comfortable reading; phone sizes are unchanged.
+- Reserves extra hero space on phones only when the research card is shown, so it no longer overlaps the bottom-pinned weather card; catalog destinations keep the compact banner.
+
 ## v3.7.3 reliable suggestion images
 
 - Fixes curated Places to See showing mostly placeholder images even after their real photos were fetched: cards rendered during a Wikimedia rate-limit window now retry and pick up the cached or freshly fetched image once the window clears (retry sweeps wait out the actual Retry-After window).
