@@ -15,7 +15,7 @@ const trip = {
   start: new Date(2027, 6, 8),
   end: new Date(2027, 6, 8),
   wishes: "Architecture",
-  selections: [{ name: "Westminster Abbey", area: "Westminster", detail: "Priority", lat: 51.4993, lon: -0.1273, sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Westminster_Abbey", sourceLicense: "CC BY-SA 4.0" }],
+  selections: [{ key: "see-westminster-abbey", category: "see", name: "Westminster Abbey", area: "Westminster", detail: "Priority", lat: 51.4993, lon: -0.1273, sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Westminster_Abbey", sourceLicense: "CC BY-SA 4.0", favorite: true }],
   preferences: { pace: "balanced" },
   bookings: [{ name: "Museum ticket", date: "2027-07-08", time: "10:00", status: "confirmed" }],
   practical: { notes: "Test" },
@@ -31,7 +31,7 @@ const trip = {
     date: new Date(2027, 6, 8),
     title: "Westminster",
     zone: { name: "Westminster", icon: "pin" },
-    activities: [{ time: "10:00", title: "Westminster Abbey", type: "Explore", icon: "landmark", status: "Confirmed", description: "Tour the abbey.", lat: 51.4993, lon: -0.1273, sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Westminster_Abbey", sourceLicense: "CC BY-SA 4.0" }]
+    activities: [{ time: "10:00", title: "Westminster Abbey", type: "Explore", icon: "landmark", status: "Confirmed", description: "Tour the abbey.", lat: 51.4993, lon: -0.1273, sourceLabel: "Wikipedia", sourceUrl: "https://en.wikipedia.org/wiki/Westminster_Abbey", sourceLicense: "CC BY-SA 4.0", userSelected: true, favorite: true }]
   }]
 };
 
@@ -64,8 +64,16 @@ assert.equal(rebuilt.userEntries.booking[0].id, "entry-1");
 assert.equal(rebuilt.photos[0].id, "photo-1");
 assert.equal(rebuilt.guide.banner, "https://example.com/london.jpg");
 assert.equal(rebuilt.selections[0].sourceLicense, "CC BY-SA 4.0");
+assert.equal(v3Data.selections[0].key, "see-westminster-abbey");
+assert.equal(v3Data.selections[0].category, "see");
+assert.equal(v3Data.selections[0].favorite, true);
+assert.equal(rebuilt.selections[0].favorite, true);
 assert.equal(rebuilt.days[0].activities[0].lat, 51.4993);
 assert.equal(rebuilt.days[0].activities[0].sourceUrl, "https://en.wikipedia.org/wiki/Westminster_Abbey");
+assert.equal(v3Data.days[0].activities[0].userSelected, true);
+assert.equal(v3Data.days[0].activities[0].favorite, true);
+assert.equal(rebuilt.days[0].activities[0].userSelected, true);
+assert.equal(rebuilt.days[0].activities[0].favorite, true);
 assert.equal(Object.hasOwn(v3Data.photos[0], "src"), false, "Markdown schema must omit photo data URLs");
 
 const malicious = structuredClone(v3Data);
@@ -90,5 +98,13 @@ const v2Data = vm.runInContext(`tolerantJsonParse(${JSON.stringify(v2Raw)})`, co
 assert.equal(vm.runInContext(`validateTripData(${JSON.stringify(v2Data)}).length`, context), 0);
 context.v2Data = v2Data;
 assert.equal(vm.runInContext("buildTripFromData(v2Data).destination", context), "London");
+const legacyWithoutProvenance = structuredClone(v2Data);
+delete legacyWithoutProvenance.selections[0].favorite;
+delete legacyWithoutProvenance.days[0].activities[0].userSelected;
+delete legacyWithoutProvenance.days[0].activities[0].favorite;
+context.legacyWithoutProvenance = legacyWithoutProvenance;
+const rebuiltLegacy = vm.runInContext("buildTripFromData(legacyWithoutProvenance)", context);
+assert.equal(rebuiltLegacy.days[0].activities[0].userSelected, false);
+assert.equal(rebuiltLegacy.days[0].activities[0].favorite, false);
 
 console.log("Schema smoke test passed: v3 round-trip, photo-data split, and v2 legacy import.");

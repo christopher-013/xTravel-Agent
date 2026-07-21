@@ -307,7 +307,7 @@ startDateInput.value = toInputDate(defaultStart);
 endDateInput.value = toInputDate(defaultEnd);
 
 renderKnownDestinationOptions();
-if (!hasSavedTripAtLoad()) showStartSplash();
+showStartSplash();
 scheduleTripBasicsBrandReplay();
 document.querySelectorAll(".form-progress [data-go-step]").forEach((stage) => {
   const openStage = () => navigateToWizardStep(Number(stage.dataset.goStep));
@@ -678,7 +678,7 @@ form.addEventListener("submit", async (event) => {
   window.scrollTo({ top: 0, behavior: "smooth" });
 });
 
-document.querySelector("#editTripButton").addEventListener("click", showBuilder);
+document.querySelector("#editTripButton").addEventListener("click", () => showBuilder({ splash: true }));
 document.querySelector("#newTripButton").addEventListener("click", () => {
   safeStorageRemove("plantoguide-trip");
   safeStorageRemove("plantoguide-imported-trip");
@@ -694,8 +694,7 @@ document.querySelector("#newTripButton").addEventListener("click", () => {
   startDateInput.value = toInputDate(defaultStart);
   endDateInput.value = toInputDate(defaultEnd);
   updateDestinationModeBadge();
-  showBuilder();
-  showStartSplash({ focusDestination: true });
+  showBuilder({ splash: true, focusDestination: true });
 });
 document.querySelector("#printButton").addEventListener("click", printSelectedDayItinerary);
 document.querySelector("#exportTripButton").addEventListener("click", exportTripPackage);
@@ -720,12 +719,13 @@ document.querySelector("#addBookingEntry").addEventListener("click", () => addUs
 document.querySelector("#addFoodEntry").addEventListener("click", () => addUserEntry("food"));
 document.querySelector("#addShopEntry").addEventListener("click", () => addUserEntry("shop"));
 
-function showBuilder() {
+function showBuilder(options = {}) {
   dismissStartSplash({ immediate: true });
   result.hidden = true;
   builder.hidden = false;
   document.body.classList.remove("trip-mode");
   showFormStep(1);
+  if (options.splash) showStartSplash({ focusDestination: options.focusDestination });
   requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
@@ -1094,7 +1094,10 @@ function createTripMarkdownBase() {
 }
 
 function createTripMarkdown() {
-  const base = createTripMarkdownBase();
+  const base = createTripMarkdownBase().replace(
+    "2. Preserve confirmed bookings and traveler-designated must-do activities.",
+    "2. Preserve confirmed bookings, traveler-designated must-do activities, and the userSelected / favorite provenance fields in the machine-readable data."
+  );
   const refinements = Array.isArray(trip.refinementInstructions) && trip.refinementInstructions.length
     ? trip.refinementInstructions.map((instruction) => `- ${instruction}`).join("\n")
     : "- No additional refinements selected.";
@@ -1235,20 +1238,13 @@ function crc32(bytes) {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
-function hasSavedTripAtLoad() {
-  return Boolean(
-    safeStorageGet("plantoguide-trip")
-    || safeStorageGet("plantoguide-imported-trip")
-    || safeStorageGet("x-travel-agent-imported-trip")
-    || safeStorageGet("x-travel-agent-trip")
-    || safeStorageGet("x-travel-guide-trip")
-    || safeStorageGet("roam-trip")
-  );
-}
-
 function showStartSplash(options = {}) {
-  if (!startSplash || document.body.classList.contains("trip-mode")) return;
+  if (!startSplash) return;
   window.clearTimeout(startSplashTimer);
+  result.hidden = true;
+  builder.hidden = false;
+  document.body.classList.remove("trip-mode");
+  showFormStep(1);
   startSplash.dataset.focusDestination = options.focusDestination ? "true" : "false";
   startSplash.hidden = false;
   startSplash.classList.remove("is-leaving");
@@ -2332,6 +2328,13 @@ function makeActivitiesUnique(activities, seen, destination, date, preferences) 
   let replacementIndex = 0;
   return activities.map((item) => {
     const key = item.title.trim().toLowerCase().replace(/^(breakfast|lunch|dinner|farewell dinner|taste|visit|browse):\s*/, "");
+    // A traveler choice is provenance, not disposable filler. Automatic catalog
+    // recommendations already exclude selected names, but this guard ensures a
+    // rare title collision can never replace a selected or favorited stop.
+    if (item.userSelected || item.favorite) {
+      seen.add(key);
+      return item;
+    }
     if (!seen.has(key)) {
       seen.add(key);
       return item;
@@ -2794,7 +2797,7 @@ function timeToMinutes(value) {
 
 function activity(type, icon, time, title, description, status = "Recommended", metadata = {}) {
   const item = { type, icon, time, title, description, status };
-  ["area", "address", "lat", "lon", "image", "sourceLabel", "sourceUrl", "sourceId", "sourceLicense", "sourceAttribution", "researchPrompt", "favorite"].forEach((key) => {
+  ["area", "address", "lat", "lon", "image", "sourceLabel", "sourceUrl", "sourceId", "sourceLicense", "sourceAttribution", "researchPrompt", "userSelected", "favorite"].forEach((key) => {
     if (metadata?.[key] !== undefined && metadata?.[key] !== null && metadata?.[key] !== "") item[key] = metadata[key];
   });
   return item;
@@ -3908,6 +3911,18 @@ function googleMapsSearchUrl(name, area = "", destination = trip?.destination) {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
 }
 
+function activitySelectionState(activity) {
+  const activityName = normalizeDestinationName(cleanActivityTitle(activity?.title || ""));
+  const matchingSelection = activityName
+    ? (trip?.selections || []).find((selection) => normalizeDestinationName(selection?.name || "") === activityName)
+    : null;
+  const favorite = Boolean(activity?.favorite || matchingSelection?.favorite);
+  return {
+    favorite,
+    selected: Boolean(favorite || activity?.userSelected || matchingSelection)
+  };
+}
+
 function renderActivity(activity) {
   const fragment = document.querySelector("#activityTemplate").content.cloneNode(true);
   const activityTime = fragment.querySelector(".activity-time");
@@ -3923,6 +3938,16 @@ function renderActivity(activity) {
   status.textContent = activity.status || "Recommended";
   status.className = `activity-status status-${normalizeStatus(activity.status).replace(/\s+/g, "-")}`;
   fragment.querySelector("h4").textContent = activity.title;
+  const originBadge = fragment.querySelector(".activity-origin-badge");
+  const selectionState = activitySelectionState(activity);
+  if (selectionState.selected) {
+    originBadge.hidden = false;
+    originBadge.classList.add(selectionState.favorite ? "is-favorite" : "is-selected");
+    originBadge.textContent = selectionState.favorite ? "★ Favorite" : "✓ Selected";
+    originBadge.title = selectionState.favorite
+      ? "Favorited in Choose your own adventure"
+      : "Selected in Choose your own adventure";
+  }
   const activityImage = fragment.querySelector(".activity-photo");
   const activityName = cleanActivityTitle(activity.title);
   activityImage.src = activity.image || suggestionImagePlaceholder({ name: activityName, category: activity.type === "Eat" ? "eat" : activity.type === "Shop" ? "shop" : "see" });
@@ -4352,6 +4377,16 @@ function safeStorageRemove(key) {
   try { window.localStorage.removeItem(key); } catch (error) { /* Storage is optional. */ }
 }
 
+function restoreSuggestionState(target, suggestions = [], fallbackCategory = "see") {
+  target.clear();
+  (Array.isArray(suggestions) ? suggestions : []).forEach((suggestion) => {
+    if (!suggestion || !String(suggestion.name || "").trim()) return;
+    const category = ["see", "eat", "shop"].includes(suggestion.category) ? suggestion.category : fallbackCategory;
+    const key = String(suggestion.key || `${category}:${String(suggestion.name).toLowerCase()}`);
+    target.set(key, { ...suggestion, key, category });
+  });
+}
+
 function restoreSavedTrip() {
   let saved = null;
   let imported = null;
@@ -4375,21 +4410,19 @@ function restoreSavedTrip() {
   if (imported && typeof buildTripFromData === "function") {
     trip = buildTripFromData(imported);
     destinationInput.value = trip.destination;
+    suggestionDestination = trip.destination.trim().toLowerCase();
     startDateInput.value = toInputDate(trip.start);
     endDateInput.value = toInputDate(trip.end);
     wishListInput.value = trip.wishes || "";
     setTripPreferences(trip.preferences || {});
-    selectedSuggestions.clear();
+    restoreSuggestionState(selectedSuggestions, trip.selections);
     rejectedSuggestions.clear();
     activeDay = 0;
     activeTab = "home";
-    builder.hidden = true;
-    result.hidden = false;
-    document.body.classList.add("trip-mode");
     mergeImportedTripSideData(trip);
-    renderTrip();
-    migrateStoredPhotoData().then(() => renderPhotos());
-    switchAppTab("home");
+    migrateStoredPhotoData();
+    updateDestinationModeBadge();
+    updateDestinationClearButton();
     return;
   }
   if (!saved) return;
@@ -4401,29 +4434,9 @@ function restoreSavedTrip() {
   endDateInput.value = saved.end || endDateInput.value;
   wishListInput.value = saved.wishes || "";
   setTripPreferences(saved.preferences || {});
-  selectedSuggestions.clear();
-  rejectedSuggestions.clear();
-  (saved.selections || []).forEach((suggestion) => {
-    if (suggestion && suggestion.key) selectedSuggestions.set(suggestion.key, suggestion);
-  });
-  (saved.rejectedSelections || []).forEach((suggestion) => {
-    if (suggestion && suggestion.key) rejectedSuggestions.set(suggestion.key, suggestion);
-  });
-
-  if (!saved.destination || !saved.start || !saved.end) return;
-  const start = parseDate(saved.start);
-  const end = parseDate(saved.end);
-  if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end < start) return;
-
-  trip = buildTrip(saved.destination.trim(), start, end, saved.wishes.trim(), [...selectedSuggestions.values()], saved.preferences || {}, [...rejectedSuggestions.values()]);
-  activeDay = 0;
-  activeTab = "home";
-  builder.hidden = true;
-  result.hidden = false;
-  document.body.classList.add("trip-mode");
-  renderTrip();
-  migrateStoredPhotoData().then(() => renderPhotos());
-  switchAppTab("home");
+  restoreSuggestionState(selectedSuggestions, saved.selections);
+  restoreSuggestionState(rejectedSuggestions, saved.rejectedSelections);
+  updateDestinationClearButton();
 }
 
-catalogReadyPromise.finally(restoreSavedTrip);
+restoreSavedTrip();

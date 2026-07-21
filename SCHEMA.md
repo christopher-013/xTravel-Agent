@@ -15,6 +15,7 @@ PlanToGuide can import the complete Markdown file, a fenced schema block, or the
 | `destination` | string | Required. |
 | `start`, `end` | string | `YYYY-MM-DD`. Required. |
 | `wishes` | string | Free-text traveler interests. |
+| `selections` | array | Traveler-selected places. Optional `key`, `category`, and `favorite` fields preserve Adventure choices. |
 | `preferences` | object | Pace, party, home base, budget, restrictions, and related settings. |
 | `bookings` | array | `{ name, date, time, status }`. |
 | `practical` | object | Emergency, embassy, medical, transit, tipping, phrase, and note fields. |
@@ -30,10 +31,10 @@ On import, entries and photo metadata are merged by `id`. Existing browser photo
 
 ## Days and activities
 
-Each day uses `{ date, title, zone, activities }`. A zone is `{ name, icon }` or `null`. Each activity uses `{ time, title, type, icon, status, description }`; `time` and `title` are required and activities are sorted by time on import.
+Each day uses `{ date, title, zone, activities }`. A zone is `{ name, icon }` or `null`. Each activity uses `{ time, title, type, icon, status, description }`; `time` and `title` are required and activities are sorted by time on import. Optional `userSelected` and `favorite` booleans preserve the traveler-choice pills shown beside itinerary place names. `favorite: true` implies that the activity was selected.
 
 ## Compatibility and import tolerance
 
 Version 2 exports using `schema: "xtravel-trip"` and the old `json xtravel-trip` fence remain supported. Version 2 files may omit `userEntries` and `photos`. The importer repairs trailing commas, smart quotes, and stray control characters, then reports per-field validation errors for invalid data.
 
-AI assistants should preserve confirmed bookings and traveler must-dos, keep prose and JSON synchronized, return the complete updated file, and label unverified live facts rather than inventing them.
+AI assistants should preserve confirmed bookings, traveler must-dos, and the optional `userSelected` / `favorite` provenance fields; keep prose and JSON synchronized, return the complete updated file, and label unverified live facts rather than inventing them.

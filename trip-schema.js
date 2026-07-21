@@ -80,7 +80,9 @@ function serializeTripData(activeTrip = trip) {
         sourceId: item.sourceId || "",
         sourceLicense: item.sourceLicense || "",
         sourceAttribution: item.sourceAttribution || "",
-        researchPrompt: Boolean(item.researchPrompt)
+        researchPrompt: Boolean(item.researchPrompt),
+        userSelected: Boolean(item.userSelected),
+        favorite: Boolean(item.favorite)
       }))
     }))
   });
@@ -88,12 +90,14 @@ function serializeTripData(activeTrip = trip) {
 
 function serializePlaceData(item = {}) {
   const output = {};
-  ["name", "area", "detail", "address", "rating", "cuisine", "order", "bestFor", "image", "sourceLabel", "sourceUrl", "sourceId", "sourceLicense", "sourceAttribution"].forEach((key) => {
+  ["key", "category", "name", "area", "detail", "address", "rating", "cuisine", "order", "bestFor", "image", "sourceLabel", "sourceUrl", "sourceId", "sourceLicense", "sourceAttribution"].forEach((key) => {
     if (item[key] !== undefined && item[key] !== null && item[key] !== "") output[key] = String(item[key]);
   });
   if (Number.isFinite(Number(item.lat))) output.lat = Number(item.lat);
   if (Number.isFinite(Number(item.lon))) output.lon = Number(item.lon);
   if (item.researchPrompt) output.researchPrompt = true;
+  if (item.userSelected) output.userSelected = true;
+  if (item.favorite) output.favorite = true;
   return output;
 }
 
@@ -342,7 +346,7 @@ function safeImportedUrl(value, allowImageData = false) {
 
 function normalizeImportedPlace(item = {}) {
   const output = {};
-  ["name", "area", "detail", "address", "rating", "cuisine", "order", "bestFor", "sourceLabel", "sourceId", "sourceLicense", "sourceAttribution"].forEach((key) => {
+  ["key", "category", "name", "area", "detail", "address", "rating", "cuisine", "order", "bestFor", "sourceLabel", "sourceId", "sourceLicense", "sourceAttribution"].forEach((key) => {
     if (item[key] !== undefined && item[key] !== null) output[key] = String(item[key]);
   });
   output.image = safeImportedUrl(item.image, true);
@@ -352,6 +356,8 @@ function normalizeImportedPlace(item = {}) {
   if (Number.isFinite(latitude) && latitude >= -90 && latitude <= 90) output.lat = latitude;
   if (Number.isFinite(longitude) && longitude >= -180 && longitude <= 180) output.lon = longitude;
   if (item.researchPrompt) output.researchPrompt = true;
+  if (item.userSelected) output.userSelected = true;
+  if (item.favorite) output.favorite = true;
   return output;
 }
 
@@ -430,7 +436,9 @@ function buildTripFromData(data) {
       sourceId: String(item.sourceId || ""),
       sourceLicense: String(item.sourceLicense || ""),
       sourceAttribution: String(item.sourceAttribution || ""),
-      researchPrompt: Boolean(item.researchPrompt)
+      researchPrompt: Boolean(item.researchPrompt),
+      userSelected: Boolean(item.userSelected),
+      favorite: Boolean(item.favorite)
     })).map((activity) => ({ ...activity, icon: sanitizeIcon(activity.icon) })).sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
     return {
       date: parseDate(day.date),

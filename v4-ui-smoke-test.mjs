@@ -12,7 +12,7 @@ function functionSource(name) {
   return script.slice(start, next === -1 ? script.length : next);
 }
 
-assert.match(html, /id="startSplash"[^>]*hidden/, "The opening splash must start hidden until JavaScript decides whether a saved trip exists");
+assert.match(html, /id="startSplash"[^>]*hidden/, "The opening splash markup must start hidden until JavaScript initializes the workflow");
 assert.match(html, /id="startSplashContinue"/, "The splash needs a keyboard-accessible continue button");
 assert.match(script, /function showStartSplash\(/, "The splash must have an explicit show lifecycle");
 assert.match(script, /function dismissStartSplash\(/, "The splash must have an explicit dismiss lifecycle");
@@ -39,9 +39,25 @@ assert.match(html, /id="backStepButton"/, "Adventure Back navigation must remain
 assert.match(html, /id="detailsStepButton"/, "Adventure Next navigation must remain available");
 
 const renderDeckSource = functionSource("renderSuggestionDeckCard");
+const showBuilderSource = functionSource("showBuilder");
+const showStartSplashSource = functionSource("showStartSplash");
+const restoreSavedTripSource = functionSource("restoreSavedTrip");
 const applyDecisionSource = functionSource("applySuggestionDecision");
 const distributeSelectionsSource = functionSource("distributeTripSelections");
 const createActivitiesSource = functionSource("createActivities");
+const activityFactorySource = functionSource("activity");
+const activitySelectionStateSource = functionSource("activitySelectionState");
+const renderActivitySource = functionSource("renderActivity");
+const uniqueActivitiesSource = functionSource("makeActivitiesUnique");
+
+assert.match(script, /renderKnownDestinationOptions\(\);\s*showStartSplash\(\);/, "Every page load must show the opening title, even when a trip is saved");
+assert.doesNotMatch(script, /if\s*\(\s*!hasSavedTripAtLoad\(\)\s*\)\s*showStartSplash\(\)/, "Saved trips must not bypass the opening title");
+assert.match(showStartSplashSource, /result\.hidden\s*=\s*true[\s\S]*builder\.hidden\s*=\s*false[\s\S]*showFormStep\(1\)[\s\S]*startSplash\.hidden\s*=\s*false/, "The title must always prepare Trip Basics as its fade destination");
+assert.match(showBuilderSource, /options\.splash[\s\S]*showStartSplash/, "Workflow restarts must be able to replay the title");
+assert.match(script, /#editTripButton"\)\.addEventListener\("click",\s*\(\)\s*=>\s*showBuilder\(\{\s*splash:\s*true\s*\}\)\)/, "Edit Trip must restart through the title page");
+assert.match(script, /#newTripButton"\)[\s\S]{0,900}?showBuilder\(\{\s*splash:\s*true,\s*focusDestination:\s*true\s*\}\)/, "New Trip must restart through the title page after clearing the prior trip");
+assert.match(restoreSavedTripSource, /restoreSuggestionState\(selectedSuggestions,\s*trip\.selections\)/, "Imported selections and favorites must survive the splash-first restore");
+assert.doesNotMatch(restoreSavedTripSource, /builder\.hidden\s*=\s*true|result\.hidden\s*=\s*false|classList\.add\("trip-mode"\)|renderTrip\(\)|switchAppTab\(/, "Startup restoration must hydrate Trip Basics without reopening the report");
 
 assert.match(
   renderDeckSource,
@@ -70,6 +86,14 @@ assert.match(distributeSelectionsSource, /favorite/, "Itinerary distribution mus
 assert.match(distributeSelectionsSource, /\.sort\(/, "Itinerary distribution must order selected recommendations by priority");
 assert.match(createActivitiesSource, /favorite/, "Activity placement must preserve favorite priority within each day");
 assert.match(createActivitiesSource, /\.sort\(/, "Favorite activities must be ordered ahead of ordinary selected activities");
+assert.match(activityFactorySource, /["']userSelected["'][\s\S]{0,120}?["']favorite["']/, "Generated activities must retain selected and favorite provenance");
+assert.match(activitySelectionStateSource, /activity\?\.favorite[\s\S]{0,180}?activity\?\.userSelected/, "Activity badge state must distinguish favorites from ordinary selections");
+assert.match(renderActivitySource, /activity-origin-badge/, "Itinerary activities must render a traveler-choice badge beside the title");
+assert.match(renderActivitySource, /selectionState\.favorite\s*\?\s*["']★ Favorite["']\s*:\s*["']✓ Selected["']/, "Favorite must replace, not duplicate, the Selected pill");
+assert.match(html, /class="activity-title-row"[\s\S]{0,100}?<h4><\/h4>[\s\S]{0,100}?activity-origin-badge/, "The badge must sit beside and outside the editable itinerary title");
+assert.match(styles, /\.activity-origin-badge\.is-selected\s*\{[^}]*background:/s, "Selected itinerary pills need a distinct visual treatment");
+assert.match(styles, /\.activity-origin-badge\.is-favorite\s*\{[^}]*background:/s, "Favorite itinerary pills need a distinct visual treatment");
+assert.match(uniqueActivitiesSource, /item\.userSelected\s*\|\|\s*item\.favorite/, "Duplicate resolution must never replace a traveler-selected or favorite stop");
 
 const obsoleteZeroSelectionGuard = /if\s*\(\s*!selectedSuggestions\.size\s*&&\s*!wishListInput\.value\.trim\(\)\s*\)/;
 assert.doesNotMatch(script, obsoleteZeroSelectionGuard, "Skipping every card must not dead-end the workflow");

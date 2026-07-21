@@ -1,5 +1,17 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.0.2 splash-first workflow restarts
+
+- Shows the PlanToGuide title page on every page load, including when a generated or imported trip is saved locally.
+- Fades into Trip Basics with saved answers, selections, and favorites restored instead of reopening the finished report automatically.
+- Replays the same title transition for Edit Trip and New Trip; New Trip retains its existing clear-and-reset behavior.
+
+## v4.0.1 itinerary choice badges
+
+- Shows `✓ Selected` beside ordinary traveler-chosen itinerary stops and `★ Favorite` beside starred choices.
+- Preserves selection keys, categories, favorite state, and activity provenance through the v3 Markdown/JSON schema without breaking legacy v2 imports.
+- Keeps selected and favorite stops from being replaced by automatic duplicate-resolution filler.
+
 ## v4.0.0 splash and swipeable adventure deck
 
 - Forks the latest synchronized v3.7.6 build onto the `codex/v4-ui-changes` branch without changing the v3 trip-data schema.

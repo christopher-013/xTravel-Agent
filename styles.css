@@ -5286,6 +5286,35 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
 .trip-app .status-tag { font-size: 10px; line-height: 1.35; }
 .trip-app .activity-copy h4 { font-size: 19px; line-height: 1.28; }
 .trip-app .activity-copy p { font-size: 15px; line-height: 1.58; }
+.trip-app .activity-title-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 3px 0 5px;
+}
+.trip-app .activity-title-row h4 { margin: 0; }
+.trip-app .activity-origin-badge {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font: 800 9px/1 "DM Sans", sans-serif;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.trip-app .activity-origin-badge[hidden] { display: none; }
+.trip-app .activity-origin-badge.is-selected {
+  color: #24594c;
+  background: #e5f0e9;
+}
+.trip-app .activity-origin-badge.is-favorite {
+  color: #795600;
+  background: #fff1bf;
+}
 .trip-app .collection-card h3 { font-size: 19px; line-height: 1.32; }
 .trip-app .collection-card p { font-size: 14px; line-height: 1.55; }
 .trip-app .booking-cards h3 { font-size: 19px; line-height: 1.32; }
@@ -5324,6 +5353,20 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   .trip-app .weather-summary { font-size: 15px; }
   .trip-app .weather-metrics-row strong { font-size: 14px; }
   .trip-app .app-nav-button small { font-size: 12px; }
+}
+
+@media (max-width: 720px) {
+  .trip-app .activity-title-row { gap: 5px; }
+  .trip-app .activity-origin-badge { padding: 3px 6px; font-size: 8px; }
+}
+
+@media print {
+  .trip-app .activity-origin-badge {
+    padding: 3px 6px;
+    font-size: 8px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
 }
 
 /* Home tab: bump the at-a-glance content to comfortable desktop reading sizes.
