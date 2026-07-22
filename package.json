@@ -8,8 +8,8 @@
     "start": "node server.mjs",
     "dev": "node --watch server.mjs",
     "build:export-styles": "node build-export-styles.mjs",
-    "check": "node --check server.mjs && node --check app.js && node --check beta-tools.js && node --check trip-schema.js && node --check dynamic-catalog.js && node --check photo-store.js && node --check build-precomputed-catalogs.mjs && node --check build-export-styles.mjs && node --check markup-smoke-test.mjs && node --check v4-ui-smoke-test.mjs",
-    "smoke": "node markup-smoke-test.mjs && node v4-ui-smoke-test.mjs && node catalog-order-smoke-test.mjs && node dynamic-catalog-smoke-test.mjs && node schema-smoke-test.mjs && node photo-store-smoke-test.mjs"
+    "check": "node --check server.mjs && node --check app.js && node --check beta-tools.js && node --check trip-schema.js && node --check dynamic-catalog.js && node --check photo-store.js && node --check build-precomputed-catalogs.mjs && node --check build-export-styles.mjs && node --check markup-smoke-test.mjs && node --check v4-ui-smoke-test.mjs && node --check security-smoke-test.mjs && node --check feedback-worker.js",
+    "smoke": "node markup-smoke-test.mjs && node v4-ui-smoke-test.mjs && node catalog-order-smoke-test.mjs && node dynamic-catalog-smoke-test.mjs && node schema-smoke-test.mjs && node photo-store-smoke-test.mjs && node security-smoke-test.mjs"
   },
   "engines": {
     "node": ">=18"

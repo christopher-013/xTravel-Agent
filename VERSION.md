@@ -1,5 +1,11 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.2.9 mobile swipe labels, direct feedback, security smoke test
+
+- **Mobile swipe now shows the decision label before the card leaves.** A left/right swipe briefly holds the red **Skip** / green **Include** label (~300 ms) before gliding off-screen (~440 ms), so on a phone you actually see which way it went. Button and keyboard decisions keep their slightly longer hold (360/500 ms). This softens the fully-instant swipe exit from v4.2.5 — just enough to read the label, still a quick flick.
+- **Feedback submits directly and never sends the user to GitHub** when a backend endpoint is configured (`FEEDBACK_ENDPOINT` in `beta-tools.js`, pointing at the Cloudflare Worker). On a network failure the reporter now stays in-app with an inline retry message instead of falling back to opening github.com. The Worker also now rejects Origin-less (non-browser) callers outright. *Until the deployed Worker URL is filled into `FEEDBACK_ENDPOINT`, the form still opens a pre-filled GitHub issue as the unconfigured fallback.*
+- **Security audit + CI guardrail.** Reviewed the whole static app: no committed secrets, strong CSP (`object-src 'none'`, `base-uri 'self'`, no `unsafe-inline`/`unsafe-eval` in `script-src`), no dangerous DOM sinks, all `target="_blank"` links carry `rel="noopener"`. Because the site is static and the only server write-surface is the feedback Worker (creates issues only, token scoped to issues), a malicious visitor cannot modify or delete site content. Hardened one gap: research/imported **source URLs are now scheme-validated** (`safeExternalUrl`, http/https only) before becoming a link — this matters on the exported trip page, which ships without a CSP. Added `security-smoke-test.mjs` (224 static checks) to `npm run check` and `npm run smoke` so builds fail if any of these regress.
+
 ## v4.2.8 creation animation: cream canvas, cards around the words
 
 - The post-Step-4 creation animation returns to a **cream background** (from the dark navy of v4.2.1).

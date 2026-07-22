@@ -56,10 +56,10 @@ export default {
     if (request.method !== "POST") {
       return json({ ok: false, error: "Method not allowed" }, 405, cors);
     }
-    // Browsers always send Origin on cross-origin POST; reject anything not from an
-    // allowed site. (Light friction against casual abuse; add Cloudflare Turnstile for
-    // stronger protection if the beta attracts spam.)
-    if (origin && !originAllowed) {
+    // Browsers always send Origin on cross-origin POST; require an allowed one (this also
+    // rejects Origin-less non-browser callers). Light friction against casual abuse — add
+    // Cloudflare Turnstile for stronger protection if the beta attracts spam.
+    if (!originAllowed) {
       return json({ ok: false, error: "Origin not allowed" }, 403, cors);
     }
     if (!env.GITHUB_TOKEN) {

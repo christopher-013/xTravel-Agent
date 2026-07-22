@@ -295,7 +295,10 @@ let focusNextSuggestionCard = false;
 // Swipe decision pacing: hold the SKIP/INCLUDE/FAVORITE label on-screen, then glide off.
 const SUGGESTION_DECISION_HOLD_MS = 360;
 const SUGGESTION_DECISION_EXIT_MS = 500;
-const SUGGESTION_DECISION_SWIPE_EXIT_MS = 420;
+// A swipe still holds the label briefly (so the red Skip / green Include reads on mobile)
+// before gliding off — just a touch shorter than a button/keyboard decision.
+const SUGGESTION_DECISION_SWIPE_HOLD_MS = 300;
+const SUGGESTION_DECISION_SWIPE_EXIT_MS = 440;
 let currentFormStep = 1;
 const TRIP_BASICS_BRAND_REPLAY_INTERVAL_MS = 60_000;
 const START_SPLASH_DURATION_MS = 3600;
@@ -1051,7 +1054,7 @@ async function bundleExportImages(html) {
 
 function createExportWebsite() {
   const dayNav = trip.days.map((day, index) => `<a href="#day-${index + 1}">${escapeHtml(formatDate(day.date, false))}</a>`).join("");
-  const days = trip.days.map((day, dayIndex) => `<section class="day" id="day-${dayIndex + 1}"><header><p>${escapeHtml(formatDate(day.date, true))}</p><h2>${escapeHtml(day.title)}</h2></header>${day.activities.map((item) => `<article class="stop"><time>${escapeHtml(item.time)}${item.endTime ? `<small>to ${escapeHtml(item.endTime)}</small>` : ""}</time><div><span>${escapeHtml(item.type)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p>${item.travelMinutesToNext ? `<p class="travel">${escapeHtml(item.travelIconToNext || "🚇")} Approximately ${escapeHtml(String(item.travelMinutesToNext))} minutes to the next stop · ${escapeHtml(item.travelModeToNext || "local travel")}</p>` : ""}${item.sourceLabel && item.sourceUrl ? `<a href="${escapeHtml(item.sourceUrl)}" target="_blank" rel="noopener">Source: ${escapeHtml(item.sourceLabel)}${item.sourceLicense ? ` · ${escapeHtml(item.sourceLicense)}` : ""} ↗</a>` : ""}<a href="${googleMapsSearchUrl(cleanActivityTitle(item.title))}" target="_blank" rel="noopener">Google Maps details ↗</a></div></article>`).join("")}</section>`).join("");
+  const days = trip.days.map((day, dayIndex) => `<section class="day" id="day-${dayIndex + 1}"><header><p>${escapeHtml(formatDate(day.date, true))}</p><h2>${escapeHtml(day.title)}</h2></header>${day.activities.map((item) => `<article class="stop"><time>${escapeHtml(item.time)}${item.endTime ? `<small>to ${escapeHtml(item.endTime)}</small>` : ""}</time><div><span>${escapeHtml(item.type)}</span><h3>${escapeHtml(item.title)}</h3><p>${escapeHtml(item.description)}</p>${item.travelMinutesToNext ? `<p class="travel">${escapeHtml(item.travelIconToNext || "🚇")} Approximately ${escapeHtml(String(item.travelMinutesToNext))} minutes to the next stop · ${escapeHtml(item.travelModeToNext || "local travel")}</p>` : ""}${item.sourceLabel && safeExternalUrl(item.sourceUrl) ? `<a href="${escapeHtml(safeExternalUrl(item.sourceUrl))}" target="_blank" rel="noopener">Source: ${escapeHtml(item.sourceLabel)}${item.sourceLicense ? ` · ${escapeHtml(item.sourceLicense)}` : ""} ↗</a>` : ""}<a href="${googleMapsSearchUrl(cleanActivityTitle(item.title))}" target="_blank" rel="noopener">Google Maps details ↗</a></div></article>`).join("")}</section>`).join("");
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escapeHtml(trip.destination)} Travel Guide · PlanToGuide</title><link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css"></head><body><header class="hero" style="--banner:url('${escapeHtml(trip.guide.banner)}')"><p>PlanToGuide</p><h1>${escapeHtml(trip.destination)}</h1><span>${escapeHtml(formatDate(trip.start, true))} — ${escapeHtml(formatDate(trip.end, true))}</span></header><nav>${dayNav}</nav><main>${days}</main><footer>Exported from PlanToGuide · Verify live details before traveling · <a href="ATTRIBUTIONS.md">Sources and licenses</a>.</footer></body></html>`;
 }
 
@@ -1688,9 +1691,10 @@ function renderSuggestionPicker(destination) {
 }
 
 function sourceCreditHtml(item = {}) {
-  if (!item.sourceLabel || !item.sourceUrl) return "";
+  const safeUrl = safeExternalUrl(item.sourceUrl);
+  if (!item.sourceLabel || !safeUrl) return "";
   const label = escapeHtml(item.sourceLabel);
-  const url = escapeHtml(item.sourceUrl);
+  const url = escapeHtml(safeUrl);
   const license = item.sourceLicense ? ` · ${escapeHtml(item.sourceLicense)}` : "";
   const attribution = item.sourceAttribution ? ` · ${escapeHtml(item.sourceAttribution)}` : "";
   return `<a class="source-credit" href="${url}" target="_blank" rel="noopener noreferrer">Source: ${label}${license}${attribution} ↗</a>`;
@@ -1832,10 +1836,9 @@ function applySuggestionDecision(key, decision, card, renderToken, options = {})
   // immediately for a seamless flick — no pause. Button/keyboard decisions briefly hold
   // the SKIP / INCLUDE / FAVORITE label first so it can be read.
   const fromSwipe = Boolean(options && options.fromSwipe);
-  // A one-frame delay (not 0) lets the browser commit the current drag transform first so
-  // the exit transition animates from it instead of jumping; setTimeout (unlike rAF) still
-  // fires in a backgrounded tab, so the card never gets stuck mid-swipe.
-  const holdMs = fromSwipe ? 16 : SUGGESTION_DECISION_HOLD_MS;
+  // Hold the label briefly so the red Skip / green Include reads before the card glides off
+  // (setTimeout, unlike rAF, still fires in a backgrounded tab, so the card never gets stuck).
+  const holdMs = fromSwipe ? SUGGESTION_DECISION_SWIPE_HOLD_MS : SUGGESTION_DECISION_HOLD_MS;
   const exitMs = fromSwipe ? SUGGESTION_DECISION_SWIPE_EXIT_MS : SUGGESTION_DECISION_EXIT_MS;
   if (card) {
     // Re-enable transitions (dragging disabled them) and reveal the decision label.
@@ -4755,6 +4758,13 @@ function toInputDate(date) { return `${date.getFullYear()}-${String(date.getMont
 function formatDate(date, includeYear) { return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", weekday: includeYear ? undefined : "short", year: includeYear ? "numeric" : undefined }).format(date); }
 function titleCase(text) { return text.replace(/\b\w/g, (letter) => letter.toUpperCase()); }
 function escapeHtml(value) { const div = document.createElement("div"); div.textContent = value; return div.innerHTML; }
+// Only ever emit http(s) URLs into an href — research or imported data must never inject a
+// javascript:, data:, or other active-scheme link. Defense-in-depth alongside the CSP, and
+// it also protects the exported trip page, which ships without a CSP of its own.
+function safeExternalUrl(value) {
+  const url = String(value == null ? "" : value).trim();
+  return /^https?:\/\//i.test(url) ? url : "";
+}
 
 function safeStorageGet(key) {
   try { return window.localStorage.getItem(key); } catch (error) { return null; }

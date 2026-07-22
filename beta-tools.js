@@ -154,8 +154,8 @@
       track("feedback_submitted", { category: fields.category });
 
       // Direct submission via the backend Worker → files the GitHub issue for the
-      // reporter, who never sees GitHub. Falls back to a pre-filled issue if the
-      // endpoint is unconfigured or unreachable, so feedback is never lost.
+      // reporter, who never sees GitHub. On failure we keep the form open with an inline
+      // error to retry — a configured endpoint never redirects the user to GitHub.
       if (FEEDBACK_ENDPOINT) {
         if (status) status.textContent = "Sending…";
         if (submitBtn) submitBtn.disabled = true;
@@ -180,11 +180,9 @@
           if (form.reset) form.reset();
           window.setTimeout(close, 1600);
         }).catch(function () {
-          // Network / config failure: don't lose the note — open the pre-filled issue.
-          track("feedback_fallback_github");
-          if (status) status.textContent = "Couldn’t submit automatically — opening GitHub so your note isn’t lost.";
-          window.open(buildIssueUrl(fields), "_blank", "noopener,noreferrer");
-          window.setTimeout(close, 2000);
+          // Keep the reporter in-app: show a retry message rather than opening GitHub.
+          track("feedback_submit_failed");
+          if (status) status.textContent = "Couldn’t send right now — please check your connection and try again.";
         }).then(function () {
           if (submitBtn) submitBtn.disabled = false;
         });
