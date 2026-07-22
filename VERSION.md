@@ -1,5 +1,11 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.2.4 fewer generic "places to shop" placeholders
+
+- Applies the same dining optimization to shopping: the itinerary now prefers real (non-placeholder) shops before any generic "market and independent shops"-style filler, and recognizes older precomputed shopping fillers (PlanToGuide-labeled, no source) as placeholders so they're replaced by real shops when available.
+- Finds more real shopping: Wikipedia places are now classified as shopping when their title includes bazaar, arcade, outlet, emporium, department store, flea/night market, or souk (previously only mall/market/shopping), so more real shopping areas reach the catalog. Dynamic shopping fillers are flagged as placeholders.
+- Verified: a mixed real+filler catalog now schedules the real shops first (Divisoria Market, SM Mall of Asia, Greenhills) and only then marked placeholders; curated cities still show real shops.
+
 ## v4.2.3 fewer generic "places to eat" placeholders
 
 - **Root cause fix (research):** the dining splitter sent every restaurant without a "café" or "market" keyword straight to dinner, so a destination's general restaurants all piled into dinner and lunch/breakfast were left with generic filler. General restaurants (which work for either meal) are now spread across lunch and dinner, so each meal gets real places. Applies to new research and the deploy-time precomputed catalogs.

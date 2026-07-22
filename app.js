@@ -2707,7 +2707,9 @@ function createActivities(index, totalDays, ideas, destination, guide, selectedF
   const breakfast = breakfastPick || pickUnusedForZoneOrLocal([], zone, index, "breakfast", usedRecommendedPlaces);
   const lunch = lunchPick || pickUnusedForZoneOrLocal([], zone, index, "lunch", usedRecommendedPlaces);
   const dinner = dinnerPick || pickUnusedForZoneOrLocal([], zone, index, "dinner", usedRecommendedPlaces);
-  const shop = selectedShop.shift() || pickUnusedForZoneOrLocal(guide.shopping, zone, index, "shopping", usedRecommendedPlaces);
+  const shop = selectedShop.shift()
+    || pickUnusedRealForZone(guide.shopping, zone, index, usedRecommendedPlaces)
+    || pickUnusedForZoneOrLocal([], zone, index, "shopping", usedRecommendedPlaces);
   const structuralSelections = new Set([firstSight, secondSight, breakfast, lunch, dinner, shop].filter((item) => item?.userSelected));
   const remainingSelections = selectedForDay.filter((item) => !structuralSelections.has(item)).sort(favoriteFirst);
   const idea = ideas[index] || null;

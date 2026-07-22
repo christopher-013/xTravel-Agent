@@ -574,7 +574,7 @@
     }), signal);
     return Object.values(pages?.query?.pages || {}).map((page) => ({
       name: page.title,
-      type: /market|mall|shopping|rodeo drive|grove/i.test(page.title || "") ? "buy" : "see",
+      type: /market|mall|shopping|rodeo drive|grove|bazaar|arcade|outlet|emporium|department store|flea market|night market|souk/i.test(page.title || "") ? "buy" : "see",
       area: city,
       detail: String(page.extract || "A Wikipedia-listed attraction worth researching and verifying before visiting.").split(/\n/)[0].slice(0, 240),
       image: page.thumbnail?.source || "",
@@ -1063,9 +1063,9 @@ out center tags 80;`;
       attractions: see,
       food,
       shopping: buy.length ? buy : [
-        { name: `${destination} central shopping street`, area: fallbackArea, detail: "Research the main retail street or market district and verify current stores.", bestFor: "Local gifts and browsing", sourceLabel: "PlanToGuide", sourceUrl: "" },
-        { name: `${destination} artisan market`, area: fallbackArea, detail: "Look for a local maker market, food market, or craft area near the route.", bestFor: "Crafts, food gifts, and souvenirs", sourceLabel: "PlanToGuide", sourceUrl: "" },
-        { name: `${destination} design and vintage district`, area: fallbackArea, detail: "Find a walkable independent shopping area with boutiques, books, or vintage shops.", bestFor: "Independent finds", sourceLabel: "PlanToGuide", sourceUrl: "" }
+        { name: `${destination} central shopping street`, area: fallbackArea, detail: "Research the main retail street or market district and verify current stores.", bestFor: "Local gifts and browsing", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} artisan market`, area: fallbackArea, detail: "Look for a local maker market, food market, or craft area near the route.", bestFor: "Crafts, food gifts, and souvenirs", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} design and vintage district`, area: fallbackArea, detail: "Find a walkable independent shopping area with boutiques, books, or vintage shops.", bestFor: "Independent finds", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true }
       ],
       practical: {},
       sources: [
