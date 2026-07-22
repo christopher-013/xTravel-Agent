@@ -276,6 +276,11 @@ const suggestionImageLookups = new Map();
 const suggestionImageQueue = [];
 let activeSuggestionImageLookups = 0;
 const MAX_SUGGESTION_IMAGE_LOOKUPS = 4;
+// Representative (cuisine/category) images are shared across every place of that kind, so
+// they're cached by keyword — one lookup per cuisine, reused by all matching cards.
+const representativeImageCache = new Map();
+// URLs whose pixels we've already told the browser to preload, so we don't double-request.
+const preloadedImageUrls = new Set();
 let suggestionLookup = new Map();
 let suggestionDestination = "";
 let dayBannerRenderVersion = 0;
@@ -1788,6 +1793,8 @@ function renderSuggestionDeckCard(group, section) {
 
   const card = deck.querySelector(".suggestion-swipe-card");
   hydrateSuggestionImage(card.querySelector(".suggestion-card-image"), suggestion, destinationInput.value.trim());
+  // Preload the next few cards' images so advancing the deck feels instant.
+  prefetchSuggestionImages(group, position + 1, 3);
   bindSuggestionSwipe(card, suggestion.key, renderToken);
   actions.querySelector(".suggestion-skip-button")?.addEventListener("click", () => applySuggestionDecision(suggestion.key, "skip", card, renderToken));
   actions.querySelector(".suggestion-include-button")?.addEventListener("click", () => applySuggestionDecision(suggestion.key, "include", card, renderToken));
@@ -2133,6 +2140,175 @@ async function fetchSuggestionImage(url) {
   throw new Error("Image lookup unavailable");
 }
 
+// Representative fallback: restaurants and shops rarely have their own Wikipedia article,
+// so when no exact-place photo is found we show a photo that represents the *kind* of place
+// (a sushi plate, a food market, a shopping mall, a cathedral...). One Commons lookup per
+// keyword is shared by every matching card via representativeImageCache.
+function representativeImageKeyword(suggestion, destination) {
+  const text = `${suggestion.cuisine || ""} ${suggestion.name || ""} ${suggestion.detail || ""} ${suggestion.bestFor || ""} ${suggestion.order || ""}`.toLowerCase();
+  const dest = String(destination || "").trim();
+  if (suggestion.category === "eat") {
+    if (/sushi|sashimi|nigiri|omakase/.test(text)) return "sushi";
+    if (/ramen|noodle|soba|udon|pho/.test(text)) return "ramen noodles";
+    if (/dim sum|dumpling|char siu|cantonese/.test(text)) return "dim sum dumplings";
+    if (/bakery|pastry|bread|croissant|patisserie/.test(text)) return "bakery pastries";
+    if (/coffee|café|cafe|espresso|latte/.test(text)) return "coffee cafe";
+    if (/seafood|fish|oyster|prawn|crab|lobster/.test(text)) return "seafood platter";
+    if (/steak|grill|bbq|barbecue|yakitori|churrasco/.test(text)) return "grilled meat dish";
+    if (/pizza|pasta|italian|trattoria|osteria/.test(text)) return "italian pasta";
+    if (/burger|diner/.test(text)) return "gourmet burger";
+    if (/taco|burrito|mexican|taqueria/.test(text)) return "tacos";
+    if (/curry|indian|tandoori|biryani/.test(text)) return "indian curry";
+    if (/thai|pad thai/.test(text)) return "thai food";
+    if (/tapas|spanish|paella/.test(text)) return "tapas";
+    if (/french|bistro|brasserie/.test(text)) return "french cuisine plated";
+    if (/vegan|vegetarian|salad/.test(text)) return "vegetarian bowl";
+    if (/street food|hawker|food hall|food court|market/.test(text)) return "street food market";
+    if (/breakfast|brunch|pancake/.test(text)) return "breakfast plate";
+    if (/dessert|ice cream|gelato|cake/.test(text)) return "dessert plate";
+    if (/bar|pub|wine|cocktail|brewery/.test(text)) return "restaurant interior";
+    return "restaurant plated food";
+  }
+  if (suggestion.category === "shop") {
+    if (/mall|department store|shopping cent|outlet|emporium/.test(text)) return "shopping mall interior";
+    if (/bazaar|flea market|night market|hawker|market/.test(text)) return "street market stalls";
+    if (/book/.test(text)) return "bookstore interior";
+    if (/craft|artisan|handmade|souvenir|gift/.test(text)) return "artisan craft market";
+    if (/vintage|antique/.test(text)) return "vintage shop";
+    if (/boutique|fashion|design|apparel|clothing/.test(text)) return "fashion boutique";
+    if (/jewel/.test(text)) return "jewelry shop";
+    return "shopping street storefronts";
+  }
+  // See / attractions: prefer a type-representative photo; else a destination cityscape.
+  if (/museum|gallery/.test(text)) return "museum interior";
+  if (/park|garden|botanical/.test(text)) return "city park";
+  if (/cathedral|church|basilica|chapel/.test(text)) return "cathedral";
+  if (/mosque/.test(text)) return "mosque";
+  if (/temple|shrine|pagoda/.test(text)) return "temple";
+  if (/castle|fort|fortress|citadel|palace/.test(text)) return "castle";
+  if (/beach|bay|coast|seaside/.test(text)) return "beach";
+  if (/mountain|hill|peak|volcano/.test(text)) return "mountain landscape";
+  if (/lake|river|waterfall/.test(text)) return "lake landscape";
+  if (/tower|monument|obelisk|statue/.test(text)) return "monument";
+  if (/bridge/.test(text)) return "bridge";
+  if (/zoo|aquarium/.test(text)) return "aquarium";
+  if (/theatre|theater|opera|concert/.test(text)) return "theatre interior";
+  if (/market/.test(text)) return "market";
+  return dest ? `${dest} cityscape` : "cityscape landmark";
+}
+
+async function representativeImageUrl(keyword) {
+  if (!keyword) return "";
+  const cacheKey = `repr:${keyword.toLowerCase()}`;
+  if (representativeImageCache.has(cacheKey)) return representativeImageCache.get(cacheKey);
+  if (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()) return "";
+  try {
+    const url = await queueSuggestionImageLookup(cacheKey, async () => {
+      const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: keyword, gsrnamespace: "6", gsrlimit: "16", prop: "imageinfo", iiprop: "url|mime", iiurlwidth: "520", format: "json", origin: "*" });
+      const payload = await fetchSuggestionImage(`https://commons.wikimedia.org/w/api.php?${params}`);
+      const pages = Object.values(payload?.query?.pages || {}).sort((a, b) => (a.index || 0) - (b.index || 0));
+      for (const page of pages) {
+        const info = page.imageinfo?.[0];
+        const source = info?.thumburl || info?.url || "";
+        // Only real photos — skip icons, logos, maps, diagrams, flags, and vector files.
+        if (source && /image\/(jpeg|png)/i.test(info?.mime || "") && !/logo|icon|map\b|diagram|flag|coat of arms|\.svg/i.test(page.title || "")) {
+          return source;
+        }
+      }
+      return "";
+    });
+    representativeImageCache.set(cacheKey, url);
+    return url;
+  } catch (_) {
+    return "";
+  }
+}
+
+// Resolve the best image URL for a suggestion: an exact-place photo when one exists
+// (Wikipedia/Commons with a destination-scoped then name-only query), otherwise a
+// representative cuisine/category photo. Result is cached per place; "" means keep the
+// placeholder (and may be retried while rate limited).
+async function resolveSuggestionImage(suggestion, destination) {
+  if (!suggestion || suggestion.researchPrompt) return { source: "", imageSource: "" };
+  if (isRemoteSuggestionImage(suggestion.image)) return { source: suggestion.image, imageSource: suggestion.imageSource || "catalog" };
+  const cacheKey = `${suggestion.name}|${destination}`.toLowerCase();
+  if (suggestionImageCache.has(cacheKey)) {
+    const cached = suggestionImageCache.get(cacheKey);
+    return { source: cached || "", imageSource: cached ? "cache" : "" };
+  }
+  if (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()) return { source: "", imageSource: "" };
+  try {
+    const queryName = primaryImageQueryName(suggestion.name);
+    const matchTarget = { ...suggestion, name: queryName };
+    const resolved = await queueSuggestionImageLookup(cacheKey, async () => {
+      const wikiSearch = async (search) => {
+        const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: search, gsrlimit: "8", prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
+        return fetchSuggestionImage(`https://en.wikipedia.org/w/api.php?${params}`);
+      };
+      // 1) Exact place on Wikipedia (name + destination).
+      let page = bestMatchingImagePage(await wikiSearch(`${queryName} ${destination}`), matchTarget, destination);
+      if (page) return { source: resolvedPageImage(page), imageSource: "wikipedia" };
+      // 2) Exact place on Wikimedia Commons (name + destination).
+      const commonsParams = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${queryName} ${destination}`, gsrnamespace: "6", gsrlimit: "10", prop: "imageinfo", iiprop: "url", iiurlwidth: "520", format: "json", origin: "*" });
+      page = bestMatchingImagePage(await fetchSuggestionImage(`https://commons.wikimedia.org/w/api.php?${commonsParams}`), matchTarget, destination);
+      if (page) return { source: resolvedPageImage(page), imageSource: "wikimedia-commons" };
+      // 3) For attractions, also try Wikipedia by name only (article titled just the place).
+      if (suggestion.category !== "eat" && suggestion.category !== "shop") {
+        page = bestMatchingImagePage(await wikiSearch(queryName), matchTarget, destination);
+        if (page) return { source: resolvedPageImage(page), imageSource: "wikipedia" };
+      }
+      return { source: "", imageSource: "" };
+    });
+    if (resolved.source) {
+      suggestionImageCache.set(cacheKey, resolved.source);
+      return resolved;
+    }
+    // 4) Representative cuisine/category photo (shared, cached by keyword).
+    const reprSource = await representativeImageUrl(representativeImageKeyword(suggestion, destination));
+    if (reprSource) {
+      suggestionImageCache.set(cacheKey, reprSource);
+      return { source: reprSource, imageSource: "representative" };
+    }
+    // Nothing found: cache the miss (unless throttled) so we don't re-hammer the API.
+    if (!(typeof isWikimediaThrottled === "function" && isWikimediaThrottled())) suggestionImageCache.set(cacheKey, "");
+    return { source: "", imageSource: "" };
+  } catch (_) {
+    return { source: "", imageSource: "" };
+  }
+}
+
+// Warm the browser's HTTP cache for an image URL so applying it later is instant.
+function preloadImageBytes(url) {
+  if (!url || !isRemoteSuggestionImage(url) || preloadedImageUrls.has(url)) return;
+  preloadedImageUrls.add(url);
+  const img = new Image();
+  img.decoding = "async";
+  img.src = url;
+}
+
+// Resolve + preload (bytes) an upcoming card's image without touching the DOM, so it is
+// ready the instant that card is shown.
+async function warmSuggestionImage(suggestion, destination) {
+  try {
+    const { source } = await resolveSuggestionImage(suggestion, destination);
+    if (source) preloadImageBytes(source);
+  } catch (_) { /* best-effort */ }
+}
+
+// Preload the next few unreviewed cards in the deck so advancing feels instant.
+function prefetchSuggestionImages(group, fromPosition, count = 3) {
+  if (!group || !Array.isArray(group.items)) return;
+  const reviewed = new Set((suggestionDeckHistory[activeSuggestionCategory] || []).map((entry) => entry.key));
+  const destination = (destinationInput?.value || "").trim();
+  let warmed = 0;
+  for (let i = fromPosition; i < group.items.length && warmed < count; i += 1) {
+    const item = group.items[i];
+    if (!item || reviewed.has(item.key)) continue;
+    warmed += 1;
+    warmSuggestionImage(item, destination);
+  }
+}
+
 async function hydrateSuggestionImage(imageElement, suggestion, destination) {
   if (!imageElement) return;
   const placeholder = suggestionImagePlaceholder(suggestion);
@@ -2151,46 +2327,10 @@ async function hydrateSuggestionImage(imageElement, suggestion, destination) {
   imageElement.addEventListener("error", restorePlaceholder);
   if (!isRemoteSuggestionImage(imageElement.currentSrc || imageElement.src)) restorePlaceholder();
   if (suggestion.researchPrompt) { imageElement.dataset.imageLookup = "ready"; return; }
-  if (isRemoteSuggestionImage(suggestion.image)) {
-    applyImage(suggestion.image, suggestion.imageSource || "catalog");
-    imageElement.dataset.imageLookup = "ready";
-    return;
-  }
   imageElement.dataset.imageLookup = "loading";
-  const cacheKey = `${suggestion.name}|${destination}`.toLowerCase();
-  if (suggestionImageCache.has(cacheKey)) {
-    const cached = suggestionImageCache.get(cacheKey);
-    if (cached) applyImage(cached, "cache");
-    imageElement.dataset.imageLookup = "ready";
-    return;
-  }
-  if (typeof isWikimediaThrottled === "function" && isWikimediaThrottled()) {
-    // Skip without caching the miss so a later render can retry once the window clears.
-    imageElement.dataset.imageLookup = "ready";
-    return;
-  }
-  try {
-    // The Commons fallback runs inside the same queued task so the whole lookup
-    // (Wikipedia, then Commons when needed) respects the shared concurrency cap.
-    const queryName = primaryImageQueryName(suggestion.name);
-    const matchTarget = { ...suggestion, name: queryName };
-    const { source, imageSource } = await queueSuggestionImageLookup(cacheKey, async () => {
-      const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${queryName} ${destination}`, gsrlimit: "6", prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
-      const payload = await fetchSuggestionImage(`https://en.wikipedia.org/w/api.php?${params}`);
-      const wikipediaSource = resolvedPageImage(bestMatchingImagePage(payload, matchTarget, destination));
-      if (wikipediaSource) return { source: wikipediaSource, imageSource: "wikipedia" };
-      const commonsParams = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${queryName} ${destination}`, gsrnamespace: "6", gsrlimit: "8", prop: "imageinfo", iiprop: "url", iiurlwidth: "520", format: "json", origin: "*" });
-      const commonsPayload = await fetchSuggestionImage(`https://commons.wikimedia.org/w/api.php?${commonsParams}`);
-      return { source: resolvedPageImage(bestMatchingImagePage(commonsPayload, matchTarget, destination)), imageSource: "wikimedia-commons" };
-    });
-    suggestionImageCache.set(cacheKey, source);
-    if (source) applyImage(source, imageSource);
-  } catch (_) {
-    // Don't cache rate-limit misses; those cards deserve a retry after the window clears.
-    if (!(typeof isWikimediaThrottled === "function" && isWikimediaThrottled())) suggestionImageCache.set(cacheKey, "");
-  } finally {
-    imageElement.dataset.imageLookup = "ready";
-  }
+  const { source, imageSource } = await resolveSuggestionImage(suggestion, destination);
+  if (source) applyImage(source, imageSource);
+  imageElement.dataset.imageLookup = "ready";
 }
 
 // Cards rendered during a rate-limit window (or before the initial lookup burst resolved) stay

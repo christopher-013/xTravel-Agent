@@ -1,5 +1,11 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.2.6 preloaded + always-present suggestion images
+
+- **Preloads the next few cards' images.** When a recommendation card is shown, the next 3 unreviewed cards (see/eat/shop) have their images resolved and their pixels preloaded in the background, so advancing the deck shows the photo immediately instead of a placeholder-then-image flash.
+- **Every suggestion gets a representative photo.** Image lookup now tries the exact place on Wikipedia (name + destination), then Wikimedia Commons, then Wikipedia by name only (attractions) — and when no exact-place photo exists (as for most restaurants and shops), it falls back to a photo that represents the *kind* of place: a sushi plate, seafood platter, café, food market, shopping mall, boutique, museum, cathedral, park, and so on. These representative photos are looked up once per keyword and shared across all matching cards, so they add almost no extra requests. The initials placeholder is now a rare last resort.
+- Applies to the Adventure deck and the generated itinerary (both use the same image pipeline).
+
 ## v4.2.5 seamless swipe exit on the adventure deck
 
 - Swiping a recommendation card left/right now continues immediately in that direction and fades away, with no brief pause first. The label-hold (added so button/keyboard taps show the Skip/Include/Favorite text) now applies only to button and keyboard decisions; a finger swipe flows straight off-screen for a seamless flick.
