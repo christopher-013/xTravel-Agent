@@ -1,5 +1,10 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.2.5 seamless swipe exit on the adventure deck
+
+- Swiping a recommendation card left/right now continues immediately in that direction and fades away, with no brief pause first. The label-hold (added so button/keyboard taps show the Skip/Include/Favorite text) now applies only to button and keyboard decisions; a finger swipe flows straight off-screen for a seamless flick.
+- The card also travels a bit further off-screen (±140%) and the fly-off is driven by a timer rather than requestAnimationFrame, so it can't stall if the tab is backgrounded.
+
 ## v4.2.4 fewer generic "places to shop" placeholders
 
 - Applies the same dining optimization to shopping: the itinerary now prefers real (non-placeholder) shops before any generic "market and independent shops"-style filler, and recognizes older precomputed shopping fillers (PlanToGuide-labeled, no source) as placeholders so they're replaced by real shops when available.

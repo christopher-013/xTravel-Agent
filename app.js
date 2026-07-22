@@ -290,6 +290,7 @@ let focusNextSuggestionCard = false;
 // Swipe decision pacing: hold the SKIP/INCLUDE/FAVORITE label on-screen, then glide off.
 const SUGGESTION_DECISION_HOLD_MS = 360;
 const SUGGESTION_DECISION_EXIT_MS = 500;
+const SUGGESTION_DECISION_SWIPE_EXIT_MS = 420;
 let currentFormStep = 1;
 const TRIP_BASICS_BRAND_REPLAY_INTERVAL_MS = 60_000;
 const START_SPLASH_DURATION_MS = 3600;
@@ -1798,7 +1799,7 @@ function renderSuggestionDeckCard(group, section) {
   }
 }
 
-function applySuggestionDecision(key, decision, card, renderToken) {
+function applySuggestionDecision(key, decision, card, renderToken, options = {}) {
   if (suggestionSwipeInFlight || renderToken !== suggestionDeckRenderToken) return;
   if (!["skip", "include", "favorite"].includes(decision)) return;
   const group = suggestionGroups[activeSuggestionCategory];
@@ -1820,31 +1821,41 @@ function applySuggestionDecision(key, decision, card, renderToken) {
   suggestionSwipeInFlight = true;
   preferenceError.textContent = "";
   updateSelectionCount();
+  // A swipe already committed a direction with the finger, so continue that motion
+  // immediately for a seamless flick — no pause. Button/keyboard decisions briefly hold
+  // the SKIP / INCLUDE / FAVORITE label first so it can be read.
+  const fromSwipe = Boolean(options && options.fromSwipe);
+  // A one-frame delay (not 0) lets the browser commit the current drag transform first so
+  // the exit transition animates from it instead of jumping; setTimeout (unlike rAF) still
+  // fires in a backgrounded tab, so the card never gets stuck mid-swipe.
+  const holdMs = fromSwipe ? 16 : SUGGESTION_DECISION_HOLD_MS;
+  const exitMs = fromSwipe ? SUGGESTION_DECISION_SWIPE_EXIT_MS : SUGGESTION_DECISION_EXIT_MS;
   if (card) {
-    // Re-enable transitions (dragging disabled them) and reveal the full decision label.
+    // Re-enable transitions (dragging disabled them) and reveal the decision label.
     card.classList.remove("is-dragging");
     card.style.removeProperty("--include-progress");
     card.style.removeProperty("--skip-progress");
     card.classList.add(`show-${decision}-decision`);
-    // Hold the SKIP / INCLUDE / FAVORITE label on-screen long enough to read, then glide
-    // the card off in the swipe direction from wherever it currently sits — the inline
-    // transform transitions smoothly from the drag pose, so it never snaps back to center.
-    window.setTimeout(() => {
+    // Glide the card off in the decision direction from wherever it currently sits — the
+    // inline transform transitions smoothly from the drag pose, so it never snaps back to
+    // center and a swipe flows continuously off-screen while fading out.
+    const flyOff = () => {
       if (renderToken !== suggestionDeckRenderToken) return;
-      card.style.transition = "transform .5s cubic-bezier(.4,0,.2,1), opacity .5s ease";
+      card.style.transition = `transform ${exitMs / 1000}s cubic-bezier(.22,.61,.36,1), opacity ${exitMs / 1000}s ease`;
       card.style.opacity = "0";
       card.style.transform = decision === "skip"
-        ? "translateX(-125%) rotate(-14deg)"
+        ? "translateX(-140%) rotate(-16deg)"
         : decision === "favorite"
-          ? "translateY(-18%) scale(.68)"
-          : "translateX(125%) rotate(14deg)";
-    }, SUGGESTION_DECISION_HOLD_MS);
+          ? "translateY(-20%) scale(.66)"
+          : "translateX(140%) rotate(16deg)";
+    };
+    window.setTimeout(flyOff, holdMs);
   }
   window.setTimeout(() => {
     if (renderToken !== suggestionDeckRenderToken) return;
     focusNextSuggestionCard = true;
     renderSuggestionCategory();
-  }, SUGGESTION_DECISION_HOLD_MS + SUGGESTION_DECISION_EXIT_MS);
+  }, holdMs + exitMs);
 }
 
 function undoSuggestionDecision() {
@@ -1891,7 +1902,7 @@ function bindSuggestionSwipe(card, key, renderToken) {
     if (horizontalIntent && movedX >= threshold) {
       const decision = deltaX > 0 ? "include" : "skip";
       pointerId = null;
-      applySuggestionDecision(key, decision, card, renderToken);
+      applySuggestionDecision(key, decision, card, renderToken, { fromSwipe: true });
       return;
     }
     // Double-tap on touch = Favorite (two quick taps that barely moved). A timer,
