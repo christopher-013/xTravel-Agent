@@ -1,5 +1,9 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.2.2 remove free-text "what to see, eat, shop" field
+
+- Removes the optional "What do you want to see, eat, and shop for?" free-text field from Travel style — the Adventure swipe deck and the quick-pick chips already capture these preferences. Reading and restoring the old value is guarded, so existing saved/imported drafts still load.
+
 ## v4.2.1 splash-style creation animation + curated stay areas
 
 - **Post-Step-4 creation transition now matches the opening splash:** the same dark navy canvas, animated logo, and "Turning your trip PLAN TO a mobile travel GUIDE" brand line. The old orbiting output cards are replaced by the five "what we create" cards fading in one after another in the same spot, and the whole sequence now runs for the same time as the splash logo screen (~3.6s).

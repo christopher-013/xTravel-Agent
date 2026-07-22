@@ -1443,7 +1443,7 @@ function getTripPreferences() {
     evening: document.querySelector("#eveningStyle").value,
     transport: document.querySelector("#transportStyle").value,
     budget: document.querySelector("#tripBudget").value,
-    notes: document.querySelector("#mobilityNotes").value.trim(),
+    notes: document.querySelector("#mobilityNotes")?.value.trim() || "",
     homeBase: document.querySelector("#homeBase").value.trim(),
     groupSize: document.querySelector("#groupSize").value,
     travelerAges: document.querySelector("#travelerAges").value.trim(),
