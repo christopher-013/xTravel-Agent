@@ -1479,17 +1479,67 @@ const QUICK_PICKS = {
   avoidList:        { mode: "list", sep: "\n", items: ["Long transit rides", "Big crowds", "Early mornings", "Late nights", "Tourist traps", "Lots of stairs", "Museums"] }
 };
 
-// Popular areas to stay, derived from where the destination's top sights cluster,
-// with a sensible generic fallback for thin/uncatalogued destinations.
+// Curated "best areas to stay" for popular destinations — real visitor-friendly
+// neighborhoods, preferred over catalog-derived areas when the destination matches.
+const CURATED_STAY_AREAS = {
+  "paris": ["Le Marais", "Saint-Germain-des-Prés", "Latin Quarter", "Champs-Élysées", "Montmartre", "Louvre / Palais-Royal"],
+  "london": ["Covent Garden", "Soho", "South Kensington", "Westminster", "Shoreditch", "Bloomsbury"],
+  "tokyo": ["Shinjuku", "Shibuya", "Ginza", "Asakusa", "Tokyo Station / Marunouchi", "Roppongi"],
+  "kyoto": ["Gion", "Downtown (Kawaramachi)", "Kyoto Station area", "Higashiyama", "Arashiyama"],
+  "new york": ["Midtown Manhattan", "Times Square", "SoHo", "Greenwich Village", "Upper West Side", "Williamsburg (Brooklyn)"],
+  "rome": ["Centro Storico", "Trastevere", "Monti", "Vatican / Prati", "Spanish Steps", "Termini"],
+  "barcelona": ["Eixample", "Gothic Quarter", "El Born", "Gràcia", "Barceloneta", "Las Ramblas"],
+  "madrid": ["Sol / Centro", "Malasaña", "Chueca", "Salamanca", "La Latina", "Retiro"],
+  "amsterdam": ["Canal Ring", "Jordaan", "De Pijp", "Centrum", "Museum Quarter"],
+  "lisbon": ["Baixa", "Alfama", "Chiado", "Bairro Alto", "Príncipe Real"],
+  "berlin": ["Mitte", "Prenzlauer Berg", "Kreuzberg", "Charlottenburg", "Friedrichshain"],
+  "prague": ["Old Town", "Malá Strana", "New Town", "Vinohrady", "Josefov"],
+  "vienna": ["Innere Stadt", "Leopoldstadt", "Neubau", "Mariahilf", "Landstraße"],
+  "budapest": ["District V (Belváros)", "District VII (Jewish Quarter)", "District VI", "Buda Castle area"],
+  "florence": ["Historic Center (Duomo)", "Santa Croce", "Oltrarno", "Santa Maria Novella", "San Marco"],
+  "venice": ["San Marco", "Cannaregio", "Dorsoduro", "San Polo", "Castello"],
+  "istanbul": ["Sultanahmet", "Beyoğlu / Taksim", "Beşiktaş", "Karaköy", "Kadıköy"],
+  "dublin": ["City Centre / Temple Bar", "St Stephen's Green", "Docklands", "Ballsbridge"],
+  "edinburgh": ["Old Town", "New Town", "Grassmarket", "Leith", "Stockbridge"],
+  "bangkok": ["Sukhumvit", "Silom", "Riverside", "Old City (Rattanakosin)", "Siam"],
+  "singapore": ["Marina Bay", "Orchard Road", "Chinatown", "Clarke Quay", "Kampong Glam"],
+  "dubai": ["Downtown Dubai", "Dubai Marina", "Jumeirah Beach (JBR)", "Deira", "Palm Jumeirah"],
+  "sydney": ["Circular Quay / The Rocks", "CBD", "Darling Harbour", "Bondi Beach", "Surry Hills"],
+  "san francisco": ["Union Square", "Fisherman's Wharf", "Nob Hill", "SoMa", "North Beach", "Mission District"],
+  "los angeles": ["Downtown LA", "Hollywood", "Santa Monica", "Beverly Hills", "Venice Beach"],
+  "honolulu": ["Waikiki", "Ala Moana", "Downtown / Chinatown", "Kaka'ako", "Diamond Head"],
+  "las vegas": ["The Strip", "Downtown / Fremont", "Off-Strip (Paradise)", "Summerlin"],
+  "miami": ["South Beach", "Downtown / Brickell", "Mid-Beach", "Wynwood", "Coconut Grove"],
+  "new orleans": ["French Quarter", "Garden District", "Marigny", "Warehouse District", "Uptown"],
+  "mexico city": ["Roma Norte", "Condesa", "Polanco", "Centro Histórico", "Coyoacán"]
+};
+
+// Match a curated city as a whole word inside the destination string
+// ("Paris", "Paris, France", "Trip to Paris" all match "paris").
+function curatedStayAreas(destinationName) {
+  const value = String(destinationName || "").toLowerCase();
+  if (!value) return null;
+  for (const key of Object.keys(CURATED_STAY_AREAS)) {
+    const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    if (new RegExp(`(^|[^a-z])${escaped}([^a-z]|$)`).test(value)) return CURATED_STAY_AREAS[key];
+  }
+  return null;
+}
+
+// Popular areas to stay: curated list for top destinations, else derived from where
+// the destination's top sights cluster, else a sensible generic fallback.
 function popularStayAreas() {
+  const destinationName = String(document.querySelector("#destination")?.value || "").trim();
+  const curated = curatedStayAreas(destinationName);
+  if (curated) return curated.slice(0, 6);
   const counts = new Map();
   const groups = typeof suggestionGroups !== "undefined" ? suggestionGroups : [];
-  const destinationName = String(document.querySelector("#destination")?.value || "").trim().toLowerCase();
+  const lowerDestination = destinationName.toLowerCase();
   (groups[0]?.items || []).forEach((item) => {
     const area = String(item.area || "").trim();
     if (!area || area.length > 38) return;
     // Skip the bare destination name — it's not a useful "area to stay" chip.
-    if (area.toLowerCase() === destinationName) return;
+    if (area.toLowerCase() === lowerDestination) return;
     counts.set(area, (counts.get(area) || 0) + 1);
   });
   const ranked = [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([area]) => area);

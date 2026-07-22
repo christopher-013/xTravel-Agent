@@ -1,5 +1,10 @@
 # PlanToGuide — Version 4 UI working copy
 
+## v4.2.1 splash-style creation animation + curated stay areas
+
+- **Post-Step-4 creation transition now matches the opening splash:** the same dark navy canvas, animated logo, and "Turning your trip PLAN TO a mobile travel GUIDE" brand line. The old orbiting output cards are replaced by the five "what we create" cards fading in one after another in the same spot, and the whole sequence now runs for the same time as the splash logo screen (~3.6s).
+- **Curated "best areas to stay"** for 30 top destinations (Paris, London, Tokyo, New York, Rome, Barcelona, Amsterdam, Honolulu, and more): the Home base quick-pick chips now offer real visitor-friendly neighborhoods (e.g. Paris → Le Marais, Saint-Germain-des-Prés, Latin Quarter, Montmartre…). Destinations without a curated list fall back to catalog-derived areas, then generic options.
+
 ## v4.2.0 clearer wizard, smoother swipes, fewer typed answers
 
 - **Wizard buttons name their destination:** Trip basics → "Places to See", then the Adventure Next button reads "Places to Eat", "Places to Shop", and "Travel style" as you advance.
