@@ -1,5 +1,11 @@
 # Adtona — Version 5 UI working copy
 
+## v5.1.1 fix: Skip/Include/Favorite buttons pushed off-screen
+
+- The earlier "no scrollbar on the recommendation card" change let the card grow to fit its content, which on shorter viewports pushed the **Skip / Include / Favorite / Redo action rail below the fold** — the buttons appeared to vanish.
+- Restored the deck layout so the card fills the space *above* the pinned action rail (`grid-template-rows: minmax(0,1fr) auto auto`), and the description now **truncates** (line-clamp) instead of scrolling or growing — so both the scrollbar is gone *and* the buttons stay visible.
+- **Added a smoke-test guard** (`v4-ui-smoke-test.mjs`) so a build fails if the deck shell stops keeping the card row flexible or the card body stops clipping — this class of regression can't ship again.
+
 ## v5.1.0 sharper suggestions, a photo on every card, faster results
 
 - **Wikivoyage places now arrive with a real photo for free** — the listing's `image=` becomes a Commons `Special:FilePath` thumbnail (no extra API call). Combined with the Wikipedia photos already captured, most "see"/"shop" places show a real image with zero per-card lookups.

@@ -79,6 +79,14 @@ assert.match(styles, /\.show-include-decision[\s\S]{0,240}?\.include/, "Button-t
 assert.match(script, /--skip-progress/, "Leftward dragging must control only the Skip overlay");
 assert.match(script, /--include-progress/, "Rightward dragging must control only the Include overlay");
 
+// Regression guard: the Skip/Include/Favorite/Redo action rail must never be pushed off-screen
+// by a growing recommendation card. The deck shell must keep the card row flexible (minmax(0,
+// 1fr) so it fills the space *above* the pinned action + hint rows) and the card body must clip
+// its content instead of growing or scrolling.
+assert.match(styles, /\.suggestion-swipe-shell\s*\{[^}]*grid-template-rows:\s*minmax\(0,\s*1fr\)\s+auto\s+auto/s, "The swipe deck shell must keep the card row flexible (grid-template-rows: minmax(0,1fr) auto auto) so the Skip/Include/Favorite action rail stays visible");
+assert.match(styles, /\.suggestion-swipe-card\s+\.suggestion-card-body\s*\{[^}]*overflow:\s*hidden/s, "The recommendation card body must clip its content (overflow: hidden) so it can't grow and push the action rail below the fold");
+assert.match(script, /section\.innerHTML[^;]*suggestion-swipe-actions/s, "Every recommendation group must render the action-rail container");
+
 assert.match(applyDecisionSource, /decision\s*===\s*["']favorite["']/, "Favorite must be a first-class deck decision");
 assert.match(applyDecisionSource, /favorite\s*:\s*(?:decision\s*===\s*["']favorite["']|true)/, "Favorite decisions must persist priority on the selected suggestion");
 assert.match(applyDecisionSource, /selectedValueBefore\s*=\s*selectedSuggestions\.get\(key\)/, "Redo must preserve exact prior selection state, including Favorite");
