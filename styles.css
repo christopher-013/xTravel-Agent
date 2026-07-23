@@ -835,6 +835,20 @@ body.trip-mode .result { height: 100vh; min-height: 0; padding: 0; }
 }
 .app-brand { font-size: 21px; }
 .app-brand .brand-mark { width: 27px; height: 27px; font-size: 14px; }
+/* "Go. Now" brand tagline in the generated-site top nav (after the Adtona wordmark). */
+.brand-go-now {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 9px;
+  padding-left: 10px;
+  border-left: 1.5px solid rgba(20, 40, 55, .16);
+  color: #e0531d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .01em;
+  white-space: nowrap;
+}
+@media (max-width: 520px) { .brand-go-now { display: none; } }
 .app-destination { max-width: 280px; overflow: hidden; color: var(--muted); font-size: 11px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .trip-app-header .back-button { color: var(--forest); }
 .trip-app-views { flex: 1; min-height: 0; overflow: hidden; }
@@ -4128,10 +4142,13 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
 /* Step 4 now builds every output; the deliverables orbit the branded creation stage. */
 .trip-creation-transition {
   overflow: hidden;
+  /* Adtona logo palette: sun (gold/orange) top, water (blue) + mountains (green) below. */
   background:
-    radial-gradient(circle at 17% 18%, rgba(237, 188, 49, .19), transparent 28%),
-    radial-gradient(circle at 84% 80%, rgba(38, 125, 117, .18), transparent 30%),
-    radial-gradient(circle at 50% 42%, #fffdf7 0, #f5efe0 49%, #dfe9e6 100%);
+    radial-gradient(circle at 16% 16%, rgba(247, 148, 30, .22), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(255, 199, 30, .20), transparent 32%),
+    radial-gradient(circle at 84% 84%, rgba(27, 95, 168, .20), transparent 34%),
+    radial-gradient(circle at 18% 86%, rgba(45, 138, 61, .18), transparent 34%),
+    radial-gradient(circle at 50% 45%, #fff8ec 0, #f6efe1 46%, #e2eef1 100%);
   transition: opacity .65s ease;
 }
 .trip-creation-transition::before,
@@ -5553,11 +5570,14 @@ body.start-splash-active { overflow: hidden; }
   padding: clamp(30px, 6vw, 90px);
   place-content: center;
   overflow: hidden;
-  color: white;
+  color: #17303f;
+  /* Adtona logo palette — bright "sunrise over water": sun (gold) top-right,
+     mountains (green) + water (blue) below, so the logo wordmark stays legible. */
   background:
-    radial-gradient(circle at 13% 30%, rgba(131, 220, 255, .15), transparent 23rem),
-    radial-gradient(circle at 86% 15%, rgba(255, 214, 90, .11), transparent 26rem),
-    linear-gradient(125deg, #1c2430 0%, #2b4c70 100%);
+    radial-gradient(circle at 84% 16%, rgba(255, 193, 52, .60), transparent 32%),
+    radial-gradient(circle at 15% 88%, rgba(45, 150, 70, .28), transparent 40%),
+    radial-gradient(circle at 90% 90%, rgba(41, 171, 226, .32), transparent 44%),
+    linear-gradient(150deg, #fff4d6 0%, #ffe4bd 28%, #e2f0d7 60%, #cfe9f7 100%);
   border: 0;
   border-radius: 0;
   box-shadow: none;
@@ -5576,6 +5596,11 @@ body.start-splash-active { overflow: hidden; }
 .builder:not(.builder-wide) #startSplash .home-brand-lockup strong { font-size: clamp(25px, 2.3vw, 38px); }
 .builder:not(.builder-wide) #startSplash .builder-hero-message h1 { max-width: 1000px; font-size: clamp(50px, 5.8vw, 88px); }
 .builder:not(.builder-wide) #startSplash .builder-hero-message .lede { max-width: 900px; font-size: clamp(14px, 1.35vw, 20px); }
+/* Dark, legible text on the bright Adtona start screen. */
+.builder:not(.builder-wide) #startSplash .builder-hero-message .eyebrow { color: #a85d10; }
+.builder:not(.builder-wide) #startSplash .builder-hero-message h1 { color: #143a50; text-shadow: none; }
+.builder:not(.builder-wide) #startSplash .builder-hero-message .lede { color: #33505f; }
+.builder:not(.builder-wide) #startSplash .builder-hero-message .lede strong { color: #c9491a; }
 .start-splash-actions {
   display: grid;
   justify-items: end;
@@ -5590,7 +5615,7 @@ body.start-splash-active { overflow: hidden; }
   justify-content: center;
   gap: 12px;
   padding: 10px 22px;
-  border: 1px solid rgba(255, 255, 255, .52);
+  border: 1px solid rgba(20, 40, 55, .16);
   border-radius: 999px;
   color: #1b2834;
   background: #ffd65a;
@@ -5606,7 +5631,7 @@ body.start-splash-active { overflow: hidden; }
   height: 3px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(255, 255, 255, .2);
+  background: rgba(20, 50, 70, .16);
 }
 .start-splash-progress i {
   display: block;

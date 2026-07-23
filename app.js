@@ -17,12 +17,13 @@ const startSplash = document.querySelector("#startSplash");
 const startSplashContinue = document.querySelector("#startSplashContinue");
 
 function brandIconSource() {
-  return window.PLANTOGUIDE_ICON_BASE64 ? `data:image/svg+xml;base64,${window.PLANTOGUIDE_ICON_BASE64}` : "plan-x-guide-centered-compass-morph-clean-x.svg";
+  return "icons/favicon-32.png";
 }
 
+// The brand mark shown on the splash + creation screens is now the Adtona logo lockup
+// (was the animated compass). Callers that want the square emblem use "adtona-mark.png".
 function brandIconAnimationSource() {
-  if (!window.PLANTOGUIDE_ICON_BASE64) return `plan-x-guide-centered-compass-morph-clean-x.svg?animation=${Date.now()}-${Math.random()}`;
-  return URL.createObjectURL(new Blob([base64ToBytes(window.PLANTOGUIDE_ICON_BASE64)], { type: "image/svg+xml" }));
+  return "adtona-logo.png";
 }
 
 function releaseBrandIconSource(source, delay = 6000) {
@@ -782,7 +783,12 @@ async function exportTripPackage() {
     const markdown = createTripMarkdown();
     const runtime = createExportRuntime();
     const inlineIcon = `data:image/svg+xml;base64,${window.PLANTOGUIDE_ICON_BASE64 || ""}`;
-    lastStandaloneHtml = bundled.inlineHtml.replaceAll("plan-x-guide-centered-compass-morph-clean-x.svg", inlineIcon).replace('<link rel="stylesheet" href="styles.css">', `<style>${websiteCss}</style>`).replace('<script src="app.js"><\/script>', `<script>${runtime}<\/script>`);
+    const brandMark = await fetchBrandAssetForExport("adtona-mark.png", "image/png");
+    lastStandaloneHtml = bundled.inlineHtml
+      .replaceAll("plan-x-guide-centered-compass-morph-clean-x.svg", inlineIcon)
+      .replaceAll("adtona-mark.png", brandMark.dataUri || "adtona-mark.png")
+      .replace('<link rel="stylesheet" href="styles.css">', `<style>${websiteCss}</style>`)
+      .replace('<script src="app.js"><\/script>', `<script>${runtime}<\/script>`);
     const readme = `# ${trip.destination} Adtona Website
 
 This package contains the complete visual trip website and a round-trip AI planning workflow.
@@ -833,6 +839,7 @@ Open \`index.html\` locally, drag the folder to Netlify Drop, or upload it to an
       { name: "ATTRIBUTIONS.md", content: createAttributionsMarkdown(trip) },
       { name: "README.md", content: readme },
       { name: "plan-x-guide-centered-compass-morph-clean-x.svg", content: base64ToBytes(window.PLANTOGUIDE_ICON_BASE64 || "") },
+      ...(brandMark.bytes ? [{ name: "adtona-mark.png", content: brandMark.bytes }] : []),
       { name: "icons/icon-192.png", content: icon192 },
       { name: "icons/icon-512.png", content: icon512 },
       ...bundled.files
@@ -1021,6 +1028,21 @@ function readLocalTextAsset(url) {
 
 function createExportRuntime() {
   return `let currentDay=0,currentTab="home";const result=document.querySelector('.result');function registerGuideServiceWorker(){if(!("serviceWorker"in navigator)||!location.protocol.startsWith("http"))return;try{navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(_){}}function chkKey(id){return 'ptg:chk:'+id;}function applyChecklist(){result.querySelectorAll('[data-chk-id]').forEach(function(row){var done=false;try{done=localStorage.getItem(chkKey(row.dataset.chkId))==='1';}catch(e){}row.classList.toggle('done',done);row.setAttribute('aria-pressed',done);var box=row.querySelector('.checklist-box');if(box)box.textContent=done?'✓':'';});result.querySelectorAll('.checklist-widget').forEach(function(w){var rows=w.querySelectorAll('[data-chk-id]'),done=0;rows.forEach(function(r){if(r.classList.contains('done'))done++;});var c=w.querySelector('.checklist-count');if(c)c.textContent=done+'/'+rows.length+' done';});}function showTab(name){currentTab=name;result.querySelectorAll('[data-panel]').forEach(p=>p.classList.toggle('active',p.dataset.panel===name));result.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));}function showDay(index){const next=Number(index)||0,template=document.querySelector('[data-export-template="'+next+'"]');if(!template)return;currentDay=next;result.replaceChildren(template.content.cloneNode(true));result.querySelectorAll('.day-button').forEach(b=>b.classList.toggle('active',Number(b.dataset.exportDay)===currentDay));showTab(currentTab);applyChecklist();window.scrollTo({top:0,behavior:'smooth'});}document.addEventListener('click',event=>{const chk=event.target.closest('[data-chk-id]');if(chk){try{const k=chkKey(chk.dataset.chkId);localStorage.setItem(k,localStorage.getItem(k)==='1'?'0':'1');}catch(e){}applyChecklist();return}const tab=event.target.closest('[data-tab]');if(tab){showTab(tab.dataset.tab);return}const day=event.target.closest('[data-export-day]');if(day){showDay(day.dataset.exportDay);return}const open=event.target.closest('[data-open-tab]');if(open){showTab(open.dataset.openTab);return}const print=event.target.closest('.print-button');if(print)window.print()});registerGuideServiceWorker();showTab('home');applyChecklist();`;
+}
+
+// Inline a local brand asset (e.g. the Adtona emblem) into an export so the single-file
+// site is self-contained. Falls back to the relative path if the fetch is unavailable (file://).
+async function fetchBrandAssetForExport(path, mime) {
+  try {
+    const response = await fetch(path);
+    if (!response.ok) return { dataUri: "", bytes: null };
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    let binary = "";
+    for (let offset = 0; offset < bytes.length; offset += 0x8000) binary += String.fromCharCode(...bytes.subarray(offset, offset + 0x8000));
+    return { dataUri: `data:${mime};base64,${btoa(binary)}`, bytes };
+  } catch (_) {
+    return { dataUri: "", bytes: null };
+  }
 }
 
 async function bundleExportImages(html) {
@@ -1421,7 +1443,7 @@ async function showTripCreationTransition() {
   void logo.offsetWidth;
   await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   overlay.classList.add("is-running");
-  const animationSource = brandIconAnimationSource();
+  const animationSource = "adtona-mark.png"; // square emblem fits the centered creation stage
   logo.src = animationSource;
   await new Promise((resolve) => {
     let timer = 0;
