@@ -8,6 +8,7 @@
 - **The spinning compass is gone.** The opening splash and the post-workflow creation screen now show the Adtona logo (the lockup on the splash, the square emblem on the creation stage) instead of the animated compass.
 - **Both full-screen moments use the logo palette.** The start screen is a bright "sunrise over water" wash (sun gold → mountains green → water blue) with dark, legible text; the creation-animation screen gets the same logo-color theme.
 - **"Go. Now" in the built site's top nav.** The generated trip site shows *Go. Now* (brand orange-red, after the Adtona wordmark) in the header — and the downloadable export now inlines the Adtona emblem so the exported single-file site renders it.
+- **Adtona lockup on every workflow step.** The builder's step form now carries the Adtona emblem + wordmark + *Go. Now* at the top-left (shared across all four steps), so the brand is present throughout planning (the old top bar was hidden in this view).
 - **What deliberately did not change:** the GitHub Pages URL and repo path (`.../PlanToGuide/`) stay so the live deployment and existing links keep working; internal storage keys (`plantoguide-*`), the trip file format token (`plantoguide-trip`, plus legacy `xtravel-trip`), and the `PLANTOGUIDE_VERSION` global are unchanged so saved trips, exports, and round-trip imports remain compatible. Placeholder detection now recognizes both the new "Adtona" and legacy "PlanToGuide" filler labels so cached/precomputed catalogs still work.
 
 ## v4.3.0 consistent mobile results + a photo on every card
