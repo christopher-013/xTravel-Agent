@@ -13,7 +13,7 @@
   // rate-limit window. A 429 opens the Wikimedia circuit breaker below instead.
   const RETRYABLE_STATUS = new Set([500, 502, 503, 504]);
   const WIKIMEDIA_HOST_PATTERN = /(^|\.)wikipedia\.org$|(^|\.)wikivoyage\.org$/i;
-  const WIKIMEDIA_API_USER_AGENT = "PlanToGuide/3.4 (https://christopher-013.github.io/PlanToGuide/)";
+  const WIKIMEDIA_API_USER_AGENT = "Adtona/5.0 (https://christopher-013.github.io/PlanToGuide/)";
   const RATE_LIMIT_DEFAULT_MS = 60000;
   const RATE_LIMIT_MAX_MS = 5 * 60000;
   const CACHE_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -813,11 +813,11 @@ out center tags 120;`;
       banner: seed.banner,
       items: seed.items.map((item) => ({
         ...item,
-        sourceLabel: "PlanToGuide starter catalog",
+        sourceLabel: "Adtona starter catalog",
         sourceUrl: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${item.name} ${seed.label}`)}`,
         sourceId: `plantoguide:${slugify(seed.label)}:${slugify(item.name)}`,
-        sourceLicense: "PlanToGuide curated catalog",
-        sourceAttribution: "PlanToGuide",
+        sourceLicense: "Adtona curated catalog",
+        sourceAttribution: "Adtona",
         seeded: true
       }))
     };
@@ -889,19 +889,19 @@ out center tags 120;`;
     });
     const filler = {
       breakfast: [
-        { name: `${destination} neighborhood café`, area: fallbackArea, detail: "Use live Maps research to choose a highly rated breakfast spot near the day’s route.", cuisine: "Café and local breakfast", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
-        { name: `${destination} bakery breakfast stop`, area: fallbackArea, detail: "Look for a popular bakery or coffee shop near the morning neighborhood and verify current hours.", cuisine: "Bakery and coffee", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
-        { name: `${destination} brunch option`, area: fallbackArea, detail: "Research a well-reviewed brunch spot that fits your group size and morning timing.", cuisine: "Brunch", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true }
+        { name: `${destination} neighborhood café`, area: fallbackArea, detail: "Use live Maps research to choose a highly rated breakfast spot near the day’s route.", cuisine: "Café and local breakfast", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} bakery breakfast stop`, area: fallbackArea, detail: "Look for a popular bakery or coffee shop near the morning neighborhood and verify current hours.", cuisine: "Bakery and coffee", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} brunch option`, area: fallbackArea, detail: "Research a well-reviewed brunch spot that fits your group size and morning timing.", cuisine: "Brunch", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true }
       ],
       lunch: [
-        { name: `${destination} local lunch favorite`, area: fallbackArea, detail: "Choose a well-reviewed lunch stop near the day’s sights and verify current hours.", cuisine: "Regional cuisine", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
-        { name: `${destination} market lunch stop`, area: fallbackArea, detail: "Find a food hall, public market, or casual counter-service option that works for flexible groups.", cuisine: "Market and casual dining", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
-        { name: `${destination} casual neighborhood meal`, area: fallbackArea, detail: "Pick a practical lunch with short travel time and a current menu that fits dietary needs.", cuisine: "Casual local food", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true }
+        { name: `${destination} local lunch favorite`, area: fallbackArea, detail: "Choose a well-reviewed lunch stop near the day’s sights and verify current hours.", cuisine: "Regional cuisine", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} market lunch stop`, area: fallbackArea, detail: "Find a food hall, public market, or casual counter-service option that works for flexible groups.", cuisine: "Market and casual dining", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} casual neighborhood meal`, area: fallbackArea, detail: "Pick a practical lunch with short travel time and a current menu that fits dietary needs.", cuisine: "Casual local food", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true }
       ],
       dinner: [
-        { name: `${destination} dinner reservation option`, area: fallbackArea, detail: "Research a dinner spot that matches your budget, dietary needs, and route.", cuisine: "Local dinner", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
-        { name: `${destination} special dinner pick`, area: fallbackArea, detail: "Look for a memorable dinner option near the evening plan and confirm reservations.", cuisine: "Dinner", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
-        { name: `${destination} relaxed evening restaurant`, area: fallbackArea, detail: "Choose a lower-stress dinner close to the final stop or home base.", cuisine: "Relaxed dinner", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true }
+        { name: `${destination} dinner reservation option`, area: fallbackArea, detail: "Research a dinner spot that matches your budget, dietary needs, and route.", cuisine: "Local dinner", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} special dinner pick`, area: fallbackArea, detail: "Look for a memorable dinner option near the evening plan and confirm reservations.", cuisine: "Dinner", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} relaxed evening restaurant`, area: fallbackArea, detail: "Choose a lower-stress dinner close to the final stop or home base.", cuisine: "Relaxed dinner", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true }
       ]
     };
     Object.keys(food).forEach((bucket) => {
@@ -1002,10 +1002,10 @@ out center tags 120;`;
         area: fallbackArea,
         detail: "Start with the official visitor center or tourism office, confirm current headline sights, and collect local route guidance.",
         placeholder: true,
-        sourceLabel: "PlanToGuide research checklist",
+        sourceLabel: "Adtona research checklist",
         sourceId: `plantoguide:research:${slugify(destination)}:visitor-center`,
-        sourceLicense: "PlanToGuide generated guidance",
-        sourceAttribution: "PlanToGuide"
+        sourceLicense: "Adtona generated guidance",
+        sourceAttribution: "Adtona"
       },
       {
         name: `${destination} historic center orientation walk`,
@@ -1013,10 +1013,10 @@ out center tags 120;`;
         area: fallbackArea,
         detail: "Use official tourism and map sources to verify a compact orientation walk through the destination's historic or civic center.",
         placeholder: true,
-        sourceLabel: "PlanToGuide research checklist",
+        sourceLabel: "Adtona research checklist",
         sourceId: `plantoguide:research:${slugify(destination)}:historic-center`,
-        sourceLicense: "PlanToGuide generated guidance",
-        sourceAttribution: "PlanToGuide"
+        sourceLicense: "Adtona generated guidance",
+        sourceAttribution: "Adtona"
       }
     ];
   }
@@ -1066,13 +1066,13 @@ out center tags 120;`;
       attractions: see,
       food,
       shopping: buy.length ? buy : [
-        { name: `${destination} central shopping street`, area: fallbackArea, detail: "Research the main retail street or market district and verify current stores.", bestFor: "Local gifts and browsing", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
-        { name: `${destination} artisan market`, area: fallbackArea, detail: "Look for a local maker market, food market, or craft area near the route.", bestFor: "Crafts, food gifts, and souvenirs", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true },
-        { name: `${destination} design and vintage district`, area: fallbackArea, detail: "Find a walkable independent shopping area with boutiques, books, or vintage shops.", bestFor: "Independent finds", sourceLabel: "PlanToGuide", sourceUrl: "", researchPrompt: true }
+        { name: `${destination} central shopping street`, area: fallbackArea, detail: "Research the main retail street or market district and verify current stores.", bestFor: "Local gifts and browsing", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} artisan market`, area: fallbackArea, detail: "Look for a local maker market, food market, or craft area near the route.", bestFor: "Crafts, food gifts, and souvenirs", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true },
+        { name: `${destination} design and vintage district`, area: fallbackArea, detail: "Find a walkable independent shopping area with boutiques, books, or vintage shops.", bestFor: "Independent finds", sourceLabel: "Adtona", sourceUrl: "", researchPrompt: true }
       ],
       practical: {},
       sources: [
-        ...(seeded.items?.length ? [{ label: "PlanToGuide starter catalog", url: "https://www.google.com/maps" }] : []),
+        ...(seeded.items?.length ? [{ label: "Adtona starter catalog", url: "https://www.google.com/maps" }] : []),
         { label: "Wikivoyage", url: sourceData.wikivoyageTitle ? `https://en.wikivoyage.org/wiki/${encodeURIComponent(sourceData.wikivoyageTitle.replace(/\s+/g, "_"))}` : "https://en.wikivoyage.org" },
         { label: "Wikipedia", url: "https://en.wikipedia.org" },
         ...(sourceData.osmItems?.length ? [{ label: "OpenStreetMap", url: "https://www.openstreetmap.org" }] : [])

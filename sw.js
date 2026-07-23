@@ -14,9 +14,12 @@ const PRECACHE_URLS = [
   "icon-source.js",
   "photo-store.js",
   "plan-x-guide-centered-compass-morph-clean-x.svg",
+  "adtona-logo.png",
+  "adtona-mark.png",
   "manifest.webmanifest",
   "icons/icon-192.png",
-  "icons/icon-512.png"
+  "icons/icon-512.png",
+  "icons/favicon-32.png"
 ];
 const NETWORK_ONLY_HOSTS = new Set([
   "api.open-meteo.com",

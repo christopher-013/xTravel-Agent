@@ -2236,6 +2236,8 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   height:58px;
 }
 .builder:not(.builder-wide) .home-brand-lockup strong { font-size:inherit; }
+/* Adtona hero lockup: the full logo image (overrides the generic .builder-brand img sizing). */
+.builder:not(.builder-wide) .home-brand-lockup .home-brand-logo { width:clamp(196px,44vw,300px); height:auto; }
 .builder:not(.builder-wide) .demo-showcase {
   width:min(100%,460px);
   max-width:460px;

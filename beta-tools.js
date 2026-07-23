@@ -1,4 +1,4 @@
-/* beta-tools.js — Public-beta instrumentation for PlanToGuide.
+/* beta-tools.js — Public-beta instrumentation for Adtona.
  *
  * Three self-contained, dependency-free features:
  *   1. Cloudflare Web Analytics beacon (aggregate visitor / page-view counts).
@@ -267,7 +267,7 @@
     overlay.innerHTML =
       '<div class="ptg-metrics-card">' +
       '<button class="ptg-metrics-close" type="button" aria-label="Close report">×</button>' +
-      "<h2>PlanToGuide — beta metrics</h2>" +
+      "<h2>Adtona — beta metrics</h2>" +
       '<p class="ptg-metrics-note">This report reflects <strong>this browser only</strong>. Aggregate visitor counts across everyone live in your ' +
       '<a href="https://dash.cloudflare.com/?to=/:account/web-analytics" target="_blank" rel="noopener noreferrer">Cloudflare Web Analytics</a> dashboard' +
       (CF_BEACON_TOKEN ? " (beacon active)." : " (beacon not yet configured — paste your token in beta-tools.js).") + "</p>" +

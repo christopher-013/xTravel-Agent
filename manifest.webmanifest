@@ -1,18 +1,12 @@
 {
-  "name": "PlanToGuide",
-  "short_name": "PlanToGuide",
+  "name": "Adtona",
+  "short_name": "Adtona",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f5f1e8",
   "theme_color": "#f5f1e8",
   "icons": [
-    {
-      "src": "plan-x-guide-centered-compass-morph-clean-x.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
     {
       "src": "icons/icon-192.png",
       "sizes": "192x192",

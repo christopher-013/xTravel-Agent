@@ -1,4 +1,11 @@
-# PlanToGuide — Version 4 UI working copy
+# Adtona — Version 5 UI working copy
+
+## v5.0.0 rebrand to Adtona
+
+- **The app is now Adtona** — from the Filipino *"Adto na"* ("go now"). The name, tagline, logo, app icons, favicon, PWA manifest, page metadata (title/description/social cards), and all in-product copy are rebranded from PlanToGuide to Adtona.
+- **Tagline: "Plan your trip. Adto na — go now."** The homepage hero now leads with the Adtona logo lockup, a clean headline ("Turn your trip plan into a mobile travel guide."), and the go-now tagline; the old "PLAN·TO·GUIDE" wordplay is retired.
+- **New brand art** generated from the Adtona logo: `adtona-logo.png` (horizontal lockup for headers/hero), `adtona-mark.png` (square sun-and-waves emblem for the small brand marks), and refreshed maskable app icons + favicon (`icons/icon-192.png`, `icons/icon-512.png`, `icons/favicon-32.png`).
+- **What deliberately did not change:** the GitHub Pages URL and repo path (`.../PlanToGuide/`) stay so the live deployment and existing links keep working; internal storage keys (`plantoguide-*`), the trip file format token (`plantoguide-trip`, plus legacy `xtravel-trip`), and the `PLANTOGUIDE_VERSION` global are unchanged so saved trips, exports, and round-trip imports remain compatible. Placeholder detection now recognizes both the new "Adtona" and legacy "PlanToGuide" filler labels so cached/precomputed catalogs still work.
 
 ## v4.3.0 consistent mobile results + a photo on every card
 

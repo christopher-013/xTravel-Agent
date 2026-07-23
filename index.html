@@ -6,47 +6,48 @@
   <meta name="theme-color" content="#f5f1e8">
   <meta name="referrer" content="no-referrer">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https:; connect-src 'self' https://api.open-meteo.com https://geocoding-api.open-meteo.com https://en.wikipedia.org https://en.wikivoyage.org https://commons.wikimedia.org https://overpass-api.de https://cloudflareinsights.com https://*.workers.dev; frame-src 'self' https://www.google.com https://maps.google.com; object-src 'none'; base-uri 'self'; form-action 'self'">
-  <title>PlanToGuide — Turn your trip plan into a mobile travel guide</title>
-  <meta name="description" content="Create a shareable trip website, mobile travel guide, and AI-ready planning file.">
+  <title>Adtona — Plan your trip, then go</title>
+  <meta name="description" content="Adtona turns your trip plan into a shareable travel website, mobile guide, and AI-ready planning file. Adto na — go now.">
   <link rel="canonical" href="https://christopher-013.github.io/PlanToGuide/">
   <meta property="og:type" content="website">
-  <meta property="og:site_name" content="PlanToGuide">
-  <meta property="og:title" content="PlanToGuide — Turn your trip plan into a mobile travel guide">
-  <meta property="og:description" content="Create a shareable trip website, printable itinerary, and AI-ready planning file — free, in your browser.">
+  <meta property="og:site_name" content="Adtona">
+  <meta property="og:title" content="Adtona — Plan your trip, then go">
+  <meta property="og:description" content="Turn your trip plan into a shareable travel website, printable itinerary, and AI-ready planning file — free, in your browser. Adto na — go now.">
   <meta property="og:url" content="https://christopher-013.github.io/PlanToGuide/">
   <meta property="og:image" content="https://christopher-013.github.io/PlanToGuide/icons/icon-512.png">
   <meta name="twitter:card" content="summary">
-  <meta name="twitter:title" content="PlanToGuide — Turn your trip plan into a mobile travel guide">
-  <meta name="twitter:description" content="Create a shareable trip website, printable itinerary, and AI-ready planning file — free, in your browser.">
+  <meta name="twitter:title" content="Adtona — Plan your trip, then go">
+  <meta name="twitter:description" content="Turn your trip plan into a shareable travel website, printable itinerary, and AI-ready planning file — free, in your browser. Adto na — go now.">
   <meta name="twitter:image" content="https://christopher-013.github.io/PlanToGuide/icons/icon-512.png">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:wght@600&display=swap" rel="stylesheet">
-  <link rel="icon" href="plan-x-guide-centered-compass-morph-clean-x.svg" type="image/svg+xml">
+  <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=4.3.0">
+  <link rel="stylesheet" href="styles.css?v=5.0.0">
 </head>
 <body>
   <main class="page-shell">
     <header class="topbar">
-      <a class="brand" href="#" aria-label="PlanToGuide home">
-        <span class="brand-mark" aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span>
-        <span class="brand-wordmark">PlanToGuide</span>
+      <a class="brand" href="#" aria-label="Adtona home">
+        <span class="brand-mark" aria-hidden="true"><img src="adtona-mark.png" alt=""></span>
+        <span class="brand-wordmark">Adtona</span>
       </a>
       <p>Build, export, and re-import your travel guide.</p>
       <button class="text-button" id="newTripButton" type="button">New trip</button>
     </header>
 
-    <section class="builder" id="builder" aria-label="PlanToGuide trip builder">
+    <section class="builder" id="builder" aria-label="Adtona trip builder">
       <div class="builder-copy start-splash" id="startSplash" role="region" aria-labelledby="builderTitle" aria-describedby="startSplashDescription" hidden>
         <div class="builder-hero-lockup">
-          <a class="builder-brand home-brand-lockup" href="#" aria-label="PlanToGuide home"><span aria-hidden="true"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><strong class="home-brand-wordmark" aria-hidden="true"><span class="home-brand-plan">PLAN</span><span class="home-brand-to">TO</span><span class="home-brand-guide">GUIDE</span></strong></a>
+          <a class="builder-brand home-brand-lockup" href="#" aria-label="Adtona home"><img class="home-brand-logo" src="adtona-logo.png" alt="Adtona"></a>
           <div class="builder-hero-message">
             <p class="eyebrow">Trip website builder · Free browser mode</p>
-            <h1 id="builderTitle">Turn your trip <strong class="hero-brand-word hero-brand-plan">PLAN</strong> <strong class="hero-brand-word hero-brand-to">TO</strong> a<br>mobile travel <strong class="hero-brand-word hero-brand-guide">GUIDE.</strong></h1>
-            <p class="lede homepage-tagline" id="startSplashDescription">Create a shareable trip website, printable itinerary, and AI-ready planning file for your next trip.</p>
+            <h1 id="builderTitle">Turn your trip plan into a mobile travel guide.</h1>
+            <p class="lede homepage-tagline" id="startSplashDescription">Plan your trip, then <strong>adto na</strong> — go now. Build a shareable trip website, printable itinerary, and AI-ready planning file, free in your browser.</p>
           </div>
         </div>
         <div class="journey-line" aria-hidden="true">
@@ -203,7 +204,7 @@
       <p class="report-status" id="reportStatus" role="status" aria-live="polite" aria-atomic="true"></p>
       <div class="trip-app">
         <header class="trip-app-header">
-          <a class="brand app-brand" href="#" aria-label="PlanToGuide trip home"><span class="brand-mark"><img src="plan-x-guide-centered-compass-morph-clean-x.svg" alt=""></span><span class="brand-wordmark">PlanToGuide</span></a>
+          <a class="brand app-brand" href="#" aria-label="Adtona trip home"><span class="brand-mark"><img src="adtona-mark.png" alt=""></span><span class="brand-wordmark">Adtona</span></a>
           <span class="app-destination" id="appDestination">Your trip</span>
           <div class="trip-header-actions">
             <a class="export-button feedback-header-link" href="https://github.com/christopher-013/PlanToGuide/issues" target="_blank" rel="noopener noreferrer">Feedback</a>
@@ -313,7 +314,7 @@
             <div class="compact-app-hero photos-hero"><div><p class="eyebrow light">Remember</p><h2>Photos</h2><p>Your trip gallery and visual journal.</p></div></div>
             <div class="app-panel-body photo-journal-panel">
               <section class="photo-manager" aria-labelledby="photoManagerTitle">
-                <div><p class="eyebrow">Build your journal</p><h3 id="photoManagerTitle">Add trip photos</h3><p>Upload images for the selected date. When a photo contains matching capture-date or GPS metadata, PlanToGuide files it under the corresponding trip day and plots its location.</p></div>
+                <div><p class="eyebrow">Build your journal</p><h3 id="photoManagerTitle">Add trip photos</h3><p>Upload images for the selected date. When a photo contains matching capture-date or GPS metadata, Adtona files it under the corresponding trip day and plots its location.</p></div>
                 <div class="photo-manager-actions">
                   <label class="photo-upload-button">Upload photos<input class="native-file-button" id="photoUploadInput" type="file" accept="image/*" multiple aria-label="Upload trip photos"></label>
                   <label class="photo-caption-field"><span>Caption</span><input id="photoCaptionInput" type="text" maxlength="120" placeholder="Optional caption for this upload"></label>
@@ -356,9 +357,9 @@
     <button class="creation-skip-button" id="tripCreationSkip" type="button" hidden>Skip animation →</button>
     <div class="trip-creation-transition-card">
       <div class="creation-center-stage">
-        <img id="tripCreationLogo" src="plan-x-guide-centered-compass-morph-clean-x.svg" alt="PlanToGuide">
+        <img id="tripCreationLogo" src="adtona-mark.png" alt="Adtona">
         <p class="eyebrow">Building your adventure</p>
-        <h2 class="trip-creation-brand-line">Turning your trip <strong class="hero-brand-word hero-brand-plan">PLAN</strong> <strong class="hero-brand-word hero-brand-to">TO</strong> a<br>mobile travel <strong class="hero-brand-word hero-brand-guide">GUIDE.</strong></h2>
+        <h2 class="trip-creation-brand-line">Turning your plan into a mobile travel guide.<br><strong class="hero-brand-word hero-brand-guide">Adto na — go now.</strong></h2>
       </div>
       <div class="creation-output-stack" aria-label="What we're creating">
         <article class="creation-output-card" style="--creation-card-index: 0"><strong>📱 Mobile Trip App</strong><span>A mobile-first guide designed for use during the trip</span></article>
@@ -376,7 +377,7 @@
     <p class="eyebrow">Export complete</p>
     <h2 id="exportDialogTitle">Website and Markdown files are ready</h2>
     <p>Your ZIP includes the complete interactive report, every date and section, available bundled graphics, and a detailed AI planning handoff.</p>
-    <ul><li><strong>index.html</strong> — complete visual itinerary website</li><li><strong>styles.css + app.js</strong> — report styling and navigation</li><li><strong>manifest.webmanifest + sw.js</strong> — installable/offline guide support after hosting</li><li><strong>plan-x-guide-centered-compass-morph-clean-x.svg</strong> — animated PlanToGuide logo</li><li><strong>assets/</strong> — bundled banners and place graphics</li><li><strong>TRIP-PLAN.md + TRIP-DATA.json</strong> — human- and machine-readable source of truth</li><li><strong>AGENT-INSTRUCTIONS.md</strong> — rules for continued AI planning</li><li><strong>README.md</strong> — publishing instructions</li><li><strong>Offline note</strong> — once hosted over HTTPS and opened once, the guide works offline and can be installed to your home screen.</li></ul>
+    <ul><li><strong>index.html</strong> — complete visual itinerary website</li><li><strong>styles.css + app.js</strong> — report styling and navigation</li><li><strong>manifest.webmanifest + sw.js</strong> — installable/offline guide support after hosting</li><li><strong>plan-x-guide-centered-compass-morph-clean-x.svg</strong> — animated Adtona logo</li><li><strong>assets/</strong> — bundled banners and place graphics</li><li><strong>TRIP-PLAN.md + TRIP-DATA.json</strong> — human- and machine-readable source of truth</li><li><strong>AGENT-INSTRUCTIONS.md</strong> — rules for continued AI planning</li><li><strong>README.md</strong> — publishing instructions</li><li><strong>Offline note</strong> — once hosted over HTTPS and opened once, the guide works offline and can be installed to your home screen.</li></ul>
     <div class="export-action-grid"><button id="exportDownloadZip" type="button">Download Website ZIP</button><button id="exportDownloadHtml" type="button">Download HTML</button><button id="exportDownloadMarkdown" type="button">Download Markdown</button><button id="exportCopyChatGpt" type="button">Copy ChatGPT Prompt</button><button id="exportCopyClaude" type="button">Copy Claude Prompt</button><button id="exportPreviewWebsite" type="button">Preview Website</button><a href="https://docs.github.com/pages/getting-started-with-github-pages/creating-a-github-pages-site" target="_blank" rel="noopener">Publish to GitHub Pages Guide</a></div>
     <button class="primary-button" id="exportDialogDone" type="button">Done</button>
   </dialog>
@@ -386,7 +387,7 @@
     <span class="export-dialog-icon" aria-hidden="true">⤵</span>
     <p class="eyebrow">Close the loop</p>
     <h2 id="importDialogTitle">Import an AI-updated plan</h2>
-    <p>Paste the complete TRIP-PLAN.md your AI assistant returned (or just its <code>json plantoguide-trip</code> block), or choose the file. PlanToGuide reads the Machine-Readable Trip Data section and re-renders your trip website. Legacy <code>xtravel-trip</code> files remain supported.</p>
+    <p>Paste the complete TRIP-PLAN.md your AI assistant returned (or just its <code>json plantoguide-trip</code> block), or choose the file. Adtona reads the Machine-Readable Trip Data section and re-renders your trip website. Legacy <code>xtravel-trip</code> files remain supported.</p>
     <textarea id="importPlanText" rows="9" placeholder="Paste the full TRIP-PLAN.md returned by Claude, ChatGPT, or another AI…" aria-label="Updated plan content"></textarea>
     <div class="import-precheck" id="importPrecheck" role="status" aria-live="polite">No trip JSON block found yet.</div>
     <div class="import-error" id="importError" role="alert" hidden></div>
@@ -447,13 +448,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=4.3.0"></script>
-  <script src="dynamic-catalog.js?v=4.3.0"></script>
-  <script src="export-styles.js?v=4.3.0"></script>
-  <script src="icon-source.js?v=4.3.0"></script>
-  <script src="photo-store.js?v=4.3.0"></script>
-  <script src="trip-schema.js?v=4.3.0"></script>
-  <script src="beta-tools.js?v=4.3.0"></script>
-  <script src="app.js?v=4.3.0"></script>
+  <script src="version.js?v=5.0.0"></script>
+  <script src="dynamic-catalog.js?v=5.0.0"></script>
+  <script src="export-styles.js?v=5.0.0"></script>
+  <script src="icon-source.js?v=5.0.0"></script>
+  <script src="photo-store.js?v=5.0.0"></script>
+  <script src="trip-schema.js?v=5.0.0"></script>
+  <script src="beta-tools.js?v=5.0.0"></script>
+  <script src="app.js?v=5.0.0"></script>
 </body>
 </html>
