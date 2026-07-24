@@ -13,6 +13,7 @@ const PRECACHE_URLS = [
   "export-styles.js",
   "icon-source.js",
   "photo-store.js",
+  "beta-tools.js",
   "plan-x-guide-centered-compass-morph-clean-x.svg",
   "adtona-logo.png",
   "adtona-mark.png",

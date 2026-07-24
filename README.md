@@ -53,3 +53,21 @@ powershell -ExecutionPolicy Bypass -File .\dev-server.ps1
 Then visit `http://127.0.0.1:8767`.
 
 The browser edition requires no account or API key. Optional live weather and dynamic destination research use keyless public endpoints.
+
+## Deploy to Cloudflare Workers
+
+The Cloudflare bundle is assembled from an explicit browser-asset allowlist in
+`build-cloudflare.mjs`. This prevents `node_modules`, tests, repository history,
+and development files from being uploaded as public assets.
+
+```powershell
+npm run build:cloudflare
+npm run verify:cloudflare
+npm run deploy
+```
+
+For a Cloudflare Git build, keep the deploy command as `npx wrangler deploy`.
+The committed `wrangler.jsonc` runs the static build and publishes only
+`./dist`; do not set the static-assets directory to the repository root (`.`).
+After the first successful deployment, attach `atona.com` to the `adtona`
+Worker under **Settings → Domains & Routes → Add Custom Domain**.

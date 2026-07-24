@@ -1,5 +1,12 @@
 # Adtona — Version 5 UI working copy
 
+## v5.1.3 Cloudflare deployment packaging
+
+- Adds a deterministic Cloudflare build that publishes only the browser application from `dist/`, never the repository root or `node_modules`.
+- Adds a deployment smoke test for missing references, service-worker assets, symlinks, source-code leaks, and Cloudflare's 25 MiB per-file limit.
+- Pins Wrangler, adds reproducible deploy/preview scripts, and points canonical/social metadata at `https://atona.com/`.
+- Uses the same allowlisted bundle for GitHub Pages and includes `beta-tools.js` in both the deployment and offline service-worker cache.
+
 ## v5.1.2 streamline Travel style: drop the "Evening style" question
 
 - Removed the **Evening style** ("Quiet nights or one more adventure?") select from Step 3 to shorten the survey. The `evening` preference now defaults to **flexible** (its previous default), so dinner and end-of-day timing are unchanged for everyone who didn't touch it. Saved-draft restore ignores the removed field gracefully.
