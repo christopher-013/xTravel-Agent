@@ -1,5 +1,13 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.0 public-beta quality and safety
+
+- Streamlines Trip Basics by hiding the redundant “Where?” and “When?” headings, moving the Adtona lockup upward, and using Tokyo, Japan as the default for a new unsaved trip while preserving returning travelers’ saved destination.
+- Makes recommendation swipes glide directly off-screen, aligns generated-guide day swipes with the date strip (left advances; right goes back), and sequences creation deliverables one at a time with the AI Source-of-Truth file last.
+- Improves live destination research and fallback photography for Bohol and other uncatalogued destinations, with clearer filtering of non-visitor Wikipedia results.
+- Hardens the public feedback endpoint against active-content injection, links, unsafe controls, and profanity before any GitHub request is made.
+- Shortens the live-research reminder to “Verify before travel” and keeps it visually secondary.
+
 ## v5.2.2 photo-first Adventure recommendations
 
 - Stacks every suggested location photo above its description on desktop and mobile, using a two-thirds image / one-third detail composition.
@@ -81,7 +89,7 @@
 - **Both full-screen moments use the logo palette.** The start screen is a bright "sunrise over water" wash (sun gold → mountains green → water blue) with dark, legible text; the creation-animation screen gets the same logo-color theme.
 - **"Go. Now" in the built site's top nav.** The generated trip site shows *Go. Now* (brand orange-red, after the Adtona wordmark) in the header — and the downloadable export now inlines the Adtona emblem so the exported single-file site renders it.
 - **Adtona lockup on every workflow step.** The builder's step form now carries the Adtona emblem + wordmark + *Go. Now* at the top-left (shared across all four steps), so the brand is present throughout planning (the old top bar was hidden in this view).
-- **Swipe to change day on the generated site (mobile).** On the built trip view (and the downloadable export), a horizontal swipe changes the day while keeping the current tab — works on Home, Itinerary, Bookings, Maps, Food, Shop, and Photos. Per request, **swipe left → previous day, swipe right → next day** (a deliberate horizontal flick only, so vertical scrolling is untouched).
+- **Swipe to change day on the generated site (mobile).** On the built trip view (and the downloadable export), a horizontal swipe changes the day while keeping the current tab — works on Home, Itinerary, Bookings, Maps, Food, Shop, and Photos. The current mapping follows the date strip: **swipe left → next day, swipe right → previous day** (a deliberate horizontal flick only, so vertical scrolling is untouched).
 - **Compact research-status card.** On the trip home hero, the "Live research catalog / Real places found" card now sits to the right of the **Export** button at the same height, with smaller text.
 - **What deliberately did not change:** the GitHub Pages URL and repo path (`.../PlanToGuide/`) stay so the live deployment and existing links keep working; internal storage keys (`plantoguide-*`), the trip file format token (`plantoguide-trip`, plus legacy `xtravel-trip`), and the `PLANTOGUIDE_VERSION` global are unchanged so saved trips, exports, and round-trip imports remain compatible. Placeholder detection now recognizes both the new "Adtona" and legacy "PlanToGuide" filler labels so cached/precomputed catalogs still work.
 

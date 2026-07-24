@@ -291,12 +291,11 @@ let suggestionDeckDestination = "";
 let suggestionSwipeInFlight = false;
 let suggestionDeckRenderToken = 0;
 let focusNextSuggestionCard = false;
-// Swipe decision pacing: hold the SKIP/INCLUDE/FAVORITE label on-screen, then glide off.
+// Button and keyboard decisions briefly hold the decision label before gliding off.
 const SUGGESTION_DECISION_HOLD_MS = 360;
 const SUGGESTION_DECISION_EXIT_MS = 500;
-// A swipe still holds the label briefly (so the red Skip / green Include reads on mobile)
-// before gliding off — just a touch shorter than a button/keyboard decision.
-const SUGGESTION_DECISION_SWIPE_HOLD_MS = 300;
+// A committed drag must continue directly from the traveler's finger without pausing.
+const SUGGESTION_DECISION_SWIPE_HOLD_MS = 0;
 const SUGGESTION_DECISION_SWIPE_EXIT_MS = 440;
 let currentFormStep = 1;
 const TRIP_BASICS_BRAND_REPLAY_INTERVAL_MS = 60_000;
@@ -315,6 +314,7 @@ const defaultStart = new Date(today.getFullYear(), today.getMonth() + 1, 8);
 const defaultEnd = new Date(today.getFullYear(), today.getMonth() + 1, 13);
 startDateInput.value = toInputDate(defaultStart);
 endDateInput.value = toInputDate(defaultEnd);
+destinationInput.value = "Tokyo, Japan";
 
 renderKnownDestinationOptions();
 showStartSplash();
@@ -498,7 +498,7 @@ async function goToPreferencesStep() {
   } else {
     const researchDestination = destinationInput.value.trim();
     if (getLiveOrCuratedCatalog(researchDestination)) {
-      destinationError.textContent = "Live research catalog ready. Verify hours, closures, ratings, tickets, and availability before travel.";
+      destinationError.textContent = "Live research catalog ready. Verify before travel.";
     } else {
       startOrReuseDynamicCatalogResearch(researchDestination);
       destinationError.textContent = `Researching real places for ${researchDestination} — you can continue, results will update automatically.`;
@@ -602,7 +602,7 @@ function startOrReuseDynamicCatalogResearch(destination, options = {}) {
       // status messaging and only refresh the board with the newly merged places.
       if (!options.enrich) {
         destinationError.textContent = catalog
-          ? "Live research catalog created from keyless public sources. Verify hours, closures, ratings, tickets, and availability before travel."
+          ? "Live research catalog created from keyless public sources. Verify before travel."
           : researchWasRateLimited(destination)
             ? "Live research is busy right now — showing starter suggestions. Retry in a minute."
             : "Starter mode is available for this destination: Adtona will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
@@ -710,6 +710,7 @@ document.querySelector("#newTripButton").addEventListener("click", () => {
   safeStorageRemove("x-travel-guide-trip");
   safeStorageRemove("roam-trip");
   form.reset();
+  destinationInput.value = "Tokyo, Japan";
   selectedSuggestions.clear();
   rejectedSuggestions.clear();
   suggestionDestination = "";
@@ -740,7 +741,8 @@ document.querySelectorAll("[data-open-tab]").forEach((button) => button.addEvent
 
 // Mobile day navigation on the generated site: a horizontal swipe changes the day while
 // keeping the current tab (Home, Itinerary, Bookings, Maps, Food, Shop, Photos). Per the
-// requested mapping: swipe left → previous day, swipe right → next day.
+// Match the date strip's reading direction: swipe left advances to the next day,
+// while swipe right returns to the previous day.
 function attachTripDaySwipe() {
   const views = document.querySelector(".trip-app-views");
   if (!views) return;
@@ -760,7 +762,7 @@ function attachTripDaySwipe() {
     if (Date.now() - startTime > 700) return;
     // Deliberate horizontal flick only, so vertical scrolling is never hijacked.
     if (Math.abs(dx) < 55 || Math.abs(dx) < Math.abs(dy) * 1.7) return;
-    const target = Math.max(0, Math.min(trip.days.length - 1, activeDay + (dx < 0 ? -1 : 1)));
+    const target = Math.max(0, Math.min(trip.days.length - 1, activeDay + (dx < 0 ? 1 : -1)));
     if (target === activeDay) return;
     activeDay = target;
     renderTrip();
@@ -1069,7 +1071,7 @@ function readLocalTextAsset(url) {
 }
 
 function createExportRuntime() {
-  return `let currentDay=0,currentTab="home";const result=document.querySelector('.result');function registerGuideServiceWorker(){if(!("serviceWorker"in navigator)||!location.protocol.startsWith("http"))return;try{navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(_){}}function chkKey(id){return 'ptg:chk:'+id;}function applyChecklist(){result.querySelectorAll('[data-chk-id]').forEach(function(row){var done=false;try{done=localStorage.getItem(chkKey(row.dataset.chkId))==='1';}catch(e){}row.classList.toggle('done',done);row.setAttribute('aria-pressed',done);var box=row.querySelector('.checklist-box');if(box)box.textContent=done?'✓':'';});result.querySelectorAll('.checklist-widget').forEach(function(w){var rows=w.querySelectorAll('[data-chk-id]'),done=0;rows.forEach(function(r){if(r.classList.contains('done'))done++;});var c=w.querySelector('.checklist-count');if(c)c.textContent=done+'/'+rows.length+' done';});}function showTab(name){currentTab=name;result.querySelectorAll('[data-panel]').forEach(p=>p.classList.toggle('active',p.dataset.panel===name));result.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));}function showDay(index){const next=Number(index)||0,template=document.querySelector('[data-export-template="'+next+'"]');if(!template)return;currentDay=next;result.replaceChildren(template.content.cloneNode(true));result.querySelectorAll('.day-button').forEach(b=>b.classList.toggle('active',Number(b.dataset.exportDay)===currentDay));showTab(currentTab);applyChecklist();window.scrollTo({top:0,behavior:'smooth'});}document.addEventListener('click',event=>{const chk=event.target.closest('[data-chk-id]');if(chk){try{const k=chkKey(chk.dataset.chkId);localStorage.setItem(k,localStorage.getItem(k)==='1'?'0':'1');}catch(e){}applyChecklist();return}const tab=event.target.closest('[data-tab]');if(tab){showTab(tab.dataset.tab);return}const day=event.target.closest('[data-export-day]');if(day){showDay(day.dataset.exportDay);return}const open=event.target.closest('[data-open-tab]');if(open){showTab(open.dataset.openTab);return}const print=event.target.closest('.print-button');if(print)window.print()});(function(){var sx=0,sy=0,st=0,tr=false,n=document.querySelectorAll('[data-export-template]').length;if(!result)return;result.addEventListener('touchstart',function(e){if(e.touches.length!==1){tr=false;return}sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();tr=true},{passive:true});result.addEventListener('touchend',function(e){if(!tr)return;tr=false;var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Date.now()-st>700)return;if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.7)return;var d=currentDay+(dx<0?-1:1);if(d<0)d=0;if(d>n-1)d=n-1;if(d!==currentDay)showDay(d)},{passive:true})})();registerGuideServiceWorker();showTab('home');applyChecklist();`;
+  return `let currentDay=0,currentTab="home";const result=document.querySelector('.result');function registerGuideServiceWorker(){if(!("serviceWorker"in navigator)||!location.protocol.startsWith("http"))return;try{navigator.serviceWorker.register("sw.js").catch(()=>{})}catch(_){}}function chkKey(id){return 'ptg:chk:'+id;}function applyChecklist(){result.querySelectorAll('[data-chk-id]').forEach(function(row){var done=false;try{done=localStorage.getItem(chkKey(row.dataset.chkId))==='1';}catch(e){}row.classList.toggle('done',done);row.setAttribute('aria-pressed',done);var box=row.querySelector('.checklist-box');if(box)box.textContent=done?'✓':'';});result.querySelectorAll('.checklist-widget').forEach(function(w){var rows=w.querySelectorAll('[data-chk-id]'),done=0;rows.forEach(function(r){if(r.classList.contains('done'))done++;});var c=w.querySelector('.checklist-count');if(c)c.textContent=done+'/'+rows.length+' done';});}function showTab(name){currentTab=name;result.querySelectorAll('[data-panel]').forEach(p=>p.classList.toggle('active',p.dataset.panel===name));result.querySelectorAll('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));}function showDay(index){const next=Number(index)||0,template=document.querySelector('[data-export-template="'+next+'"]');if(!template)return;currentDay=next;result.replaceChildren(template.content.cloneNode(true));result.querySelectorAll('.day-button').forEach(b=>b.classList.toggle('active',Number(b.dataset.exportDay)===currentDay));showTab(currentTab);applyChecklist();window.scrollTo({top:0,behavior:'smooth'});}document.addEventListener('click',event=>{const chk=event.target.closest('[data-chk-id]');if(chk){try{const k=chkKey(chk.dataset.chkId);localStorage.setItem(k,localStorage.getItem(k)==='1'?'0':'1');}catch(e){}applyChecklist();return}const tab=event.target.closest('[data-tab]');if(tab){showTab(tab.dataset.tab);return}const day=event.target.closest('[data-export-day]');if(day){showDay(day.dataset.exportDay);return}const open=event.target.closest('[data-open-tab]');if(open){showTab(open.dataset.openTab);return}const print=event.target.closest('.print-button');if(print)window.print()});(function(){var sx=0,sy=0,st=0,tr=false,n=document.querySelectorAll('[data-export-template]').length;if(!result)return;result.addEventListener('touchstart',function(e){if(e.touches.length!==1){tr=false;return}sx=e.touches[0].clientX;sy=e.touches[0].clientY;st=Date.now();tr=true},{passive:true});result.addEventListener('touchend',function(e){if(!tr)return;tr=false;var t=e.changedTouches[0],dx=t.clientX-sx,dy=t.clientY-sy;if(Date.now()-st>700)return;if(Math.abs(dx)<55||Math.abs(dx)<Math.abs(dy)*1.7)return;var d=currentDay+(dx<0?1:-1);if(d<0)d=0;if(d>n-1)d=n-1;if(d!==currentDay)showDay(d)},{passive:true})})();registerGuideServiceWorker();showTab('home');applyChecklist();`;
 }
 
 // Inline a local brand asset (e.g. the Adtona emblem) into an export so the single-file
@@ -4952,3 +4954,5 @@ function restoreSavedTrip() {
 }
 
 restoreSavedTrip();
+updateDestinationModeBadge();
+updateDestinationClearButton();

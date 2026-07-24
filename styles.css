@@ -6609,6 +6609,98 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   }
 }
 
+/* Start screen refinement: the logo and value statement lead from the top,
+   while the unlabeled destination/date controls retain accessible labels. */
+.builder:not(.builder-wide) .trip-form[data-current-step="1"] {
+  padding-top: clamp(12px, 2vw, 28px);
+}
+.builder:not(.builder-wide) .merged-start-layout {
+  align-content: start;
+  gap: clamp(30px, 4.2vh, 46px);
+}
+.builder:not(.builder-wide) .merged-start-step .builder-hero-message .eyebrow {
+  font-size: clamp(8px, .72vw, 10px);
+  line-height: 1.35;
+}
+.builder:not(.builder-wide) .merged-start-questions .destination-error {
+  margin-top: 5px;
+  font-size: 8.5px;
+  line-height: 1.25;
+}
+
+/* Keep the compact live-research reminder secondary to the trip content. */
+.app-home-hero .hero-export-row .research-mode-notice > p:not(.eyebrow) {
+  font-size: 8.5px;
+  line-height: 1.25;
+}
+
+/* Creation sequence: one deliverable appears directly over the logo at a time.
+   The final AI Source-of-Truth card remains visible until the guide opens. */
+.trip-creation-transition .creation-output-stack {
+  z-index: 6;
+}
+.trip-creation-transition .creation-output-card,
+.trip-creation-transition .creation-output-card:nth-child(n) {
+  --sx: 0px;
+  --sy: 0px;
+  top: 50%;
+  left: 50%;
+  width: clamp(250px, 30vw, 390px);
+  padding: clamp(15px, 1.7vw, 22px) clamp(18px, 2vw, 26px);
+  border-radius: 20px;
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(1.16);
+}
+.trip-creation-transition .creation-output-card strong {
+  font-size: clamp(15px, 1.5vw, 20px);
+}
+.trip-creation-transition .creation-output-card span {
+  font-size: clamp(10.5px, .9vw, 13px);
+}
+.trip-creation-transition.is-running .creation-output-card {
+  animation: creationCardSequence .58s ease-in-out both;
+  animation-delay: calc(.34s + (var(--creation-card-index) * .58s));
+}
+.trip-creation-transition.is-running .creation-output-card:last-child {
+  animation-name: creationCardFinal;
+}
+@keyframes creationCardSequence {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.18); }
+  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  72%  { opacity: 1; transform: translate(-50%, -50%) scale(.96); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(.72); }
+}
+@keyframes creationCardFinal {
+  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.18); }
+  24%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 1; transform: translate(-50%, -50%) scale(.96); }
+}
+
+@media (max-width: 760px) {
+  .builder:not(.builder-wide) .trip-form[data-current-step="1"] {
+    padding-top: max(8px, env(safe-area-inset-top));
+  }
+  .builder:not(.builder-wide) .merged-start-layout {
+    gap: clamp(18px, 3.2vh, 28px);
+  }
+  .trip-creation-transition .creation-output-card,
+  .trip-creation-transition .creation-output-card:nth-child(n) {
+    width: min(82vw, 330px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .trip-creation-transition.is-running .creation-output-card {
+    display: none;
+    animation: none;
+  }
+  .trip-creation-transition.is-running .creation-output-card:last-child {
+    display: grid;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 @media (max-width: 760px) {
   .builder.builder-wide .trip-form[data-current-step="2"] {
     padding: 8px 10px max(10px, env(safe-area-inset-bottom));

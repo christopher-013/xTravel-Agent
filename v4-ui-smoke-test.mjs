@@ -25,8 +25,11 @@ assert.match(stepOneHtml, /class="builder-brand home-brand-lockup"[\s\S]*?src="a
 assert.doesNotMatch(stepOneHtml, /Turn your trip plan into a mobile travel guide\./, "The opening screen must omit the redundant large headline");
 assert.match(stepOneHtml, /class="eyebrow">Build a shareable trip website[\s\S]{0,180}?free in your browser\.<\/p>/, "The compact product-value eyebrow must remain on Trip Basics");
 assert.doesNotMatch(stepOneHtml, /Plan your trip, then/, "The opening screen must omit the secondary tagline");
-assert.match(stepOneHtml, /<label for="destination">Where\?<\/label>/, "The first screen must ask for the destination");
-assert.match(stepOneHtml, /<h2>When\?<\/h2>[\s\S]*?id="startDate"[\s\S]*?id="endDate"/, "The first screen must ask for arrival and departure dates");
+assert.match(stepOneHtml, /<label class="sr-only" for="destination">Destination<\/label>/, "The destination control must retain an accessible label");
+assert.doesNotMatch(stepOneHtml, />Where\?</, "The compact first screen must not show a redundant Where heading");
+assert.doesNotMatch(stepOneHtml, />When\?</, "The compact first screen must not show a redundant When heading");
+assert.match(stepOneHtml, /<label for="startDate">Arrive<\/label>[\s\S]*?id="startDate"[\s\S]*?<label for="endDate">Depart<\/label>[\s\S]*?id="endDate"/, "Arrival and departure inputs must retain their individual labels");
+assert.match(script, /destinationInput\.value\s*=\s*"Tokyo, Japan";/, "A new browser draft must start with Tokyo, Japan");
 assert.match(stepOneHtml, /data-open-import[\s\S]{0,180}?Import your AI plan/, "The first screen must provide a compact AI-plan importer");
 assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,160}?Adto Na\. Go Now/, "The merged first screen must use the requested continue action");
 assert.doesNotMatch(html, /id="startSplash(?:Continue)?"/, "Trip Basics must not be hidden behind a separate splash layer");
@@ -34,6 +37,7 @@ assert.match(script, /function showStartSplash\(/, "Refresh and workflow restart
 assert.doesNotMatch(script, /function dismissStartSplash\(/, "The merged first screen must not auto-dismiss while the traveler is typing");
 assert.match(styles, /\.trip-form\[data-current-step="1"\][\s\S]{0,900}?linear-gradient\(150deg,\s*#fff4d6/, "Trip Basics must retain the branded startup background");
 assert.match(styles, /prefers-reduced-motion:\s*reduce/, "The v4 animations must honor reduced-motion preferences");
+assert.match(script, /Live research catalog created from keyless public sources\. Verify before travel\./, "The live-research reminder must use the compact verification copy");
 
 assert.match(script, /function renderSuggestionDeckCard\(/, "Adventure recommendations must render as a one-card deck");
 assert.match(script, /function applySuggestionDecision\(/, "The deck must apply Skip, Include, and Favorite decisions through shared state");
@@ -50,6 +54,7 @@ assert.match(script, /event\.key === "ArrowRight"/, "The deck must support keybo
 assert.match(script, /event\.key !== "ArrowLeft"/, "The deck must support keyboard skipping");
 assert.match(styles, /\.suggestion-swipe-card[\s\S]*?touch-action:\s*pan-y/, "The swipe card must preserve vertical page gestures");
 assert.match(script, /loading="eager" draggable="false"/, "Card images must not intercept desktop swipe gestures");
+assert.match(script, /SUGGESTION_DECISION_SWIPE_HOLD_MS\s*=\s*0/, "Committed card swipes must continue off-screen without a decision-label pause");
 assert.doesNotMatch(script, /suggestion-swipe-deck" role="region" aria-live=/, "Only the concise deck status should be announced as a live region");
 assert.match(styles, /\.builder\s+\.form-step\[hidden\]\s*\{[^}]*display:\s*none\s*!important/s, "Inactive workflow steps must never paint behind the Adventure deck");
 assert.match(html, /id="backStepButton"/, "Adventure Back navigation must remain available");
@@ -80,6 +85,8 @@ assert.match(script, /#editTripButton"\)\.addEventListener\("click",\s*\(\)\s*=>
 assert.match(script, /#newTripButton"\)[\s\S]{0,900}?showBuilder\(\{\s*splash:\s*true,\s*focusDestination:\s*true\s*\}\)/, "New Trip must restart through the title page after clearing the prior trip");
 assert.match(restoreSavedTripSource, /restoreSuggestionState\(selectedSuggestions,\s*trip\.selections\)/, "Imported selections and favorites must survive the splash-first restore");
 assert.doesNotMatch(restoreSavedTripSource, /builder\.hidden\s*=\s*true|result\.hidden\s*=\s*false|classList\.add\("trip-mode"\)|renderTrip\(\)|switchAppTab\(/, "Startup restoration must hydrate Trip Basics without reopening the report");
+assert.match(script, /activeDay\s*\+\s*\(dx\s*<\s*0\s*\?\s*1\s*:\s*-1\)/, "Swiping left on the generated guide must advance to the next day");
+assert.match(script, /currentDay\s*\+\s*\(dx<0\?1:-1\)/, "The standalone export must use the same left-to-next-day swipe mapping");
 
 assert.match(
   renderDeckSource,
@@ -133,6 +140,25 @@ assert.match(html, /class="activity-title-row"[\s\S]{0,100}?<h4><\/h4>[\s\S]{0,1
 assert.match(styles, /\.activity-origin-badge\.is-selected\s*\{[^}]*background:/s, "Selected itinerary pills need a distinct visual treatment");
 assert.match(styles, /\.activity-origin-badge\.is-favorite\s*\{[^}]*background:/s, "Favorite itinerary pills need a distinct visual treatment");
 assert.match(uniqueActivitiesSource, /item\.userSelected\s*\|\|\s*item\.favorite/, "Duplicate resolution must never replace a traveler-selected or favorite stop");
+
+assert.match(
+  styles,
+  /\.trip-creation-transition\.is-running\s+\.creation-output-card\s*\{[^}]*animation:\s*creationCardSequence/s,
+  "Trip creation must sequence one deliverable card at a time"
+);
+assert.match(
+  styles,
+  /\.trip-creation-transition\.is-running\s+\.creation-output-card:last-child\s*\{[^}]*animation-name:\s*creationCardFinal/s,
+  "The AI Source-of-Truth deliverable must be the final persistent creation card"
+);
+const creationCardStart = html.indexOf('class="creation-output-stack"');
+const creationCardEnd = html.indexOf("</div>", creationCardStart);
+const creationCards = html.slice(creationCardStart, creationCardEnd);
+assert.ok(creationCardStart > -1, "The trip-creation transition must contain deliverable cards");
+assert.ok(
+  creationCards.lastIndexOf("AI Source-of-Truth File") > creationCards.lastIndexOf("Photo Journal"),
+  "AI Source-of-Truth must be the last creation-transition deliverable"
+);
 
 const obsoleteZeroSelectionGuard = /if\s*\(\s*!selectedSuggestions\.size\s*&&\s*!wishListInput\.value\.trim\(\)\s*\)/;
 assert.doesNotMatch(script, obsoleteZeroSelectionGuard, "Skipping every card must not dead-end the workflow");

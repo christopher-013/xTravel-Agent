@@ -24,6 +24,7 @@ const MAX_PAGE = 300;
 const MAX_VIEWPORT = 40;
 const MAX_VERSION = 40;
 const MAX_USER_AGENT = 400;
+const UNSAFE_FEEDBACK_ERROR = "Feedback contains content that cannot be submitted.";
 const CATEGORIES = ["bug", "idea", "praise", "other"];
 const CATEGORY_LABELS = {
   bug: ["bug"],
@@ -97,6 +98,20 @@ export default {
     // checking the GitHub secret so the trap behaves consistently in every environment.
     if (String(payload.website || "").trim()) {
       return json({ ok: true, number: null }, 201, cors);
+    }
+
+    const fieldsToValidate = [
+      ["summary", payload.summary, MAX_SUMMARY, true],
+      ["message", payload.message, MAX_MESSAGE, false],
+      ["page", payload.page || "—", MAX_PAGE, true],
+      ["viewport", payload.viewport || "—", MAX_VIEWPORT, true],
+      ["version", payload.version || "—", MAX_VERSION, true],
+      ["userAgent", payload.userAgent || "—", MAX_USER_AGENT, true]
+    ];
+    if (fieldsToValidate.some(([, value, maxLength, singleLine]) =>
+      !isSafeFeedbackText(value, { maxLength, singleLine })
+    )) {
+      return json({ ok: false, error: UNSAFE_FEEDBACK_ERROR }, 400, cors);
     }
 
     const summary = sanitizeUserText(payload.summary, MAX_SUMMARY, true);
@@ -251,4 +266,100 @@ function sanitizeUserText(value, maxLength, singleLine) {
   if (singleLine) text = text.replace(/\s+/g, " ");
   text = text.trim();
   return text.length > maxLength ? text.slice(0, maxLength) : text;
+}
+
+function isSafeFeedbackText(value, { maxLength, singleLine }) {
+  const raw = String(value == null ? "" : value);
+  if (raw.length > maxLength) return false;
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/u.test(raw)) {
+    return false;
+  }
+  if (singleLine && /[\r\n]/u.test(raw)) return false;
+
+  const text = canonicalizeForDetection(raw);
+  if (!text) return true;
+
+  // Reject executable markup and URI payloads while still allowing useful bug
+  // report snippets such as CSS selectors, route.js, and ordinary punctuation.
+  if (/<\s*\/?\s*(?:script|iframe|img|svg|object|embed|link|meta|style|form|input|button|video|audio|source|base|math)\b/iu.test(text)) {
+    return false;
+  }
+  if (/\bon[a-z]{2,30}\s*=/iu.test(text)) return false;
+  if (/\b(?:javascript|vbscript)\s*:/iu.test(text)) return false;
+  if (/\bdata\s*:\s*(?:text\/html|image\/svg\+xml|application\/(?:javascript|xhtml\+xml))/iu.test(text)) {
+    return false;
+  }
+  if (containsLinkOrContact(text)) return false;
+  if (containsProfanity(text)) return false;
+  return true;
+}
+
+function canonicalizeForDetection(value) {
+  let text = String(value || "").normalize("NFKC");
+  for (let pass = 0; pass < 2; pass += 1) {
+    text = text
+      .replace(/&#(?:x([0-9a-f]{1,6})|([0-9]{1,7}));?/giu, (_, hex, decimal) => {
+        const codePoint = Number.parseInt(hex || decimal, hex ? 16 : 10);
+        try { return String.fromCodePoint(codePoint); } catch { return ""; }
+      })
+      .replace(/&(?:colon|period|sol|commat|lpar|rpar);?/giu, (entity) => ({
+        "&colon;": ":", "&colon": ":", "&period;": ".", "&period": ".",
+        "&sol;": "/", "&sol": "/", "&commat;": "@", "&commat": "@",
+        "&lpar;": "(", "&lpar": "(", "&rpar;": ")", "&rpar": ")"
+      })[entity.toLowerCase()] || entity);
+    try { text = decodeURIComponent(text); } catch { /* keep malformed escapes */ }
+  }
+  return text
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/[\u200B-\u200F\u2060\uFEFF]/gu, "")
+    .replace(/[\u3002\uFF0E\uFF61]/gu, ".")
+    .replace(/[\u2215\u2044\uFF0F]/gu, "/")
+    .replace(/\bhxxps?\b/giu, "http")
+    .replace(/\b(https?)\s*(?:colon|:)\s*(?:slash|\/)\s*(?:slash|\/)/giu, "$1://")
+    .replace(/\[\s*(?:dot|\.)\s*\]|\(\s*(?:dot|\.)\s*\)/giu, ".")
+    .replace(/\s+dot\s+/giu, ".")
+    .replace(/\s+colon\s+/giu, ":")
+    .replace(/\s+slash\s+/giu, "/");
+}
+
+function containsLinkOrContact(text) {
+  if (/!?\[[^\]\r\n]{0,300}\]\s*\([^)\r\n]{1,500}\)/u.test(text)) return true;
+  if (/\b(?:https?|ftp|ftps|file):\s*\/\//iu.test(text)) return true;
+  if (/\bwww\s*\./iu.test(text)) return true;
+  if (/(?:^|[^\p{L}\p{N}._%+-])[\p{L}\p{N}._%+-]{1,64}@[\p{L}\p{N}.-]+\.[\p{L}]{2,24}(?=$|[^\p{L}\p{N}_-])/iu.test(text)) {
+    return true;
+  }
+  if (/(?:^|[\s(])(?:localhost|(?:\d{1,3}\.){3}\d{1,3})(?=$|[\s/:),])/iu.test(text)) return true;
+
+  // This curated public-suffix list catches links without treating filenames
+  // such as route.js and photo.jpg as domains.
+  const publicSuffix = "(?:com|org|net|edu|gov|mil|io|co|uk|ca|au|de|fr|it|es|jp|cn|in|ph|nz|sg|eu|ch|nl|se|no|dk|fi|be|at|ie|pt|gr|pl|cz|sk|hu|ro|bg|hr|rs|ua|ru|tr|il|ae|sa|za|eg|ma|ke|ng|gh|br|ar|cl|pe|mx|cr|pa|hk|tw|kr|th|vn|id|my|travel|app|dev|me|us|info|biz|xyz|online|site|store|tech|ai|cloud|ly|tv|museum|name|mobi|pro)";
+  return new RegExp(
+    `(?:^|[^\\p{L}\\p{N}_-])(?:[\\p{L}\\p{N}](?:[\\p{L}\\p{N}-]{0,61}[\\p{L}\\p{N}])?\\.)+${publicSuffix}(?=$|[^\\p{L}\\p{N}_-])`,
+    "iu"
+  ).test(text);
+}
+
+function containsProfanity(text) {
+  const normalized = text
+    .replace(/[@4]/gu, "a")
+    .replace(/3/gu, "e")
+    .replace(/[!1|]/gu, "i")
+    .replace(/0/gu, "o")
+    .replace(/[$5]/gu, "s")
+    .replace(/7/gu, "t");
+  const blockedWords = [
+    "fuck", "fucking", "motherfucker", "shit", "bullshit", "bitch", "asshole",
+    "bastard", "cunt", "dick", "pussy", "whore", "slut", "nigger", "nigga",
+    "faggot", "retard"
+  ];
+  return blockedWords.some((word) => {
+    const letters = [...word].map((letter) => escapeRegExp(letter)).join("[\\s._-]*");
+    return new RegExp(`(?:^|[^\\p{L}\\p{N}])${letters}(?=$|[^\\p{L}\\p{N}])`, "iu").test(normalized);
+  });
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

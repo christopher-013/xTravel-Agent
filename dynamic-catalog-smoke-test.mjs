@@ -160,6 +160,40 @@ assert.equal(api.catalogHasSeededAnchors({
 }, "Los Angeles, California"), false);
 assert.equal(api.catalogHasSeededAnchors(losAngelesCatalog, "Los Angeles, California"), true);
 
+const boholCatalog = api.assembleDynamicCatalog("Bohol", {
+  name: "Bohol",
+  admin1: "Central Visayas",
+  country: "Philippines",
+  country_code: "PH"
+}, {
+  wikivoyageTitle: "Bohol",
+  wikivoyageItems: [],
+  wikipediaItems: [],
+  osmItems: []
+});
+assert.equal(boholCatalog.dynamic, true);
+assert.equal(boholCatalog.label, "Bohol, Philippines");
+assert.ok(boholCatalog.match.test("Bohol"));
+const boholAttractions = boholCatalog.attractions.map((item) => item.name);
+for (const expected of ["Chocolate Hills", "Philippine Tarsier Sanctuary", "Alona Beach", "Loboc River"]) {
+  assert.ok(boholAttractions.includes(expected), `Expected Bohol attraction: ${expected}`);
+}
+assert.ok(
+  boholCatalog.attractions.slice(0, 8).every((item) =>
+    /^https:\/\/commons\.wikimedia\.org\/wiki\/Special:FilePath\//.test(item.image || "") &&
+    !/blank|transparent|spacer|pixel/i.test(item.image)
+  ),
+  "Bohol's leading attraction cards must use real Wikimedia fallback photography"
+);
+assert.equal(api.catalogHasSeededAnchors({
+  attractions: [{ name: "Generic island walk" }, { name: "Downtown viewpoint" }]
+}, "Bohol", { name: "Bohol", country: "Philippines" }), false);
+assert.equal(api.catalogHasSeededAnchors(
+  boholCatalog,
+  "Bohol",
+  { name: "Bohol", country: "Philippines" }
+), true);
+
 assert.equal(api.hasSeededDestinationCatalog("San Diego, Texas", { name: "San Diego", admin1: "Texas", country: "United States" }), false);
 assert.equal(api.hasSeededDestinationCatalog("Hollywood, Florida", { name: "Hollywood", admin1: "Florida", country: "United States" }), false);
 

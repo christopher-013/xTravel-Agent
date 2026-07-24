@@ -128,7 +128,7 @@
   }
 
   function cacheKey(slug) {
-    return `ptg:dyncat3:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
+    return `ptg:dyncat4:${slug}:${global.PLANTOGUIDE_VERSION || "dev"}`;
   }
 
   const dynamicCatalogCache = {
@@ -322,6 +322,28 @@
     return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(name.replace(/\s+/g, "_"))}?width=${width}`;
   }
 
+  // Reject tiny transparent shims and common non-photographic page images. Wikipedia pages
+  // occasionally expose Blank.png, a seal, or a locator map as their "thumbnail"; treating that
+  // as a place photo produces misleading cards and can also poison the destination banner.
+  function usablePlaceImage(value = "") {
+    const image = String(value || "").trim();
+    if (!image) return "";
+    let decoded = image;
+    try { decoded = decodeURIComponent(image); } catch (_) { /* keep the original URL */ }
+    if (/\b(?:blank|transparent|spacer|pixel)\.(?:gif|png|jpe?g|webp)\b/i.test(decoded)) return "";
+    if (/\b(?:locator|location[_ -]?map|route[_ -]?map|coat[_ -]?of[_ -]?arms|logo|flag|seal|icon)\b/i.test(decoded)) return "";
+    if (/\.svg(?:[?#]|$)/i.test(decoded)) return "";
+    return image;
+  }
+
+  function wikipediaThumbnail(page = {}) {
+    const thumbnail = page.thumbnail || {};
+    const width = Number(thumbnail.width || 0);
+    const height = Number(thumbnail.height || 0);
+    if ((width && width < 160) || (height && height < 100)) return "";
+    return usablePlaceImage(thumbnail.source);
+  }
+
   function parseListingTemplate(content, pageTitle) {
     const parts = splitTopLevel(content);
     const templateName = parts.shift().trim().toLowerCase();
@@ -430,8 +452,19 @@
   // Tuned to drop Wikipedia geosearch noise that isn't a visitable attraction — transit infrastructure,
   // schools/faculties, and administrative-boundary articles — while still keeping the single nearest
   // station (travelers use the main station) and legitimate "University of X" main-campus articles.
-  const NON_ATTRACTION_TITLE_PATTERN = /railway station|train station|metro station|tube station|bus station|school|faculty|district of|municipality|province of|county of|\(company\)|corporation|timeline of|history of|list of|diocese|archdiocese|city hall|courthouse|court house|post office|fire (department|station|& rescue)|police|\(tv series\)|\(film\)|\(series\)|season \d|city council|school district|library district|\bauthority\b|tourism board/i;
+  const NON_ATTRACTION_TITLE_PATTERN = /railway station|train station|metro station|tube station|bus station|school|faculty|district of|municipality|province of|county of|\(company\)|corporation|timeline of|history of|list of|diocese|archdiocese|city hall|courthouse|court house|post office|fire (department|station|& rescue)|police|\(tv series\)|\(film\)|\(series\)|season \d|city council|school district|library district|\bauthority\b|tourism board|\bearthquake\b|\btyphoon\b|\bhurricane\b|\bfloods?\b|\bwildfires?\b|\bdisaster\b|\belection\b/i;
   const STATION_TITLE_PATTERN = /railway station|train station|metro station|tube station|bus station/i;
+  const ADMINISTRATIVE_EXTRACT_PATTERN = /^(?:.{0,90}\b)?(?:is|was)\s+(?:an?\s+)?(?:\d+(?:st|nd|rd|th)[ -]class\s+)?(?:component\s+)?(?:municipality|province|administrative region|barangay|census-designated place|unincorporated community)\b/i;
+
+  function wikipediaPageLooksVisitable(page = {}, destinationName = "") {
+    const title = String(page.title || "");
+    const extract = String(page.extract || "").replace(/\s+/g, " ").trim();
+    if (!title) return false;
+    if (destinationName && (title === destinationName || title.startsWith(`${destinationName},`))) return false;
+    if (NON_ATTRACTION_TITLE_PATTERN.test(title) && !STATION_TITLE_PATTERN.test(title)) return false;
+    if (ADMINISTRATIVE_EXTRACT_PATTERN.test(extract)) return false;
+    return true;
+  }
 
   async function fetchWikipediaGeoPlaces(geocode, signal) {
     if (!geocode?.latitude || !geocode?.longitude) return [];
@@ -452,7 +485,7 @@
     let keptAStation = false;
     return orderedPages.filter((page) => {
       const title = String(page.title || "");
-      if (destinationName && (title === destinationName || title.startsWith(`${destinationName},`))) return false;
+      if (!wikipediaPageLooksVisitable(page, destinationName)) return false;
       if (NON_ATTRACTION_TITLE_PATTERN.test(title)) {
         if (STATION_TITLE_PATTERN.test(title) && !keptAStation) {
           keptAStation = true;
@@ -466,7 +499,7 @@
       type: "see",
       area: geocode.name,
       detail: String(page.extract || "A Wikipedia-listed landmark or neighborhood worth researching.").split(/\n/)[0].slice(0, 220),
-      image: page.thumbnail?.source || "",
+      image: wikipediaThumbnail(page),
       lat: coordinate(geoMap.get(Number(page.pageid))?.lat),
       lon: coordinate(geoMap.get(Number(page.pageid))?.lon),
       popularity: averageDailyPageviews(page),
@@ -587,12 +620,12 @@
       action: "query", pageids: ids.join("|"), prop: "pageviews|coordinates|pageimages|extracts|info", exintro: "1", explaintext: "1",
       piprop: "thumbnail", pithumbsize: "640", inprop: "url", format: "json", origin: "*"
     }), signal);
-    return Object.values(pages?.query?.pages || {}).map((page) => ({
+    return Object.values(pages?.query?.pages || {}).filter((page) => wikipediaPageLooksVisitable(page)).map((page) => ({
       name: page.title,
       type: /market|mall|shopping|rodeo drive|grove|bazaar|arcade|outlet|emporium|department store|flea market|night market|souk/i.test(page.title || "") ? "buy" : "see",
       area: city,
       detail: String(page.extract || "A Wikipedia-listed attraction worth researching and verifying before visiting.").split(/\n/)[0].slice(0, 240),
-      image: page.thumbnail?.source || "",
+      image: wikipediaThumbnail(page),
       lat: coordinate(page.coordinates?.[0]?.lat),
       lon: coordinate(page.coordinates?.[0]?.lon),
       popularity: averageDailyPageviews(page),
@@ -731,6 +764,8 @@ out center tags 120;`;
     ["seaworld", 30], ["sea world", 30], ["casino", 28], ["castle", 26], ["museum", 26], ["aquarium", 25],
     ["palace", 24], ["cathedral", 24], ["monument", 24], ["abbey", 22], ["gallery", 22],
     ["historic", 22], ["old town", 22], ["waterfront", 20], ["tower", 20], ["pier", 20], ["cove", 20],
+    ["sanctuary", 22], ["protected landscape", 22], ["national park", 22], ["river", 20], ["cave", 20],
+    ["waterfall", 20], ["island", 18], ["church", 18], ["temple", 18], ["nature reserve", 18],
     ["view", 18], ["garden", 18], ["bridge", 16], ["resort", 16], ["market", 16], ["fountain", 16],
     ["square", 14], ["village", 14], ["mall", 12], ["shopping", 12], ["district", 10], ["studio", 10]
   ]);
@@ -794,12 +829,156 @@ out center tags 120;`;
     }
   ];
 
+  // Region and island articles are often "thin" in Wikivoyage and too large for Wikipedia's
+  // 10 km geosearch radius. These are not full destination catalogs: they are a compact set of
+  // durable, source-backed anchors used to keep a dynamic result useful when a public endpoint
+  // is incomplete or rate limited. Live Wikimedia records still merge into and enrich them.
+  const DESTINATION_FALLBACK_PROFILES = [
+    {
+      aliases: ["bohol", "bohol philippines"],
+      country: ["philippines", "ph"],
+      label: "Bohol, Philippines",
+      banner: commonsImageUrl("Chocolate Hills Bohol.JPG", 1200),
+      items: [
+        {
+          name: "Chocolate Hills",
+          type: "see",
+          area: "Carmen / central Bohol",
+          detail: "Bohol's signature landscape of more than a thousand grass-covered limestone hills, with established viewpoints around Carmen.",
+          image: commonsImageUrl("Chocolate Hills Bohol.JPG"),
+          lat: 9.91666667,
+          lon: 124.16666667,
+          seedRank: 110,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Chocolate_Hills",
+          sourceId: "wikipedia:318873",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Philippine Tarsier Sanctuary",
+          aliases: ["Philippine Tarsier Foundation", "Tarsier Sanctuary"],
+          type: "see",
+          area: "Corella",
+          detail: "A forest sanctuary and visitor center run for Philippine tarsier conservation in Corella; confirm current visitor rules before going.",
+          image: commonsImageUrl("Tarsier Sanctuary, Corella, Bohol (2052878890).jpg"),
+          lat: 9.691389,
+          lon: 123.953056,
+          seedRank: 108,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Philippine_Tarsier_Foundation",
+          sourceId: "wikipedia:7819019",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Alona Beach",
+          type: "see",
+          area: "Panglao Island",
+          detail: "A compact white-sand beach and established snorkeling and diving base on Panglao, close to the island's airport.",
+          image: commonsImageUrl("Alona Beach Overview.jpg"),
+          lat: 9.54861111,
+          lon: 123.77083333,
+          seedRank: 106,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Alona_Beach",
+          sourceId: "wikipedia:43460415",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Loboc River",
+          type: "see",
+          area: "Loboc",
+          detail: "A tropical river corridor through southern Bohol, known for green scenery and locally operated river excursions.",
+          image: commonsImageUrl("Loboc River Bohol 2017 4.jpg"),
+          lat: 9.600872,
+          lon: 124.00878,
+          seedRank: 104,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Loboc_River",
+          sourceId: "wikipedia:21557858",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Panglao Island",
+          type: "see",
+          area: "Panglao / Dauis",
+          detail: "Bohol's main beach and diving island, linked to Tagbilaran and home to Alona Beach, coastal villages, and marine day-trip bases.",
+          image: commonsImageUrl("Panglao Island from air (Bohol; 08-11-2023).jpg"),
+          lat: 9.6,
+          lon: 123.82,
+          seedRank: 102,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Panglao_Island",
+          sourceId: "wikipedia:3203970",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Hinagdanan Cave",
+          type: "see",
+          area: "Dauis, Panglao Island",
+          detail: "A naturally lit limestone cavern with rock formations and an underground lagoon; verify current access and swimming guidance.",
+          image: commonsImageUrl("Snorkeling in Hinagdanan Cave.jpg"),
+          lat: 9.62527778,
+          lon: 123.80111111,
+          seedRank: 100,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Hinagdanan_Cave",
+          sourceId: "wikipedia:8083883",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Baclayon Church",
+          type: "see",
+          area: "Baclayon",
+          detail: "A historic coral-stone church complex east of Tagbilaran and a useful anchor for exploring Bohol's Spanish-colonial heritage.",
+          image: commonsImageUrl("Baclayon Immaculate Concepcion Church (Tagbilaran East Road, Baclayon, Bohol; 01-12-2023).jpg"),
+          lat: 9.6227,
+          lon: 123.9122,
+          seedRank: 98,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Baclayon_Church",
+          sourceId: "wikipedia:44080340",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        },
+        {
+          name: "Rajah Sikatuna Protected Landscape",
+          type: "see",
+          area: "Bilar / central-southern Bohol",
+          detail: "Bohol's largest remaining tract of natural forest, valued for limestone scenery and bird habitat; use current local access guidance.",
+          image: commonsImageUrl("Carmen, Fields in Bohol, Nature of Bohol Island, Philippines.jpg"),
+          lat: 9.70527778,
+          lon: 124.12416667,
+          seedRank: 96,
+          destinationAnchor: true,
+          sourceLabel: "Wikipedia",
+          sourceUrl: "https://en.wikipedia.org/wiki/Rajah_Sikatuna_Protected_Landscape",
+          sourceId: "wikipedia:44345906",
+          sourceLicense: "CC BY-SA 4.0",
+          sourceAttribution: "Wikipedia contributors"
+        }
+      ]
+    }
+  ];
+
   function normalizeDestinationText(value = "") {
     return String(value).normalize("NFKC").toLocaleLowerCase("en-US")
       .replace(/[\p{P}\p{S}]+/gu, " ").replace(/\s+/gu, " ").trim();
   }
 
-  function seedEntryMatches(entry, destination, geocode) {
+  function destinationEntryMatches(entry, destination, geocode) {
     const aliases = new Set((entry.aliases || []).map(normalizeDestinationText));
     const input = normalizeDestinationText(destination);
     const geocodeName = normalizeDestinationText(geocode?.name);
@@ -814,7 +993,11 @@ out center tags 120;`;
   }
 
   function findSeededDestination(destination, geocode) {
-    return SEEDED_DESTINATION_CATALOGS.find((entry) => seedEntryMatches(entry, destination, geocode));
+    return SEEDED_DESTINATION_CATALOGS.find((entry) => destinationEntryMatches(entry, destination, geocode));
+  }
+
+  function findDestinationFallback(destination, geocode) {
+    return DESTINATION_FALLBACK_PROFILES.find((entry) => destinationEntryMatches(entry, destination, geocode));
   }
 
   function seededDestinationItems(destination, geocode) {
@@ -839,12 +1022,29 @@ out center tags 120;`;
     return Boolean(findSeededDestination(destination, geocode));
   }
 
+  function destinationFallbackItems(destination, geocode) {
+    const fallback = findDestinationFallback(destination, geocode);
+    if (!fallback) return { items: [], label: "", banner: "" };
+    return {
+      label: fallback.label,
+      banner: fallback.banner,
+      items: fallback.items.map((item) => ({ ...item, destinationFallback: true }))
+    };
+  }
+
   function catalogHasSeededAnchors(catalog, destination, geocode) {
     const seed = seededDestinationItems(destination, geocode);
-    if (!seed.items.length) return true;
-    const anchors = seed.items.filter((item) => item.type === "see").slice(0, 4).map((item) => slugify(item.name));
-    const existing = new Set((catalog?.attractions || []).map((item) => slugify(item.name)));
-    return anchors.every((anchor) => existing.has(anchor));
+    const fallback = destinationFallbackItems(destination, geocode);
+    const anchors = [
+      ...seed.items.filter((item) => item.type === "see").slice(0, 4),
+      ...fallback.items.filter((item) => item.type === "see").slice(0, 4)
+    ];
+    if (!anchors.length) return true;
+    const existing = catalog?.attractions || [];
+    return anchors.every((anchor) => {
+      const anchorKeys = new Set(itemIdentityKeys(anchor));
+      return existing.some((item) => itemIdentityKeys(item).some((key) => anchorKeys.has(key)));
+    });
   }
 
   // Word-boundary matchers so "park" cannot match "ballpark"/"parking" and inflate
@@ -854,7 +1054,7 @@ out center tags 120;`;
   );
 
   function tourismScore(item, destination = "") {
-    const text = [item.name, item.area, item.detail, item.bestFor, item.cuisine, destination].filter(Boolean).join(" ").toLowerCase();
+    const text = [item.name, item.area, item.detail, item.bestFor, item.cuisine].filter(Boolean).join(" ").toLowerCase();
     let score = Number(item.seedRank || 0);
     TOURISM_KEYWORD_MATCHERS.forEach((weight, matcher) => {
       if (matcher.test(text)) score += weight;
@@ -865,6 +1065,9 @@ out center tags 120;`;
     score += Number(item.rankBoost) || 0;
     if (Number(item.popularity) > 0) score += Math.min(80, Math.round(Math.log10(Number(item.popularity) + 1) * 26));
     if (item.seeded) score += 60;
+    if (item.destinationAnchor) score += 60;
+    const destinationName = normalizeDestinationText(String(destination || "").split(",")[0]);
+    if (destinationName && normalizeDestinationText(text).includes(destinationName)) score += 10;
     if (item.image) score += 8;
     if (/wikipedia|wikivoyage/i.test(item.sourceLabel || "")) score += 4;
     return score;
@@ -950,15 +1153,22 @@ out center tags 120;`;
 
   function mergeItemRecords(primary, secondary) {
     const mergedSources = itemSources({ ...secondary, sources: [...itemSources(primary), ...itemSources(secondary)] });
+    const aliases = [...new Set([
+      ...(Array.isArray(primary.aliases) ? primary.aliases : []),
+      ...(Array.isArray(secondary.aliases) ? secondary.aliases : [])
+    ].map((value) => String(value || "").trim()).filter(Boolean))];
     return {
       ...secondary,
       ...primary,
       area: primary.area || secondary.area || "",
       detail: primary.detail || secondary.detail || "",
       address: primary.address || secondary.address || "",
-      image: primary.image || secondary.image || "",
+      image: usablePlaceImage(primary.image) || usablePlaceImage(secondary.image) || "",
       lat: coordinate(primary.lat) ?? coordinate(secondary.lat),
       lon: coordinate(primary.lon) ?? coordinate(secondary.lon),
+      aliases,
+      destinationAnchor: Boolean(primary.destinationAnchor || secondary.destinationAnchor),
+      destinationFallback: Boolean(primary.destinationFallback || secondary.destinationFallback),
       sourceLabel: primary.sourceLabel || secondary.sourceLabel || "",
       sourceUrl: primary.sourceUrl || secondary.sourceUrl || "",
       sourceId: primary.sourceId || secondary.sourceId || "",
@@ -968,19 +1178,29 @@ out center tags 120;`;
     };
   }
 
+  function itemIdentityKeys(item = {}) {
+    return [...new Set([item.name, ...(Array.isArray(item.aliases) ? item.aliases : [])]
+      .map((value) => String(value || "").trim())
+      .filter(Boolean)
+      .map((value) => slugify(value))
+      .filter(Boolean))];
+  }
+
   function dedupeItems(items = []) {
     const positions = new Map();
     const merged = [];
     items.forEach((item) => {
-      const key = slugify(item.name);
-      if (!key) return;
-      if (positions.has(key)) {
-        const position = positions.get(key);
+      const keys = itemIdentityKeys(item);
+      if (!keys.length) return;
+      const position = keys.map((key) => positions.get(key)).find((value) => value !== undefined);
+      if (position !== undefined) {
         merged[position] = mergeItemRecords(merged[position], item);
+        itemIdentityKeys(merged[position]).forEach((key) => positions.set(key, position));
         return;
       }
-      positions.set(key, merged.length);
+      const nextPosition = merged.length;
       merged.push(mergeItemRecords(item, {}));
+      itemIdentityKeys(merged[nextPosition]).forEach((key) => positions.set(key, nextPosition));
     });
     return merged;
   }
@@ -991,9 +1211,10 @@ out center tags 120;`;
       area: item.area || fallbackArea,
       detail: item.detail || "Research this local recommendation before adding it to a final route.",
       address: item.address || "",
-      image: item.image || "",
+      image: usablePlaceImage(item.image),
       lat: coordinate(item.lat),
       lon: coordinate(item.lon),
+      aliases: Array.isArray(item.aliases) ? [...item.aliases] : [],
       sourceLabel: item.sourceLabel || "",
       sourceUrl: item.sourceUrl || "",
       sourceId: item.sourceId || "",
@@ -1004,6 +1225,15 @@ out center tags 120;`;
       rankBoost: Number(item.rankBoost) || 0,
       placeholder: Boolean(item.placeholder)
     };
+  }
+
+  function itemLooksLikeAttraction(item = {}) {
+    if (item.type !== "see" || item.placeholder) return false;
+    const title = String(item.name || "");
+    const detail = String(item.detail || "").replace(/\s+/g, " ").trim();
+    if (NON_ATTRACTION_TITLE_PATTERN.test(title) && !STATION_TITLE_PATTERN.test(title)) return false;
+    if (ADMINISTRATIVE_EXTRACT_PATTERN.test(detail)) return false;
+    return true;
   }
 
   function attractionFallbacks(destination, fallbackArea) {
@@ -1041,9 +1271,16 @@ out center tags 120;`;
 
   function assembleDynamicCatalog(destination, geocode, sourceData = {}) {
     const seeded = seededDestinationItems(destination, geocode);
-    const fallbackArea = seeded.label || [geocode?.name, geocode?.admin1, geocode?.country].filter(Boolean).join(", ") || destination;
-    const items = rankDynamicItems(dedupeItems([...(seeded.items || []), ...(sourceData.wikivoyageItems || []), ...(sourceData.wikipediaItems || []), ...(sourceData.osmItems || [])]), destination);
-    const realSee = items.filter((item) => item.type === "see" && !item.placeholder).slice(0, 24).map((item) => toPlace(item, fallbackArea));
+    const destinationFallback = destinationFallbackItems(destination, geocode);
+    const fallbackArea = seeded.label || destinationFallback.label || [geocode?.name, geocode?.admin1, geocode?.country].filter(Boolean).join(", ") || destination;
+    const items = rankDynamicItems(dedupeItems([
+      ...(seeded.items || []),
+      ...(sourceData.wikivoyageItems || []),
+      ...(sourceData.wikipediaItems || []),
+      ...(sourceData.osmItems || []),
+      ...(destinationFallback.items || [])
+    ]), destination);
+    const realSee = items.filter(itemLooksLikeAttraction).slice(0, 24).map((item) => toPlace(item, fallbackArea));
     // Food or shopping data alone is not enough for itinerary generation. Two real attractions
     // is the minimum usable signal; explicit research cards safely bring a thin result to four.
     if (realSee.length < 2) return null;
@@ -1054,7 +1291,7 @@ out center tags 120;`;
     }
     const eatItems = items.filter((item) => item.type === "eat").slice(0, 28).map((item) => ({ ...toPlace(item, fallbackArea), cuisine: item.cuisine || "Local cuisine", order: item.order || "Check the current menu and signature dishes." }));
     const buy = items.filter((item) => item.type === "buy").slice(0, 28).map((item) => ({ ...toPlace(item, fallbackArea), bestFor: item.bestFor || "Local shopping, gifts, and browsing" }));
-    const fillerImage = seeded.banner || [...see, ...eatItems, ...buy].find((item) => item.image)?.image || NEUTRAL_BANNER_PLACEHOLDER;
+    const fillerImage = seeded.banner || destinationFallback.banner || [...see, ...eatItems, ...buy].find((item) => item.image)?.image || NEUTRAL_BANNER_PLACEHOLDER;
     const food = distributeFoodItems(eatItems, destination, fallbackArea);
     const zones = see.slice(0, 8).map((item, index) => ({
       name: item.area || item.name,

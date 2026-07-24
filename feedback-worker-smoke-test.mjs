@@ -56,6 +56,27 @@ const responseJson = async (response) => {
   }
 };
 
+const expectUnsafeFeedback = async (overrides, label) => {
+  const originalFetch = globalThis.fetch;
+  let githubCalled = false;
+  globalThis.fetch = async () => {
+    githubCalled = true;
+    return new Response("unexpected", { status: 500 });
+  };
+  try {
+    const response = await worker.fetch(jsonRequest(validPayload(overrides)), baseEnv);
+    pass(response.status === 400, `${label} must be rejected with 400`);
+    const body = await responseJson(response);
+    pass(
+      body.error === "Feedback contains content that cannot be submitted.",
+      `${label} must receive the generic unsafe-content response`
+    );
+    pass(!githubCalled, `${label} must be rejected before GitHub is called`);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+};
+
 const assetCalls = [];
 const baseEnv = {
   GITHUB_TOKEN: "smoke-test-token",
@@ -245,6 +266,59 @@ for (const contentType of ["text/plain", "application/x-www-form-urlencoded", nu
   }
 }
 
+// Unsafe user-authored content is rejected at the Worker boundary before any
+// GitHub request. The same generic response prevents reflection or filter probing.
+for (const [label, overrides] of [
+  ["direct link", { message: "Visit https://attacker.example/payload" }],
+  ["bare domain", { message: "Visit attacker.com now" }],
+  ["Markdown link", { message: "[details](https://attacker.example)" }],
+  ["obfuscated hxxp link", { message: "hxxps://attacker[.]com/path" }],
+  ["word-obfuscated link", { message: "hxxps colon slash slash attacker [dot] com" }],
+  ["percent-encoded link", { message: "https%3A%2F%2Fattacker.com" }],
+  ["HTML entity link", { message: "https&colon;&sol;&sol;attacker&period;com" }],
+  ["email address", { message: "Contact bad.actor@example.com" }],
+  ["script element", { message: "<script>alert(1)</script>" }],
+  ["event handler", { message: "<div onerror = alert(1)>broken</div>" }],
+  ["JavaScript URI", { message: "javascript:alert(1)" }],
+  ["active data URI", { message: "data:text/html,<script>alert(1)</script>" }],
+  ["unsafe control", { message: "hello\u0007world" }],
+  ["bidi override", { summary: "Broken route\u202Etxt" }],
+  ["link in page metadata", { page: "https://attacker.com/collect" }],
+  ["markup in viewport metadata", { viewport: "<img src=x onerror=alert(1)>" }],
+  ["newline in version metadata", { version: "5.3.0\njavascript:alert(1)" }],
+  ["link in user-agent metadata", { userAgent: "Mozilla/5.0 attacker dot com" }],
+  ["plain profanity", { message: "This is fucking broken" }],
+  ["obfuscated profanity", { message: "This is f.u.c.k.i.n.g broken" }],
+  ["hidden over-limit payload", { message: `${"x".repeat(4000)} https://attacker.com` }]
+]) {
+  await expectUnsafeFeedback(overrides, label);
+}
+
+// Avoid broad substring false positives: legitimate destinations, filenames,
+// multilingual text, prices, and a normal browser UA remain valid feedback.
+{
+  const originalFetch = globalThis.fetch;
+  let githubCalled = false;
+  globalThis.fetch = async () => {
+    githubCalled = true;
+    return new Response(JSON.stringify({ number: 120 }), {
+      status: 201,
+      headers: { "Content-Type": "application/json" }
+    });
+  };
+  try {
+    const response = await worker.fetch(jsonRequest(validPayload({
+      summary: "Notes for Scunthorpe and Phuket",
+      message: "Cockpit Country, Shiitake dinner, route.js, and photo.jpg all render. 東京 costs ¥2,500 😊",
+      userAgent: "Mozilla/5.0 Chrome/139.0.0.0 Safari/537.36"
+    })), baseEnv);
+    pass(response.status === 201, "valid multilingual travel feedback must be accepted");
+    pass(githubCalled, "valid multilingual travel feedback must reach GitHub");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+}
+
 // A valid submission creates an issue in the Adtona repository. User-authored text is
 // normalized before entering the public issue, and the browser receives no GitHub URL.
 {
@@ -263,8 +337,8 @@ for (const contentType of ["text/plain", "application/x-www-form-urlencoded", nu
   try {
     const payload = validPayload({
       category: "bug",
-      summary: "Broken\u0000 title \u202E @octocat",
-      message: "First line\r\n<script>alert(1)</script>\u0007 @everyone",
+      summary: "Route preview stays blank",
+      message: "First line\r\nSecond line with clear reproduction steps.",
       email: "private@example.com"
     });
     const response = await worker.fetch(jsonRequest(payload), baseEnv);
@@ -300,8 +374,6 @@ for (const contentType of ["text/plain", "application/x-www-form-urlencoded", nu
       "issue title/body must not contain bidi override/isolate characters");
     pass(!/(^|[^A-Za-z0-9_])@(octocat|everyone)\b/i.test(issue.title + issue.body),
       "user text must not create active GitHub mentions");
-    pass((issue.title + issue.body).includes("＠octocat") && issue.body.includes("＠everyone"),
-      "active mentions must use a full-width at sign");
     pass(!/<script\b/i.test(issue.body), "user HTML must be rendered inert in the GitHub issue");
     pass(!issue.body.includes("private@example.com") && !/\*\*Contact\b/i.test(issue.body),
       "public GitHub issues must not contain submitted contact information");
