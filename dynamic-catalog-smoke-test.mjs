@@ -34,6 +34,17 @@ assert.match(nestedItems[0].detail, /historic rooms/);
 assert.equal(nestedItems[1].name, "Harbor Café");
 assert.match(nestedItems[1].detail, /regional pastries/);
 
+const peterOfficialUrl = "https://www.peninsula.com/en/tokyo/hotel-fine-dining/peter-modern-french";
+const peterItems = api.parseWikivoyageListings(
+  `{{eat|name=Peter|url=${peterOfficialUrl}|address=24th Floor, The Peninsula Tokyo hotel|lat=35.67471|long=139.76063|content=Modern French dining with Imperial Palace views.}}`,
+  "Tokyo/Chiyoda"
+);
+assert.equal(peterItems.length, 1);
+assert.equal(peterItems[0].name, "Peter");
+assert.equal(peterItems[0].type, "eat");
+assert.equal(peterItems[0].officialUrl, peterOfficialUrl, "The exact venue URL must survive Wikivoyage parsing");
+assert.equal(peterItems[0].address, "24th Floor, The Peninsula Tokyo hotel");
+
 const catalog = api.assembleDynamicCatalog("Fixture City", { name: "Fixture City", country: "Exampleland" }, {
   wikivoyageTitle: "Fixture City",
   wikivoyageItems: normalItems,
@@ -57,6 +68,17 @@ assert.equal(mergedAttraction.image, "https://images.example/square.jpg");
 assert.ok(mergedAttraction.sources.some((source) => source.id === "wikipedia:101"));
 assert.ok(mergedAttraction.sources.some((source) => source.label === "Wikivoyage"));
 assert.ok(mergedAttraction.sources.every((source) => Object.hasOwn(source, "license") && Object.hasOwn(source, "attribution")));
+
+const peterCatalog = api.assembleDynamicCatalog("Tokyo, Japan", { name: "Tokyo", country: "Japan" }, {
+  wikivoyageTitle: "Tokyo/Chiyoda",
+  wikivoyageItems: peterItems,
+  wikipediaItems: [
+    { name: "Tokyo National Museum", type: "see", area: "Ueno", detail: "A major museum.", sourceLabel: "Wikipedia" },
+    { name: "Senso-ji", type: "see", area: "Asakusa", detail: "A major temple.", sourceLabel: "Wikipedia" }
+  ]
+});
+const assembledPeter = Object.values(peterCatalog.food).flat().find((item) => item.name === "Peter");
+assert.equal(assembledPeter.officialUrl, peterOfficialUrl, "Venue context must survive catalog assembly");
 
 const thinCatalog = api.assembleDynamicCatalog("Thin City", { name: "Thin City", country: "Exampleland" }, {
   wikipediaItems: [

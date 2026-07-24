@@ -343,7 +343,7 @@ destinationInput.addEventListener("blur", () => {
   normalizeSelectedDestination();
   scheduleDestinationResearch();
   if (destinationInput.value.trim() && !hasLiveOrCuratedCatalog(destinationInput.value) && !(destinationResearchState.geocode && sameResearchQuery(destinationInput.value))) {
-    destinationError.textContent = "Starter mode is available for this destination: Adtona will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
+    destinationError.textContent = "Starter mode is available for this destination: Adtona will create an AI-ready research plan and website.";
   }
   updateDestinationModeBadge();
   updateDestinationClearButton();
@@ -605,7 +605,7 @@ function startOrReuseDynamicCatalogResearch(destination, options = {}) {
           ? "Live research catalog created from keyless public sources. Verify before travel."
           : researchWasRateLimited(destination)
             ? "Live research is busy right now — showing starter suggestions. Retry in a minute."
-            : "Starter mode is available for this destination: Adtona will create an AI-ready research plan and starter website you can refine in ChatGPT or Claude.";
+            : "Starter mode is available for this destination: Adtona will create an AI-ready research plan and website.";
         updateDestinationModeBadge();
       }
       renderSuggestionPicker(destination);
@@ -2021,6 +2021,7 @@ function createSuggestionGroups(destination) {
     order: item.order || "",
     bestFor: item.bestFor || "",
     address: item.address || "",
+    officialUrl: item.officialUrl || "",
     image: item.image || "",
     sourceLabel: item.sourceLabel || "",
     sourceUrl: item.sourceUrl || "",
@@ -2164,14 +2165,59 @@ const IMAGE_MATCH_STOP_WORDS = new Set([
   "top", "rated", "best", "neighborhood", "neighbourhood"
 ]);
 
+const IMAGE_CONTEXT_STOP_WORDS = new Set([
+  "floor", "level", "suite", "building", "tower", "hotel", "resort", "street", "road",
+  "avenue", "boulevard", "lane", "drive", "plaza", "city", "prefecture", "province",
+  "www", "com", "org", "net", "co", "jp", "en"
+]);
+
+const IMAGE_GENERIC_WEBSITE_HOSTS = new Set([
+  "facebook", "instagram", "tripadvisor", "google", "maps", "wikipedia", "wikivoyage",
+  "openstreetmap", "twitter"
+]);
+
+const IMAGE_PERSON_TITLE_PATTERN = /\b(?:professor|portrait|headshot|actor|actress|singer|politician|author|writer|footballer|player|athlete|director|composer|presenter|journalist|photographer)\b/i;
+const IMAGE_CONTEXT_DISTRACTOR_TITLE_PATTERN = /\b(?:detail|rolls[- ]royce|automobile|vehicle|car|bus|train|aircraft|statue|sculpture)\b/i;
+
 function normalizedImageTokens(value = "") {
   return String(value).normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
     .replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/)
     .filter((token) => token.length >= 3 && !IMAGE_MATCH_STOP_WORDS.has(token));
 }
 
+function suggestionImageContextTokens(suggestion = {}, destination = "") {
+  const destinationTokens = new Set(normalizedImageTokens(destination));
+  const nameTokens = new Set(normalizedImageTokens(suggestion.name));
+  const context = normalizedImageTokens(suggestion.address);
+  const officialUrl = String(suggestion.officialUrl || suggestion.website || "").trim();
+  if (/^https?:\/\//i.test(officialUrl)) {
+    try {
+      const hostTokens = normalizedImageTokens(new URL(officialUrl).hostname.replace(/^www\./i, "").replace(/\./g, " "));
+      if (!hostTokens.some((token) => IMAGE_GENERIC_WEBSITE_HOSTS.has(token))) context.push(...hostTokens);
+    } catch (_) { /* A malformed optional listing URL must not block image fallback. */ }
+  }
+  return [...new Set(context)].filter((token) =>
+    !destinationTokens.has(token)
+    && !nameTokens.has(token)
+    && !IMAGE_CONTEXT_STOP_WORDS.has(token)
+    && !/^\d/.test(token)
+  );
+}
+
+function suggestionImageSearchQuery(suggestion = {}, destination = "") {
+  const queryName = primaryImageQueryName(suggestion.name);
+  const nameTokens = normalizedImageTokens(queryName);
+  const contextTokens = suggestionImageContextTokens(suggestion, destination).slice(0, 3);
+  const isAmbiguousVenue = (suggestion.category === "eat" || suggestion.category === "shop")
+    && nameTokens.length === 1
+    && contextTokens.length;
+  return [isAmbiguousVenue ? "" : queryName, ...contextTokens, destination].filter(Boolean).join(" ");
+}
+
 function imagePageMatchScore(page, suggestion, destination) {
   if (!page?.thumbnail?.source && !page?.imageinfo?.[0]?.thumburl && !page?.imageinfo?.[0]?.url) return -1;
+  const isEatShop = suggestion.category === "eat" || suggestion.category === "shop";
+  if (isEatShop && IMAGE_PERSON_TITLE_PATTERN.test(String(page.title || ""))) return -1;
   const pageTokens = new Set(normalizedImageTokens(page.title));
   const destinationTokens = normalizedImageTokens(destination);
   const destinationTokenSet = new Set(destinationTokens);
@@ -2179,18 +2225,36 @@ function imagePageMatchScore(page, suggestion, destination) {
   const nameTokens = allNameTokens.filter((token) => !destinationTokenSet.has(token));
   if (!nameTokens.length) return -1;
   const nameMatches = nameTokens.filter((token) => pageTokens.has(token));
-  if (!nameMatches.length) return -1;
   const destinationMatches = destinationTokens.filter((token) => pageTokens.has(token));
+  const contextTokens = suggestionImageContextTokens(suggestion, destination);
+  const contextMatches = contextTokens.filter((token) => pageTokens.has(token));
   const normalizedTitle = normalizedImageTokens(page.title).join(" ");
+  const venuePhraseMatch = contextTokens.some((contextToken) =>
+    destinationTokens.some((destinationToken) =>
+      normalizedTitle.includes(`${contextToken} ${destinationToken}`)
+      || normalizedTitle.includes(`${contextToken} hotel ${destinationToken}`)
+    )
+  );
+  if (!nameMatches.length) {
+    if (isEatShop && IMAGE_CONTEXT_DISTRACTOR_TITLE_PATTERN.test(String(page.title || ""))) return -1;
+    return contextMatches.length && destinationMatches.length
+      ? 24 + (contextMatches.length * 8) + (destinationMatches.length * 2) + (venuePhraseMatch ? 18 : 0)
+      : -1;
+  }
+  if (isEatShop && nameTokens.length === 1 && contextTokens.length && !contextMatches.length) return -1;
   const normalizedName = nameTokens.join(" ");
-  return (normalizedTitle.includes(normalizedName) ? 12 : 0) + (nameMatches.length * 5) + destinationMatches.length;
+  return (normalizedTitle.includes(normalizedName) ? 12 : 0)
+    + (nameMatches.length * 5)
+    + (contextMatches.length * 8)
+    + destinationMatches.length;
 }
 
 function bestMatchingImagePage(payload, suggestion, destination) {
   return Object.values(payload?.query?.pages || {})
     .map((page) => ({ page, score: imagePageMatchScore(page, suggestion, destination) }))
     .filter((candidate) => candidate.score >= 5)
-    .sort((left, right) => right.score - left.score)[0]?.page || null;
+    .sort((left, right) => (right.score - left.score)
+      || (Number(left.page?.index ?? Number.MAX_SAFE_INTEGER) - Number(right.page?.index ?? Number.MAX_SAFE_INTEGER)))[0]?.page || null;
 }
 
 function resolvedPageImage(page) {
@@ -2348,6 +2412,7 @@ async function resolveSuggestionImage(suggestion, destination) {
   try {
     const queryName = primaryImageQueryName(suggestion.name);
     const matchTarget = { ...suggestion, name: queryName };
+    const exactSearchQuery = suggestionImageSearchQuery(matchTarget, destination);
     const resolved = await queueSuggestionImageLookup(cacheKey, async () => {
       const wikiSearch = async (search) => {
         const params = new URLSearchParams({ action: "query", generator: "search", gsrsearch: search, gsrlimit: "8", prop: "pageimages", piprop: "thumbnail", pithumbsize: "520", format: "json", origin: "*" });
@@ -2364,7 +2429,7 @@ async function resolveSuggestionImage(suggestion, destination) {
         if (page) return { source: resolvedPageImage(page), imageSource: "wikipedia" };
       }
       // 2) Exact place on Wikimedia Commons (name + destination).
-      const commonsParams = new URLSearchParams({ action: "query", generator: "search", gsrsearch: `${queryName} ${destination}`, gsrnamespace: "6", gsrlimit: "10", prop: "imageinfo", iiprop: "url", iiurlwidth: "520", format: "json", origin: "*" });
+      const commonsParams = new URLSearchParams({ action: "query", generator: "search", gsrsearch: exactSearchQuery, gsrnamespace: "6", gsrlimit: "10", prop: "imageinfo", iiprop: "url", iiurlwidth: "520", format: "json", origin: "*" });
       page = bestMatchingImagePage(await fetchSuggestionImage(`https://commons.wikimedia.org/w/api.php?${commonsParams}`), matchTarget, destination);
       if (page) return { source: resolvedPageImage(page), imageSource: "wikimedia-commons" };
       // 3) For attractions, also try Wikipedia by name only (article titled just the place).

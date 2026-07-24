@@ -36,12 +36,21 @@ assert.doesNotMatch(html, /id="startSplash(?:Continue)?"/, "Trip Basics must not
 assert.match(script, /function showStartSplash\(/, "Refresh and workflow restarts must have an explicit merged-start lifecycle");
 assert.doesNotMatch(script, /function dismissStartSplash\(/, "The merged first screen must not auto-dismiss while the traveler is typing");
 assert.match(styles, /\.trip-form\[data-current-step="1"\][\s\S]{0,900}?linear-gradient\(150deg,\s*#fff4d6/, "Trip Basics must retain the branded startup background");
+assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-layout\s*\{[^}]*grid-template-rows:\s*minmax\(24px,\s*\.65fr\)\s+auto\s+minmax\(64px,\s*1fr\)\s+auto/s, "The welcome screen must balance flexible space above and below the brand");
+assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-step \.builder-hero-lockup\s*\{[^}]*grid-row:\s*2/s, "The welcome brand must occupy the centered second grid row");
+assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-step \.home-brand-lockup \.home-brand-logo\s*\{[^}]*width:\s*clamp\(260px,\s*25vw,\s*390px\)/s, "The desktop welcome logo must use the enlarged responsive lockup");
+assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-questions\s*\{[^}]*grid-row:\s*4[^}]*align-self:\s*end/s, "Destination and date controls must sit immediately above the bottom action row");
+assert.match(styles, /\.builder:not\(\.builder-wide\) \.merged-start-actions\s*\{[^}]*margin-top:\s*0/s, "The welcome actions must remain aligned directly beneath the trip controls");
 assert.match(styles, /prefers-reduced-motion:\s*reduce/, "The v4 animations must honor reduced-motion preferences");
 assert.match(script, /Live research catalog created from keyless public sources\. Verify before travel\./, "The live-research reminder must use the compact verification copy");
+assert.match(styles, /\.builder \.style-question\s*\{[^}]*align-content:\s*start[^}]*grid-auto-rows:\s*max-content/s, "Wizard cards must pack their labels, helper copy, and controls without stretched grid-track whitespace");
+assert.match(styles, /\.builder \.style-question select,[\s\S]{0,320}?\.style-question select\s*\{[^}]*min-height:\s*40px[^}]*height:\s*40px[^}]*max-height:\s*40px[^}]*align-self:\s*start/s, "All wizard dropdowns must use the same compact 40px field height");
+assert.match(styles, /\.trip-header-actions \.export-button\s*\{[^}]*display:\s*inline-flex[^}]*align-items:\s*center[^}]*justify-content:\s*center[^}]*text-align:\s*center[^}]*line-height:\s*1/s, "Feedback, Export, and Edit trip must share centered header-button alignment");
 
 assert.match(script, /function renderSuggestionDeckCard\(/, "Adventure recommendations must render as a one-card deck");
 assert.match(script, /function applySuggestionDecision\(/, "The deck must apply Skip, Include, and Favorite decisions through shared state");
 assert.match(script, /function undoSuggestionDecision\(/, "The deck must support redo/rewind");
+assert.match(stepTwoHtml, /class="suggestion-heading-row"[\s\S]{0,400}?id="adventureStepTitle"[\s\S]{0,400}?id="surpriseMeButton"[^>]*>Not sure where to begin\? Choose for me<\/button>/, "Adventure must present one concise auto-pick button beside its heading");
 assert.match(script, /const rejectedSuggestions = new Map\(\)/, "Skipped recommendations must have explicit exclusion state");
 assert.match(script, /\[\.\.\.selections, \.\.\.rejectedSelections\]\.map\(recommendationKey\)/, "Automatic itinerary backfill must honor skipped recommendations");
 assert.match(script, /rejectedSuggestions\.set\(key, suggestion\)/, "A left decision must record the recommendation as rejected");
@@ -60,8 +69,8 @@ assert.match(styles, /\.builder\s+\.form-step\[hidden\]\s*\{[^}]*display:\s*none
 assert.match(html, /id="backStepButton"/, "Adventure Back navigation must remain available");
 assert.match(html, /id="detailsStepButton"/, "Adventure Next navigation must remain available");
 assert.ok(
-  stepTwoHtml.indexOf('id="suggestionBoard"') < stepTwoHtml.indexOf('class="suggestion-toolbar"'),
-  "The compact auto-pick helper must follow the photo and description deck"
+  stepTwoHtml.indexOf('class="suggestion-toolbar"') < stepTwoHtml.indexOf('id="suggestionBoard"'),
+  "The compact auto-pick helper must appear above the photo and description deck"
 );
 
 const renderDeckSource = functionSource("renderSuggestionDeckCard");
@@ -115,12 +124,20 @@ assert.match(script, /--include-progress/, "Rightward dragging must control only
 assert.match(styles, /\.suggestion-swipe-shell\s*\{[^}]*grid-template-rows:\s*minmax\(0,\s*1fr\)\s+auto\s+auto/s, "The swipe deck shell must keep the card row flexible (grid-template-rows: minmax(0,1fr) auto auto) so the Skip/Include/Favorite action rail stays visible");
 assert.match(styles, /\.suggestion-swipe-card\s+\.suggestion-card-body\s*\{[^}]*overflow:\s*hidden/s, "The recommendation card body must clip its content (overflow: hidden) so it can't grow and push the action rail below the fold");
 assert.match(styles, /\.suggestion-swipe-card\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)[^}]*grid-template-rows:\s*minmax\(0,\s*2fr\)\s+minmax\(0,\s*1fr\)/s, "Recommendation cards must stack the photo above the description in a two-thirds/one-third split");
+assert.match(styles, /\.trip-form\[data-current-step="2"\] \.suggestion-heading-row\s*\{[^}]*display:\s*flex[^}]*justify-content:\s*space-between/s, "The auto-pick helper must stay aligned with the Adventure heading");
+assert.match(styles, /\.trip-form\[data-current-step="2"\] \.suggestion-swipe-shell\s*\{[^}]*width:\s*min\(100%,\s*900px\)/s, "Desktop recommendation cards must use a narrower frame that reveals more of each location photograph");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-swipe-deck\s*\{[^}]*height:\s*clamp\(390px,\s*52dvh,\s*560px\)[^}]*min-height:\s*clamp\(390px,\s*52dvh,\s*560px\)/s, "Desktop recommendation photography must retain a large responsive height");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.trip-form\[data-current-step="2"\]\s*\{[^}]*height:\s*100%[^}]*max-height:\s*100%[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/s, "Low-height desktop Adventure screens must scroll instead of clipping the taller card or navigation");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\[data-form-step="2"\]\.active\s*\{[^}]*height:\s*max-content[^}]*min-height:\s*max-content[^}]*overflow:\s*visible/s, "The desktop Adventure step must grow with the taller card so its decision controls cannot overlap the selection summary");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-swipe-shell\s*\{[^}]*grid-template-rows:\s*auto\s+auto\s+auto/s, "The desktop swipe shell must flow the card, decision controls, and hint in separate rows");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-swipe-card\s+\.suggestion-card-body\s*\{[^}]*display:\s*grid[^}]*grid-template-rows:\s*auto\s+auto\s+minmax\(0,\s*1fr\)\s+auto/s, "Desktop recommendation text must reserve independent rows for the title, metadata, bounded description, and links");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-card-body\s*>\s*\*\s*\{[^}]*grid-column:\s*1/s, "Legacy card-column rules must be reset so desktop recommendation text cannot overlap across implicit columns");
+assert.match(styles, /\.suggestion-swipe-card\s+\.suggestion-card-detail\s*\{[^}]*grid-row:\s*3[^}]*overflow:\s*hidden[^}]*-webkit-line-clamp:\s*3/s, "Long recommendation copy must be clipped inside its own third grid row");
+assert.match(styles, /\.suggestion-swipe-card\s+\.suggestion-card-links\s*\{[^}]*grid-row:\s*4[^}]*overflow:\s*hidden[^}]*background:\s*#fffdf8/s, "Source and map links must render in a separate protected footer row");
+assert.match(styles, /\.suggestion-swipe-card\s+\.suggestion-card-links\s+\.source-credit\s*\{[^}]*margin-top:\s*0/s, "Source attribution and Google Maps verification must share the same baseline");
+assert.match(styles, /\.suggestion-card-links\s+a\s*\{[^}]*text-overflow:\s*ellipsis[^}]*white-space:\s*nowrap/s, "Long source labels must truncate rather than collide with recommendation copy");
+assert.match(styles, /\.suggestion-swipe-actions\s+\.suggestion-action-button\s*\{[^}]*width:\s*52px[^}]*height:\s*52px[^}]*min-height:\s*52px/s, "Desktop Redo, Skip, Include, and Favorite controls must remain compact");
+assert.match(styles, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.suggestion-swipe-actions\s+\.suggestion-action-button\s*\{[^}]*width:\s*44px[^}]*height:\s*44px[^}]*min-height:\s*44px/s, "Mobile decision controls must fit while preserving a 44px touch target");
 assert.match(styles, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.suggestion-swipe-card\s*\{[^}]*grid-template-rows:\s*minmax\(0,\s*2fr\)\s+minmax\(0,\s*1fr\)/s, "Mobile recommendations must maximize the image while retaining a bounded description");
 assert.doesNotMatch(styles, /grid-template-rows:\s*minmax\(0,\s*38%\)\s+minmax\(0,\s*1fr\)/, "Short phones must not regress to a description-heavy 38% photo");
 assert.match(script, /section\.innerHTML[^;]*suggestion-swipe-actions/s, "Every recommendation group must render the action-rail container");
@@ -143,14 +160,23 @@ assert.match(uniqueActivitiesSource, /item\.userSelected\s*\|\|\s*item\.favorite
 
 assert.match(
   styles,
-  /\.trip-creation-transition\.is-running\s+\.creation-output-card\s*\{[^}]*animation:\s*creationCardSequence/s,
-  "Trip creation must sequence one deliverable card at a time"
+  /\.trip-creation-transition\.is-running\s+\.creation-output-card\s*\{[^}]*animation:\s*creationArcCardIn/s,
+  "Trip creation must reveal the deliverable cards sequentially along the arc"
 );
 assert.match(
   styles,
-  /\.trip-creation-transition\.is-running\s+\.creation-output-card:last-child\s*\{[^}]*animation-name:\s*creationCardFinal/s,
-  "The AI Source-of-Truth deliverable must be the final persistent creation card"
+  /@keyframes\s+creationArcCardIn[\s\S]*?100%\s*\{[^}]*opacity:\s*1[^}]*var\(--arc-x\)[^}]*var\(--arc-y\)[^}]*scale\(1\)/s,
+  "Each deliverable card must remain visible in its final arc position"
 );
+assert.match(styles, /\.creation-center-stage\s*\{[^}]*top:\s*clamp\(76px,\s*10vh,\s*96px\)/s, "The logo and creation copy must move below the deliverable-card arc");
+for (let position = 1; position <= 5; position += 1) {
+  assert.match(
+    styles,
+    new RegExp(`\\.creation-output-card:nth-child\\(${position}\\)\\s*\\{[^}]*--arc-x:[^;}]+;[^}]*--arc-y:\\s*-`, "s"),
+    `Creation deliverable ${position} must have a distinct position above the logo`
+  );
+}
+assert.match(styles, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.creation-output-card\s+span\s*\{[^}]*display:\s*none/s, "Mobile arc cards must hide secondary copy to remain compact and non-overlapping");
 const creationCardStart = html.indexOf('class="creation-output-stack"');
 const creationCardEnd = html.indexOf("</div>", creationCardStart);
 const creationCards = html.slice(creationCardStart, creationCardEnd);

@@ -6376,6 +6376,142 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   background: rgba(255,255,255,.9);
   font-size: 10px;
 }
+.trip-app > .app-nav {
+  padding-bottom: 6px;
+}
+.trip-header-actions .export-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+}
+
+@media (max-width: 640px) {
+  .trip-app > .app-nav {
+    padding-bottom: 4px;
+  }
+  .app-footnote {
+    padding-bottom: max(6px, env(safe-area-inset-bottom));
+  }
+}
+
+/* Adventure viewport fit.
+   Keep the entire decision flow — recommendation, controls, selection count,
+   and Back/Next actions — inside one normal desktop or mobile viewport. The
+   card is deliberately narrower and more vertical so landscape destination
+   photos retain substantially more of their original composition. */
+.builder.builder-wide .trip-form[data-current-step="2"] {
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  overflow: hidden;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .workflow-brand {
+  margin-bottom: 7px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .security-note,
+.builder.builder-wide .trip-form[data-current-step="2"] .form-footnote {
+  display: none;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
+  align-content: stretch;
+  overflow: hidden;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
+  height: 100%;
+  min-height: 0;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group {
+  overflow: hidden;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
+  width: min(100%, 780px);
+  grid-template-rows: minmax(0, 1fr) 44px auto;
+  gap: 4px;
+}
+.builder .suggestion-swipe-card,
+.builder.builder-wide .suggestion-swipe-card {
+  grid-template-rows: minmax(0, 7fr) minmax(104px, 3fr);
+}
+.builder .suggestion-swipe-card .suggestion-card-image,
+.builder.builder-wide .suggestion-swipe-card .suggestion-card-image {
+  object-position: center;
+  transform: none;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions {
+  gap: clamp(7px, 1.3vw, 12px);
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions .suggestion-action-button {
+  width: 44px;
+  height: 44px;
+  min-height: 44px;
+  font-size: 20px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-hint {
+  font-size: 8px;
+  line-height: 1.2;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .selection-summary {
+  min-height: 28px;
+  margin-top: 3px;
+  padding: 4px 8px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .preference-actions {
+  margin: 4px 0 0;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .preference-actions .icon-nav-button {
+  min-height: 40px;
+  height: 40px;
+  padding-block: 0;
+}
+
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .workflow-brand {
+    margin-bottom: 4px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
+    width: min(100%, 480px);
+  }
+  .builder .suggestion-swipe-card,
+  .builder.builder-wide .suggestion-swipe-card {
+    grid-template-rows: minmax(0, 7fr) minmax(100px, 3fr);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .preference-actions .icon-nav-button {
+    min-height: 44px;
+    height: 44px;
+  }
+}
+
+/* At unusually short viewport heights (including heavy browser zoom), preserve
+   access to every control instead of clipping the card below a usable size. */
+@media (max-height: 560px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] {
+    grid-template-rows: auto auto auto auto;
+    overflow-y: auto;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+    height: auto;
+    grid-template-rows: auto auto auto auto auto auto;
+    overflow: visible;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group,
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
+    height: auto;
+    overflow: visible;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
+    height: 310px;
+    min-height: 310px;
+  }
+}
 
 /* Feedback dialog (reuses .export-dialog base) */
 .feedback-dialog .feedback-category {
@@ -6609,14 +6745,235 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   }
 }
 
+/* Recommendation-card text containment.
+   Long live-research descriptions must never paint underneath source credits
+   or the Google Maps verification link. Assign every content type to an
+   explicit grid row, clip only the description row, and keep the links in
+   their own opaque footer row. */
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr) auto;
+  min-height: 0;
+  overflow: hidden;
+  align-content: stretch;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-body > * {
+  min-width: 0;
+  grid-column: 1;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-top {
+  grid-row: 1;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-selected-badge {
+  z-index: 1;
+  grid-row: 1;
+  justify-self: end;
+  align-self: start;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-meta {
+  grid-row: 2;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-detail {
+  display: -webkit-box;
+  min-height: 0;
+  max-height: 100%;
+  grid-row: 3;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  text-overflow: ellipsis;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-links {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  min-width: 0;
+  grid-row: 4;
+  align-self: end;
+  flex-wrap: wrap;
+  gap: 3px 10px;
+  margin-top: 0;
+  padding-top: 2px;
+  overflow: hidden;
+  background: #fffdf8;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-links .source-credit {
+  margin-top: 0;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-links a {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Keep all four deck decisions compact while retaining a 44px minimum touch
+   target on small screens. */
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions {
+  gap: clamp(9px, 1.7vw, 16px);
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions .suggestion-action-button {
+  width: 52px;
+  height: 52px;
+  min-height: 52px;
+  font-size: 23px;
+}
+
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-detail {
+    -webkit-line-clamp: 3;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions {
+    gap: clamp(7px, 3.4vw, 12px);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-actions .suggestion-action-button {
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    font-size: 20px;
+  }
+}
+
+/* Wizard field alignment.
+   Grid cards are equal-height within each row, but their automatic tracks must
+   not stretch select controls or create large gaps between the label, helper
+   copy, and field. Keep every dropdown the same compact field height. */
+.builder .style-question {
+  align-content: start;
+  grid-auto-rows: max-content;
+}
+.builder .style-question select,
+.builder.builder-wide [data-form-step="3"].active .style-question select,
+.builder.builder-wide [data-form-step="4"].active .style-question select {
+  box-sizing: border-box;
+  min-height: 40px;
+  height: 40px;
+  max-height: 40px;
+  align-self: start;
+  padding-block: 0;
+  line-height: 1.2;
+}
+
+/* Welcome-screen composition: keep the brand moment near the top, then use the
+   flexible center of the viewport as breathing room. The trip controls settle
+   immediately above the paired Import / Adto Na actions at the bottom. */
+.builder:not(.builder-wide) .merged-start-step {
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: clamp(15px, 2.4vh, 23px);
+}
+.builder:not(.builder-wide) .merged-start-layout {
+  min-height: 0;
+  height: 100%;
+  grid-template-rows: minmax(24px, .65fr) auto minmax(64px, 1fr) auto;
+  align-content: stretch;
+  gap: 0;
+  padding-top: 0;
+}
+.builder:not(.builder-wide) .merged-start-step .builder-hero-lockup {
+  grid-row: 2;
+}
+.builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo {
+  width: clamp(260px, 25vw, 390px);
+}
+.builder:not(.builder-wide) .merged-start-questions {
+  grid-row: 4;
+  align-self: end;
+}
+.builder:not(.builder-wide) .merged-start-actions {
+  margin-top: 0;
+}
+
+@media (max-width: 760px) {
+  .builder:not(.builder-wide) .merged-start-layout {
+    grid-template-rows: minmax(12px, .4fr) auto minmax(28px, 1fr) auto;
+    gap: 0;
+    padding-top: 0;
+  }
+  .builder:not(.builder-wide) .merged-start-step .builder-hero-lockup {
+    grid-row: 2;
+  }
+  .builder:not(.builder-wide) .merged-start-questions {
+    grid-row: 4;
+  }
+  .builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo {
+    width: clamp(170px, 48vw, 230px);
+  }
+}
+
+@media (min-width: 761px) and (max-height: 720px) {
+  .builder:not(.builder-wide) .merged-start-layout {
+    grid-template-rows: minmax(12px, .35fr) auto minmax(36px, 1fr) auto;
+  }
+  .builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo {
+    width: clamp(230px, 21vw, 300px);
+  }
+}
+
+/* Adventure focus: the decision helper belongs with the heading, while a
+   narrower card brings the photo frame closer to common landscape ratios so
+   substantially more of each destination image remains visible. */
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row {
+  display: flex;
+  min-width: 0;
+  align-items: end;
+  justify-content: space-between;
+  gap: 18px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row h2 {
+  min-width: 0;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar {
+  display: block;
+  width: auto;
+  min-height: 0;
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar button {
+  width: auto;
+  min-height: 36px;
+  padding: 8px 14px;
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
+  width: min(100%, 900px);
+}
+
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row {
+    align-items: center;
+    gap: 8px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row h2 {
+    flex: 1 1 auto;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar {
+    flex: 0 0 min(42%, 150px);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-heading-row .suggestion-toolbar button {
+    width: 100%;
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 8px;
+    white-space: normal;
+  }
+}
+
 /* Start screen refinement: the logo and value statement lead from the top,
    while the unlabeled destination/date controls retain accessible labels. */
 .builder:not(.builder-wide) .trip-form[data-current-step="1"] {
   padding-top: clamp(12px, 2vw, 28px);
 }
 .builder:not(.builder-wide) .merged-start-layout {
-  align-content: start;
-  gap: clamp(30px, 4.2vh, 46px);
+  align-content: stretch;
+  gap: 0;
 }
 .builder:not(.builder-wide) .merged-start-step .builder-hero-message .eyebrow {
   font-size: clamp(8px, .72vw, 10px);
@@ -6634,46 +6991,88 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
   line-height: 1.25;
 }
 
-/* Creation sequence: one deliverable appears directly over the logo at a time.
-   The final AI Source-of-Truth card remains visible until the guide opens. */
+/* Creation sequence: the five deliverables build a persistent half-circle
+   above the logo. Each card arrives in order and stays in its own arc position,
+   leaving the logo and brand copy completely unobstructed. */
 .trip-creation-transition .creation-output-stack {
   z-index: 6;
 }
+.trip-creation-transition .creation-center-stage {
+  top: clamp(76px, 10vh, 96px);
+}
 .trip-creation-transition .creation-output-card,
 .trip-creation-transition .creation-output-card:nth-child(n) {
-  --sx: 0px;
-  --sy: 0px;
+  --arc-x: 0px;
+  --arc-y: -260px;
   top: 50%;
   left: 50%;
-  width: clamp(250px, 30vw, 390px);
-  padding: clamp(15px, 1.7vw, 22px) clamp(18px, 2vw, 26px);
-  border-radius: 20px;
+  width: clamp(170px, 15vw, 210px);
+  min-height: 62px;
+  gap: 3px;
+  justify-items: start;
+  padding: 10px 12px 10px 15px;
+  border-radius: 15px;
   opacity: 0;
-  transform: translate(-50%, -50%) scale(1.16);
+  transform: translate(
+    calc(-50% + var(--arc-x)),
+    calc(-50% + var(--arc-y) + 18px)
+  ) scale(.84);
 }
 .trip-creation-transition .creation-output-card strong {
-  font-size: clamp(15px, 1.5vw, 20px);
+  font-size: clamp(10px, .86vw, 12px);
 }
 .trip-creation-transition .creation-output-card span {
-  font-size: clamp(10.5px, .9vw, 13px);
+  font-size: clamp(7.5px, .66vw, 9px);
+}
+.trip-creation-transition .creation-output-card:nth-child(1) {
+  --arc-x: clamp(-430px, -38vw, -315px);
+  --arc-y: -96px;
+}
+.trip-creation-transition .creation-output-card:nth-child(2) {
+  --arc-x: clamp(-230px, -19vw, -165px);
+  --arc-y: -205px;
+}
+.trip-creation-transition .creation-output-card:nth-child(3) {
+  --arc-x: 0px;
+  --arc-y: -260px;
+}
+.trip-creation-transition .creation-output-card:nth-child(4) {
+  --arc-x: clamp(165px, 19vw, 230px);
+  --arc-y: -205px;
+}
+.trip-creation-transition .creation-output-card:nth-child(5) {
+  --arc-x: clamp(315px, 38vw, 430px);
+  --arc-y: -96px;
 }
 .trip-creation-transition.is-running .creation-output-card {
-  animation: creationCardSequence .58s ease-in-out both;
-  animation-delay: calc(.34s + (var(--creation-card-index) * .58s));
+  animation: creationArcCardIn .5s cubic-bezier(.2, .82, .24, 1) both;
+  animation-delay: calc(.24s + (var(--creation-card-index) * .43s));
 }
-.trip-creation-transition.is-running .creation-output-card:last-child {
-  animation-name: creationCardFinal;
-}
-@keyframes creationCardSequence {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.18); }
-  18%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  72%  { opacity: 1; transform: translate(-50%, -50%) scale(.96); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(.72); }
-}
-@keyframes creationCardFinal {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(1.18); }
-  24%  { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 1; transform: translate(-50%, -50%) scale(.96); }
+@keyframes creationArcCardIn {
+  0% {
+    opacity: 0;
+    filter: blur(5px);
+    transform: translate(
+      calc(-50% + var(--arc-x)),
+      calc(-50% + var(--arc-y) + 18px)
+    ) scale(.84);
+  }
+  72% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(
+      calc(-50% + var(--arc-x)),
+      calc(-50% + var(--arc-y) - 3px)
+    ) scale(1.025);
+  }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    transform: translate(
+      calc(-50% + var(--arc-x)),
+      calc(-50% + var(--arc-y))
+    ) scale(1);
+  }
 }
 
 @media (max-width: 760px) {
@@ -6681,23 +7080,59 @@ body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
     padding-top: max(8px, env(safe-area-inset-top));
   }
   .builder:not(.builder-wide) .merged-start-layout {
-    gap: clamp(18px, 3.2vh, 28px);
+    gap: 0;
+  }
+  .trip-creation-transition .creation-center-stage {
+    top: clamp(70px, 10vh, 92px);
   }
   .trip-creation-transition .creation-output-card,
   .trip-creation-transition .creation-output-card:nth-child(n) {
-    width: min(82vw, 330px);
+    width: min(28vw, 104px);
+    min-height: 48px;
+    justify-items: center;
+    padding: 6px 7px;
+    border-radius: 11px;
+    text-align: center;
+  }
+  .trip-creation-transition .creation-output-card strong {
+    font-size: clamp(7px, 2.2vw, 9px);
+    line-height: 1.1;
+  }
+  .trip-creation-transition .creation-output-card span {
+    display: none;
+  }
+  .trip-creation-transition .creation-output-card:nth-child(1) {
+    --arc-x: clamp(-130px, -34vw, -105px);
+    --arc-y: -92px;
+  }
+  .trip-creation-transition .creation-output-card:nth-child(2) {
+    --arc-x: clamp(-70px, -18vw, -56px);
+    --arc-y: -166px;
+  }
+  .trip-creation-transition .creation-output-card:nth-child(3) {
+    --arc-x: 0px;
+    --arc-y: -222px;
+  }
+  .trip-creation-transition .creation-output-card:nth-child(4) {
+    --arc-x: clamp(56px, 18vw, 70px);
+    --arc-y: -166px;
+  }
+  .trip-creation-transition .creation-output-card:nth-child(5) {
+    --arc-x: clamp(105px, 34vw, 130px);
+    --arc-y: -92px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .trip-creation-transition.is-running .creation-output-card {
-    display: none;
-    animation: none;
-  }
-  .trip-creation-transition.is-running .creation-output-card:last-child {
     display: grid;
     opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
+    filter: none;
+    transform: translate(
+      calc(-50% + var(--arc-x)),
+      calc(-50% + var(--arc-y))
+    ) scale(1);
+    animation: none;
   }
 }
 

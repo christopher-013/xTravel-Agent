@@ -27,7 +27,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.3.0">
+  <link rel="stylesheet" href="styles.css?v=5.3.10">
 </head>
 <body>
   <main class="page-shell">
@@ -125,15 +125,16 @@
         <section class="form-step" data-form-step="2" hidden>
           <div class="suggestion-intro">
             <p class="eyebrow">Popular in <span id="suggestionDestination">your destination</span></p>
-            <h2 id="adventureStepTitle">Choose your own adventure</h2>
+            <div class="suggestion-heading-row">
+              <h2 id="adventureStepTitle">Choose your own adventure</h2>
+              <div class="suggestion-toolbar">
+                <button id="surpriseMeButton" type="button">Not sure where to begin? Choose for me</button>
+              </div>
+            </div>
             <p id="adventureStepCopy">Start with the places you would most like to see. Every selection is prioritized once in your daily itinerary.</p>
             <p class="starter-suggestion-note" id="starterSuggestionNote" hidden>Suggestions are limited for this destination — your selections and notes will be preserved for AI research.</p>
           </div>
           <div class="suggestion-board" id="suggestionBoard" aria-label="Popular destination suggestions"></div>
-          <div class="suggestion-toolbar">
-            <div><strong>Not sure where to begin?</strong><span>We'll make a balanced mix for your trip length.</span></div>
-            <button id="surpriseMeButton" type="button">Choose for me</button>
-          </div>
           <div class="selection-summary"><span id="selectionCount">0 selected</span><button id="clearSelectionsButton" type="button">Clear</button></div>
 
           <div class="wizard-actions preference-actions">
@@ -322,8 +323,6 @@
           </section>
         </div>
 
-        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a></p>
-
         <nav class="app-nav" aria-label="Trip sections">
           <button class="app-nav-button active" type="button" data-tab="home"><span>🏠</span><small>Home</small></button>
           <button class="app-nav-button" type="button" data-tab="itinerary"><span>📅</span><small>Itinerary</small></button>
@@ -334,6 +333,8 @@
           <button class="app-nav-button" type="button" data-tab="photos"><span>📷</span><small>Photos</small></button>
           <button class="app-nav-button" type="button" data-tab="ai"><span>✦</span><small>AI Export</small></button>
         </nav>
+
+        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a></p>
       </div>
     </section>
   </main>
@@ -434,13 +435,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.3.0"></script>
-  <script src="dynamic-catalog.js?v=5.3.0"></script>
-  <script src="export-styles.js?v=5.3.0"></script>
-  <script src="icon-source.js?v=5.3.0"></script>
-  <script src="photo-store.js?v=5.3.0"></script>
-  <script src="trip-schema.js?v=5.3.0"></script>
-  <script src="beta-tools.js?v=5.3.0"></script>
-  <script src="app.js?v=5.3.0"></script>
+  <script src="version.js?v=5.3.10"></script>
+  <script src="dynamic-catalog.js?v=5.3.10"></script>
+  <script src="export-styles.js?v=5.3.10"></script>
+  <script src="icon-source.js?v=5.3.10"></script>
+  <script src="photo-store.js?v=5.3.10"></script>
+  <script src="trip-schema.js?v=5.3.10"></script>
+  <script src="beta-tools.js?v=5.3.10"></script>
+  <script src="app.js?v=5.3.10"></script>
 </body>
 </html>

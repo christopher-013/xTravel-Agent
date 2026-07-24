@@ -1,5 +1,91 @@
 # Adtona — Version 5 UI working copy
 
+## v5.3.10 viewport-fit Adventure cards
+
+- Keeps the complete Adventure decision flow inside one standard desktop or
+  mobile viewport, with a scroll fallback only for unusually short windows.
+- Narrows and vertically enlarges recommendation cards so destination photos
+  retain more of their original composition.
+- Reduces the decision controls while preserving a 44px accessible touch
+  target, and compacts the selection and Back/Next rows.
+
+## v5.3.9 venue-aware suggestion images
+
+- Preserves official venue URLs from Wikivoyage and OpenStreetMap listings so
+  ambiguous restaurant and shop names have useful image-search context.
+- Rejects people, portraits, and unrelated same-name businesses when matching
+  eat/shop photos, then falls back to representative cuisine or shopping
+  imagery rather than showing a misleading result.
+- Adds a regression fixture for Peter at The Peninsula Tokyo and verifies that
+  the venue image wins over unrelated people named Peter.
+
+## v5.3.8 aligned recommendation sources
+
+- Aligns Adventure-card source attribution and Google Maps verification links
+  on the same baseline.
+- Preserves responsive wrapping and truncation for narrow recommendation cards.
+
+## v5.3.7 centered welcome brand
+
+- Moves the opening Adtona logo and value statement lower into the upper half
+  of the screen instead of crowding the top edge.
+- Enlarges the desktop and mobile logo responsively, with a compact override
+  for short laptop-height screens.
+- Adds regression coverage for the welcome-brand position and scale.
+
+## v5.3.6 centered header actions
+
+- Gives Feedback, Export, and Edit trip one shared flex alignment so every
+  header-action label is centered horizontally and vertically.
+- Adds regression coverage for the common header-button layout.
+
+## v5.3.5 navigation footnote order
+
+- Moves the public-beta privacy and feedback note below the trip-app bottom
+  navigation.
+- Keeps the mobile safe-area inset on the final footnote while avoiding
+  duplicate bottom padding inside the navigation dock.
+
+## v5.3.4 creation deliverable arc
+
+- Places the five generated-output cards in a persistent half-circle above the
+  creation logo and headline.
+- Reveals each card sequentially while keeping previous cards visible, with the
+  AI Source-of-Truth card appearing last.
+- Adds a compact title-only mobile arc and a static reduced-motion equivalent
+  so cards remain readable without overlap.
+- Adds regression coverage for the arc positions, persistence, and mobile
+  composition.
+
+## v5.3.3 consistent wizard dropdowns
+
+- Normalizes every Travel style and Constraints dropdown to a compact 40px
+  control height.
+- Prevents equal-height question cards from stretching dropdowns or inserting
+  large gaps between labels, helper copy, and fields.
+- Adds regression coverage for the shared dropdown sizing and card alignment.
+
+## v5.3.2 recommendation text containment
+
+- Keeps long live-research descriptions inside a bounded text row so source
+  credits and verification links can never overlap the recommendation copy.
+- Truncates unusually long source labels cleanly and protects the links with
+  their own footer row.
+- Compacts the Redo, Skip, Include, and Favorite controls while preserving a
+  44px minimum mobile touch target.
+- Adds smoke-test coverage for the content rows and responsive action sizes.
+
+## v5.3.1 welcome and Adventure composition
+
+- Repositions the Trip Basics destination and date controls immediately above
+  the bottom actions, leaving a calmer brand-first opening screen.
+- Moves the Adventure auto-pick action beside the recommendation heading and
+  consolidates it into one clear “Not sure where to begin? Choose for me”
+  button.
+- Narrows the desktop recommendation frame so more of each location photograph
+  remains visible instead of being cropped into an overly panoramic strip.
+- Adds responsive and smoke-test regression coverage for the revised layouts.
+
 ## v5.3.0 public-beta quality and safety
 
 - Streamlines Trip Basics by hiding the redundant “Where?” and “When?” headings, moving the Adtona lockup upward, and using Tokyo, Japan as the default for a new unsaved trip while preserving returning travelers’ saved destination.

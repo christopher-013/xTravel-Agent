@@ -11,6 +11,11 @@ const ids = [...html.matchAll(/\sid=["']([^"']+)["']/g)].map((match) => match[1]
 const duplicateIds = [...new Set(ids.filter((id, index) => ids.indexOf(id) !== index))];
 assert.deepEqual(duplicateIds, [], `index.html contains duplicate IDs: ${duplicateIds.join(", ")}`);
 
+const appNavIndex = html.indexOf('<nav class="app-nav"');
+const appFootnoteIndex = html.indexOf('<p class="form-footnote app-footnote"');
+assert.ok(appNavIndex >= 0, "Generated trip app must include the bottom navigation");
+assert.ok(appFootnoteIndex > appNavIndex, "Public-beta footnote must render below the bottom navigation");
+
 const version = versionSource.match(/PLANTOGUIDE_VERSION\s*=\s*["']([^"']+)/)?.[1];
 assert.ok(version, "version.js must define PLANTOGUIDE_VERSION");
 const assetVersions = [...html.matchAll(/(?:styles\.css|(?:version|dynamic-catalog|export-styles|icon-source|photo-store|trip-schema|beta-tools|app)\.js)\?v=([^"']+)/g)].map((match) => match[1]);
