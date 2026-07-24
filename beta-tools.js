@@ -2,7 +2,7 @@
  *
  * Three self-contained, dependency-free features:
  *   1. Cloudflare Web Analytics beacon (aggregate visitor / page-view counts).
- *   2. An in-app feedback form that composes a pre-filled GitHub issue.
+ *   2. An in-app feedback form submitted through the same-origin Worker.
  *   3. A private, local (this-browser-only) usage log + a hidden metrics report.
  *
  * Loaded as a classic script before app.js, so it shares the global scope and
@@ -24,13 +24,9 @@
   //   Leave it "" to keep analytics OFF (no third-party request is made).
   var CF_BEACON_TOKEN = "a7ddbdbdc90e436d98590a41f3cbf190";
 
-  // Feedback backend (Cloudflare Worker in feedback-worker.js) that files the report as
-  // a GitHub issue on the reporter's behalf, so they never leave the app. Paste the
-  // deployed Worker URL here, e.g. "https://plantoguide-feedback.<subdomain>.workers.dev".
-  // While empty, the form falls back to opening a pre-filled GitHub issue instead.
-  var FEEDBACK_ENDPOINT = "";
-
-  var GITHUB_REPO = "christopher-013/PlanToGuide";
+  // Same-origin Cloudflare Worker route. The GitHub token stays in Cloudflare's secret
+  // store; it is never sent to or embedded in the browser application.
+  var FEEDBACK_ENDPOINT = "/api/feedback";
   var METRICS_KEY = "ptg_beta_metrics_v1";
   var MAX_EVENTS = 500;
 
@@ -98,30 +94,8 @@
   injectBeacon();
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Feedback → pre-filled GitHub issue
+  // Feedback → server-side submission to the public project tracker
   // ─────────────────────────────────────────────────────────────────────────
-
-  function buildIssueUrl(fields) {
-    var typeLabel = { bug: "Bug", idea: "Idea", praise: "Praise", other: "Feedback" }[fields.category] || "Feedback";
-    var title = "[" + typeLabel + "] " + (fields.summary || "Beta feedback");
-    var body = [
-      "**Type:** " + typeLabel,
-      "",
-      (fields.message || "").trim() || "_(no description provided)_",
-      "",
-      "---",
-      "**Contact (optional):** " + (fields.email ? fields.email : "—"),
-      "**Page:** " + location.pathname + location.hash,
-      "**Viewport:** " + window.innerWidth + "×" + window.innerHeight,
-      "**Version:** " + (globalThis.PLANTOGUIDE_VERSION || "unknown"),
-      "**User agent:** " + navigator.userAgent
-    ].join("\n");
-    var params = new URLSearchParams();
-    params.set("title", title);
-    params.set("body", body);
-    params.set("labels", "feedback,beta");
-    return "https://github.com/" + GITHUB_REPO + "/issues/new?" + params.toString();
-  }
 
   var feedbackDialog = null;
   function getFeedbackDialog() {
@@ -149,55 +123,49 @@
         category: (form.querySelector('input[name="feedbackCategory"]:checked') || {}).value || "other",
         summary: (form.querySelector("#feedbackSummary") || {}).value || "",
         message: (form.querySelector("#feedbackMessage") || {}).value || "",
-        email: (form.querySelector("#feedbackEmail") || {}).value || ""
+        website: (form.querySelector("#feedbackWebsite") || {}).value || ""
       };
       track("feedback_submitted", { category: fields.category });
 
-      // Direct submission via the backend Worker → files the GitHub issue for the
-      // reporter, who never sees GitHub. On failure we keep the form open with an inline
-      // error to retry — a configured endpoint never redirects the user to GitHub.
-      if (FEEDBACK_ENDPOINT) {
-        if (status) status.textContent = "Sending…";
-        if (submitBtn) submitBtn.disabled = true;
-        fetch(FEEDBACK_ENDPOINT, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            category: fields.category,
-            summary: fields.summary,
-            message: fields.message,
-            email: fields.email,
-            page: location.pathname + location.hash,
-            viewport: window.innerWidth + "x" + window.innerHeight,
-            version: globalThis.PLANTOGUIDE_VERSION || "",
-            userAgent: navigator.userAgent
-          })
-        }).then(function (res) {
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          return res.json().catch(function () { return {}; });
-        }).then(function () {
-          if (status) status.textContent = "Thank you — your feedback was sent.";
-          if (form.reset) form.reset();
-          window.setTimeout(close, 1600);
-        }).catch(function () {
-          // Keep the reporter in-app: show a retry message rather than opening GitHub.
-          track("feedback_submit_failed");
-          if (status) status.textContent = "Couldn’t send right now — please check your connection and try again.";
-        }).then(function () {
-          if (submitBtn) submitBtn.disabled = false;
+      // The same-origin Worker files the issue with its server-side GitHub credential.
+      // The visitor stays in Adtona for both success and retry states.
+      if (status) status.textContent = "Sending…";
+      if (submitBtn) submitBtn.disabled = true;
+      fetch(FEEDBACK_ENDPOINT, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          category: fields.category,
+          summary: fields.summary,
+          message: fields.message,
+          website: fields.website,
+          page: location.pathname + location.hash,
+          viewport: window.innerWidth + "x" + window.innerHeight,
+          version: globalThis.PLANTOGUIDE_VERSION || "",
+          userAgent: navigator.userAgent
+        })
+      }).then(function (res) {
+        return res.json().catch(function () { return {}; }).then(function (data) {
+          if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+          if (data.ok !== true) throw new Error("Invalid feedback response");
+          return data;
         });
-        return;
-      }
-
-      // No backend configured yet → pre-filled GitHub issue.
-      var url = buildIssueUrl(fields);
-      var win = window.open(url, "_blank", "noopener,noreferrer");
-      if (status) {
-        status.textContent = win
-          ? "Opening GitHub in a new tab — click “Submit new issue” there to finish. Thank you!"
-          : "Could not open a new tab. Please allow pop-ups, or email the team.";
-      }
-      if (win) window.setTimeout(close, 1400);
+      }).then(function (data) {
+        if (status) {
+          status.textContent = data.number
+            ? "Thank you — feedback #" + data.number + " was sent."
+            : "Thank you — your feedback was sent.";
+        }
+        if (form.reset) form.reset();
+        window.setTimeout(close, 1800);
+      }).catch(function () {
+        track("feedback_submit_failed");
+        if (status) {
+          status.textContent = "Couldn’t send right now — please check your connection and try again.";
+        }
+      }).then(function () {
+        if (submitBtn) submitBtn.disabled = false;
+      });
     });
 
     return feedbackDialog;
@@ -206,11 +174,7 @@
   function openFeedback(source) {
     var dialog = getFeedbackDialog();
     track("feedback_opened", { source: source || "link" });
-    if (!dialog) {
-      // Fallback if the dialog markup is missing for any reason.
-      window.open("https://github.com/" + GITHUB_REPO + "/issues/new?labels=feedback,beta", "_blank", "noopener,noreferrer");
-      return;
-    }
+    if (!dialog) return;
     var status = dialog.querySelector("#feedbackStatus");
     if (status) status.textContent = "";
     if (typeof dialog.showModal === "function") {

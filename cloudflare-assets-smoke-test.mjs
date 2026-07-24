@@ -44,7 +44,41 @@ const forbiddenSegments = new Set([
 ]);
 
 const wrangler = JSON.parse(await readFile(path.join(projectRoot, "wrangler.jsonc"), "utf8"));
+assert.equal(wrangler.main, "./feedback-worker.js", "Wrangler must run the integrated feedback Worker");
 assert.equal(wrangler.assets?.directory, "./dist", "Wrangler must publish only ./dist");
+assert.equal(wrangler.assets?.binding, "ASSETS", "Static files must be available through the ASSETS binding");
+assert(
+  Array.isArray(wrangler.assets?.run_worker_first)
+    && wrangler.assets.run_worker_first.includes("/api/feedback"),
+  "Wrangler must route /api/feedback through the Worker before static assets"
+);
+assert.equal(
+  wrangler.vars?.GITHUB_REPO,
+  "christopher-013/Adtona",
+  "Feedback must target the Adtona repository"
+);
+assert(
+  Array.isArray(wrangler.secrets?.required)
+    && wrangler.secrets.required.includes("GITHUB_TOKEN"),
+  "Deployments must require the encrypted GitHub token secret"
+);
+const feedbackRateLimiter = (wrangler.ratelimits || [])
+  .find((binding) => binding.name === "FEEDBACK_RATE_LIMITER");
+assert(feedbackRateLimiter, "Feedback Worker must declare a Cloudflare rate-limiting binding");
+assert.equal(feedbackRateLimiter.simple?.limit, 5, "Feedback rate limit must allow five submissions");
+assert.equal(feedbackRateLimiter.simple?.period, 60, "Feedback rate-limit period must be one minute");
+for (const origin of [
+  "https://adtona.com",
+  "https://www.adtona.com",
+  "https://adtona.cch13.workers.dev",
+  "http://127.0.0.1:8767",
+  "http://localhost:8767"
+]) {
+  assert(
+    String(wrangler.vars?.ALLOWED_ORIGINS || "").split(",").includes(origin),
+    `Missing feedback origin in Wrangler configuration: ${origin}`
+  );
+}
 assert.notEqual(path.resolve(projectRoot, wrangler.assets.directory), projectRoot, "Wrangler must never publish the repository root");
 
 async function collectFiles(directory, prefix = "") {
@@ -63,6 +97,7 @@ async function collectFiles(directory, prefix = "") {
 
 const files = await collectFiles(outputDirectory);
 const deployedPaths = new Set(files.map((file) => file.relativePath));
+assert(!deployedPaths.has("feedback-worker.js"), "Worker source must not be copied into public static assets");
 
 for (const relativePath of requiredFiles) {
   assert(deployedPaths.has(relativePath), `Missing required Cloudflare asset: ${relativePath}`);
@@ -73,6 +108,11 @@ for (const file of files) {
   assert(!segments.some((segment) => forbiddenSegments.has(segment)), `Forbidden deployment path: ${file.relativePath}`);
   assert(file.size <= maxAssetBytes, `Cloudflare asset exceeds 25 MiB: ${file.relativePath} (${file.size} bytes)`);
   assert(!/(?:smoke-test|build-cloudflare|server|feedback-worker)\.(?:m?js)$/i.test(file.relativePath), `Development-only code leaked into deployment: ${file.relativePath}`);
+  if (/\.(?:html|js|json|md|txt|webmanifest)$/i.test(file.relativePath)) {
+    const contents = await readFile(file.absolutePath, "utf8");
+    assert(!/github_pat_[A-Za-z0-9_]{40,}|ghp_[A-Za-z0-9]{36}/.test(contents),
+      `Possible GitHub credential leaked into deployment: ${file.relativePath}`);
+  }
 }
 
 function localReference(value) {

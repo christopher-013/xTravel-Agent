@@ -89,10 +89,46 @@ pass(/function safeExternalUrl\s*\(/.test(app), "app.js must define safeExternal
 pass(/safeExternalUrl\(item\.sourceUrl\)/.test(app),
   "source-credit links must run sourceUrl through safeExternalUrl()");
 
-// 6) The in-app feedback path must not fall back to opening github.com when a submission
-//    endpoint is configured (the reporter stays in-app per product requirement).
+// 6) Feedback stays in-app and can reach GitHub only through the same-origin Worker.
 const beta = read("beta-tools.js");
-pass(!/\.catch\([\s\S]{0,400}github\.com/.test(beta),
-  "feedback submit failure must not open github.com");
+pass(/var FEEDBACK_ENDPOINT\s*=\s*["']\/api\/feedback["']/.test(beta),
+  "feedback client must submit to the same-origin /api/feedback route");
+pass(!/github\.com/i.test(beta),
+  "browser feedback code must not contain a GitHub redirect or fallback");
+pass(!/window\.open\s*\(/.test(beta),
+  "browser feedback code must not open an external submission window");
+pass(!/feedbackEmail|["']email["']\s*:/.test(beta),
+  "feedback payload must not collect or submit contact email");
+pass(/feedbackWebsite/.test(beta),
+  "feedback payload must include the anti-bot honeypot field");
+
+const feedbackAnchors = html.match(/<a\b[^>]*(?:feedback-link|feedback-header-link)[^>]*>/gi) || [];
+pass(feedbackAnchors.length >= 3, "Every public feedback entry point must remain present");
+for (const anchor of feedbackAnchors) {
+  pass(/href=["']#feedback["']/i.test(anchor),
+    `feedback entry point must open the in-app form: ${anchor.slice(0, 100)}`);
+  pass(!/github\.com|target=["']_blank/i.test(anchor),
+    `feedback entry point must not navigate away: ${anchor.slice(0, 100)}`);
+}
+pass(/id=["']feedbackWebsite["']/.test(html),
+  "feedback dialog must include the honeypot field");
+pass(!/id=["']feedbackEmail["']/.test(html),
+  "feedback dialog must not expose an email field on the public issue form");
+pass(/Public tracker:/i.test(html),
+  "feedback dialog must disclose that submissions become public");
+
+const feedbackWorker = read("feedback-worker.js");
+pass(/const API_PATH\s*=\s*["']\/api\/feedback["']/.test(feedbackWorker),
+  "feedback Worker must intercept only /api/feedback");
+pass(/christopher-013\/Adtona/.test(feedbackWorker),
+  "feedback Worker must target the Adtona repository");
+pass(/env\.GITHUB_TOKEN/.test(feedbackWorker),
+  "feedback Worker must read the GitHub token only from its secret binding");
+pass(/env\.FEEDBACK_RATE_LIMITER\.limit/.test(feedbackWorker),
+  "feedback Worker must enforce its Cloudflare rate-limiting binding");
+pass(!/labels:\s*\[[^\]]*["'](?:feedback|beta)["']/i.test(feedbackWorker),
+  "feedback Worker must not request repository labels that do not exist");
+pass(!/payload\.email|Contact \(optional\)/.test(feedbackWorker),
+  "feedback Worker must not publish contact information");
 
 console.log(`Security smoke test passed (${checks} checks).`);

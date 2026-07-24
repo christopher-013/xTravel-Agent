@@ -1,61 +1,87 @@
-# Feedback → GitHub issue: Cloudflare Worker setup
+# Direct feedback setup
 
-The in-app **Submit** button sends beta feedback straight to GitHub Issues so the
-reporter never leaves PlanToGuide. Because a public static site can't safely hold a
-GitHub write token, a tiny **Cloudflare Worker** ([`feedback-worker.js`](feedback-worker.js))
-holds the token as a secret and creates the issue. One-time setup, ~5 minutes:
+Adtona submits the in-app feedback form to the same-origin endpoint
+`POST /api/feedback`. The Cloudflare Worker in `feedback-worker.js` creates an
+issue in `christopher-013/Adtona`, so visitors never see a GitHub dialog and do
+not need a GitHub account.
 
-## 1. Create a GitHub token (fine-grained, minimal scope)
+The GitHub credential must remain an encrypted Cloudflare secret. Never place it
+in `beta-tools.js`, `index.html`, `wrangler.jsonc`, a GitHub Actions variable, or
+any other browser/downloadable file.
 
-1. GitHub → **Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token**.
-2. **Resource owner:** `christopher-013`. **Repository access:** *Only select repositories* → `PlanToGuide`.
-3. **Permissions → Repository permissions → Issues:** *Read and write*. (Nothing else is needed.)
-4. Generate and copy the token (starts with `github_pat_…`). Treat it like a password.
+## One-time GitHub setup
 
-## 2. Deploy the Worker
+1. In GitHub, create a **fine-grained personal access token**.
+2. Limit repository access to **Only select repositories → Adtona**.
+3. Under repository permissions, grant **Issues: Read and write** only.
+4. Give the token a short expiration and rotate it before it expires.
 
-**Dashboard route (no CLI):**
-1. Cloudflare dashboard → **Workers & Pages → Create → Create Worker**.
-2. Name it e.g. `plantoguide-feedback`. Deploy the starter, then **Edit code**.
-3. Replace the code with the contents of [`feedback-worker.js`](feedback-worker.js) and **Deploy**.
-4. Copy the Worker URL it shows, e.g. `https://plantoguide-feedback.<your-subdomain>.workers.dev`.
+The form creates public GitHub issues. The UI therefore warns visitors not to
+submit email addresses, passwords, private trip details, or other personal
+information.
 
-**Or CLI:** `npx wrangler deploy feedback-worker.js --name plantoguide-feedback`
+## Add the encrypted Cloudflare secret
 
-## 3. Add the token as a Worker secret
+The production Worker is named `adtona`.
 
-- Dashboard: Worker → **Settings → Variables and Secrets → Add → Secret**, name **`GITHUB_TOKEN`**, paste the token, **Save and deploy**.
-- Or CLI: `npx wrangler secret put GITHUB_TOKEN` and paste when prompted.
+### Cloudflare dashboard
 
-Optional variables (plain text, not secret):
-- `GITHUB_REPO` — defaults to `christopher-013/PlanToGuide`.
-- `ALLOWED_ORIGINS` — comma-separated origins allowed to submit. Defaults to the
-  PlanToGuide Pages site plus `localhost:8767`/`127.0.0.1:8767` for local testing.
+1. Open **Workers & Pages → adtona**.
+2. Open **Settings → Variables and Secrets**.
+3. Add `GITHUB_TOKEN`.
+4. Choose **Secret/Encrypt**, paste the fine-grained token, and save.
+5. Deploy the latest Worker version if Cloudflare does not redeploy it
+   automatically.
 
-## 4. Point the app at the Worker
+### Wrangler (only from an authenticated local terminal)
 
-In [`beta-tools.js`](beta-tools.js), set:
-
-```js
-var FEEDBACK_ENDPOINT = "https://plantoguide-feedback.<your-subdomain>.workers.dev";
+```powershell
+npx wrangler secret put GITHUB_TOKEN --name adtona
+npx wrangler deploy
 ```
 
-Commit and push. The CSP already allows `https://*.workers.dev`, so it works once the
-URL is set. (If you later put the Worker on a custom domain, add that host to the
-`connect-src` list in `index.html`.)
+Wrangler prompts for the token without writing it to the repository. Do not
+paste the token into a chat, issue, build log, or command argument.
 
-## How it behaves
+## Configuration
 
-- **Endpoint set:** Submit POSTs the feedback to the Worker, which opens a GitHub issue
-  labeled `feedback,beta`. The reporter sees only a "Thank you" — no GitHub, no sign-in.
-- **Endpoint empty or unreachable:** the form falls back to opening a pre-filled GitHub
-  issue so a note is never lost.
+`wrangler.jsonc` provides only non-secret configuration:
 
-## Notes / hardening
+- Worker entry point: `feedback-worker.js`
+- Required secret declaration: `GITHUB_TOKEN` (the value is never stored in this file)
+- Static asset binding: `ASSETS`
+- Worker-first route: `/api/feedback`
+- GitHub repository: `christopher-013/Adtona`
+- Allowed production and localhost origins
+- A Cloudflare rate-limiting binding that allows five submissions per minute per client
 
-- The token lives only in the Worker's secret store; it is never in the site, the repo,
-  or the browser.
-- The Worker checks the request `Origin` against the allowlist as light anti-abuse. For a
-  busier beta, add **Cloudflare Turnstile** (a free CAPTCHA) in front of the form and verify
-  the token in the Worker before creating the issue.
-- The Worker validates and length-caps every field before calling GitHub.
+`beta-tools.js` always posts to `/api/feedback`; there is no browser-side GitHub
+fallback.
+
+## Verify
+
+Run the network-free validation suite:
+
+```powershell
+npm run check
+npm run smoke
+npm run build:cloudflare
+npm run verify:cloudflare
+```
+
+After deployment:
+
+1. Open Adtona and select **Send feedback**.
+2. Submit a clearly labeled test report.
+3. Confirm the in-app success message appears and no GitHub page opens.
+4. Confirm the issue was created in `christopher-013/Adtona`.
+5. Delete or close the test issue.
+
+If the form reports a temporary failure, verify that `GITHUB_TOKEN` exists on
+the `adtona` Worker and still has Issues read/write access.
+
+## Abuse protection
+
+The Worker includes origin checks, strict JSON and size validation, output
+sanitization, a hidden honeypot, and a Cloudflare rate-limiting binding. Add
+Cloudflare Turnstile if automated spam becomes a problem.

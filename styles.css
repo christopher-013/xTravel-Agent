@@ -5597,26 +5597,27 @@ html, body, body *, button, input, select, textarea, dialog, option { font-famil
   border: 0 !important;
 }
 
-body.start-splash-active { overflow: hidden; }
-.builder.start-splash-active .trip-form {
-  visibility: hidden;
-  opacity: 0;
-  pointer-events: none;
-}
-.start-splash[hidden] { display: none !important; }
-.builder:not(.builder-wide) #startSplash.start-splash {
-  position: fixed;
-  z-index: 9000;
-  inset: 0;
-  display: grid;
+/* The opening brand moment and Trip Basics are one screen. It keeps the former
+   sunrise-over-water splash palette, but the form stays interactive until the
+   traveler explicitly chooses "Adto na - Go now". */
+body.trip-basics-mode:not(.trip-mode) { overflow: auto; }
+body.trip-basics-mode:not(.trip-mode) .topbar { display: none; }
+body.trip-basics-mode:not(.trip-mode) .builder:not(.builder-wide) {
+  display: block;
+  width: 100%;
+  max-width: none;
   min-height: 100vh;
   min-height: 100dvh;
-  padding: clamp(30px, 6vw, 90px);
-  place-content: center;
-  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+.builder:not(.builder-wide) .trip-form[data-current-step="1"] {
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: clamp(24px, 4.6vw, 68px);
+  overflow-y: auto;
   color: #17303f;
-  /* Adtona logo palette — bright "sunrise over water": sun (gold) top-right,
-     mountains (green) + water (blue) below, so the logo wordmark stays legible. */
   background:
     radial-gradient(circle at 84% 16%, rgba(255, 193, 52, .60), transparent 32%),
     radial-gradient(circle at 15% 88%, rgba(45, 150, 70, .28), transparent 40%),
@@ -5625,73 +5626,184 @@ body.start-splash-active { overflow: hidden; }
   border: 0;
   border-radius: 0;
   box-shadow: none;
-  animation: startSplashArrive .7s cubic-bezier(.2, .8, .2, 1) both;
+  backdrop-filter: none;
 }
-.builder:not(.builder-wide) #startSplash.start-splash::after { content: none !important; }
-.builder:not(.builder-wide) #startSplash .builder-hero-lockup {
-  grid-template-columns: clamp(210px, 20vw, 310px) minmax(0, 1fr);
-  width: min(100%, 1500px);
-  gap: clamp(42px, 6vw, 100px);
-}
-.builder:not(.builder-wide) #startSplash .home-brand-lockup > span {
-  width: clamp(190px, 19vw, 290px);
-  height: clamp(190px, 19vw, 290px);
-}
-.builder:not(.builder-wide) #startSplash .home-brand-lockup strong { font-size: clamp(25px, 2.3vw, 38px); }
-.builder:not(.builder-wide) #startSplash .builder-hero-message h1 { max-width: 1000px; font-size: clamp(50px, 5.8vw, 88px); }
-.builder:not(.builder-wide) #startSplash .builder-hero-message .lede { max-width: 900px; font-size: clamp(14px, 1.35vw, 20px); }
-/* Dark, legible text on the bright Adtona start screen. */
-.builder:not(.builder-wide) #startSplash .builder-hero-message .eyebrow { color: #a85d10; }
-.builder:not(.builder-wide) #startSplash .builder-hero-message h1 { color: #143a50; text-shadow: none; }
-.builder:not(.builder-wide) #startSplash .builder-hero-message .lede { color: #33505f; }
-.builder:not(.builder-wide) #startSplash .builder-hero-message .lede strong { color: #c9491a; }
-.start-splash-actions {
+.trip-form[data-current-step="1"] > .workflow-brand,
+.trip-form[data-current-step="1"] > .step-row,
+.trip-form[data-current-step="1"] > .form-progress,
+.trip-form[data-current-step="1"] > .security-note,
+.trip-form[data-current-step="1"] > .form-footnote { display: none; }
+.merged-start-step {
   display: grid;
-  justify-items: end;
-  gap: 13px;
   width: min(100%, 1500px);
-  margin: clamp(26px, 4vh, 52px) auto 0;
+  min-height: calc(100dvh - clamp(48px, 9.2vw, 136px));
+  margin: 0 auto;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: stretch;
+  gap: clamp(24px, 3.8vh, 38px);
 }
-.start-splash-continue {
+.trip-form[data-current-step="1"] .form-step.active.merged-start-step { display: grid; }
+.trip-form.merged-start-reveal .merged-start-step {
+  animation: mergedStartArrive .65s cubic-bezier(.2, .8, .2, 1) both;
+}
+.merged-start-layout {
+  display: grid;
+  align-content: center;
+  gap: clamp(38px, 5.4vh, 58px);
+}
+.builder:not(.builder-wide) .merged-start-step .builder-hero-lockup {
+  grid-template-columns: 1fr;
+  width: 100%;
+  justify-items: center;
+  gap: clamp(10px, 1.8vh, 18px);
+  text-align: center;
+}
+.builder:not(.builder-wide) .merged-start-step .home-brand-lockup {
+  width: auto;
+  margin: 0;
+}
+.builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo {
+  width: clamp(210px, 20vw, 300px);
+}
+.builder:not(.builder-wide) .merged-start-step .builder-hero-message {
+  display: grid;
+  justify-items: center;
+  row-gap: 12px;
+}
+.builder:not(.builder-wide) .merged-start-step .builder-hero-message .eyebrow {
+  margin: 0;
+  color: #a85d10;
+}
+.builder:not(.builder-wide) .merged-start-step .builder-hero-message .lede {
+  display: grid;
+  max-width: 900px;
+  margin: 0 auto;
+  justify-items: center;
+  gap: 4px;
+  color: #33505f;
+  font-size: clamp(12px, 1.05vw, 16px);
+  line-height: 1.55;
+  text-align: center;
+}
+.builder:not(.builder-wide) .merged-start-step .builder-hero-message .lede > span { display: block; }
+.builder:not(.builder-wide) .merged-start-step .builder-hero-message .lede strong { color: #c9491a; }
+.merged-start-questions {
+  display: grid;
+  grid-template-columns: minmax(0, 320px) minmax(0, 560px);
+  width: min(100%, 908px);
+  margin-inline: auto;
+  align-items: start;
+  justify-content: center;
+  gap: clamp(20px, 2.5vw, 28px);
+}
+.merged-start-questions .field-group {
+  display: block;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.merged-start-questions .field-group.last { border: 0; }
+.merged-start-questions .field-content > label,
+.merged-start-questions .field-content > h2 {
+  display: block;
+  margin: 0;
+  color: #143a50;
+  font: 600 clamp(17px, 1.35vw, 22px)/1.15 "Fraunces", serif;
+  text-align: center;
+}
+.merged-start-questions h2[tabindex="-1"]:focus { outline: none; }
+.merged-start-questions .input-wrap,
+.merged-start-questions .date-field {
+  margin-top: 11px;
+  border-color: rgba(20, 58, 80, .18);
+  background: rgba(255,255,255,.64);
+  backdrop-filter: blur(10px);
+}
+.merged-start-questions .input-wrap {
+  width: min(100%, 320px);
+  height: 48px;
+  margin-inline: auto;
+}
+.merged-start-questions .date-field {
+  height: 48px;
+  padding: 5px 10px;
+}
+.merged-start-questions .date-field input { min-height: 22px; }
+.merged-start-questions .date-grid {
+  width: min(100%, 560px);
+  margin-inline: auto;
+}
+.merged-start-questions .destination-error,
+.merged-start-questions .date-error { min-height: 0; margin-bottom: 0 !important; }
+.merged-start-questions .destination-mode-badge {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+.merged-start-actions {
+  display: flex;
+  width: min(100%, 908px);
+  align-items: center !important;
+  justify-content: space-between;
+  gap: 16px;
+  margin: clamp(16px, 2.4vh, 24px) auto 0;
+  padding-top: 0;
+  border-top: 0;
+}
+.merged-import-button {
   display: inline-flex;
   min-height: 48px;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  padding: 10px 22px;
-  border: 1px solid rgba(20, 40, 55, .16);
+  gap: 8px;
+  padding: 9px 15px;
+  border: 1px solid rgba(20, 58, 80, .28);
   border-radius: 999px;
-  color: #1b2834;
-  background: #ffd65a;
+  color: #21465a;
+  background: rgba(255,255,255,.28);
   cursor: pointer;
-  font: 800 13px "DM Sans", sans-serif;
-  box-shadow: 0 13px 34px rgba(0, 0, 0, .2);
-  transition: transform .2s ease, background .2s ease;
+  font-size: 11px;
+  white-space: nowrap;
+  box-shadow: 0 9px 24px rgba(33, 66, 73, .08);
+  transition: transform .2s ease, background .2s ease, border-color .2s ease;
 }
-.start-splash-continue:hover { background: #ffe58f; transform: translateY(-2px); }
-.start-splash-continue:focus-visible { outline: 3px solid #83dcff; outline-offset: 4px; }
-.start-splash-progress {
-  width: min(300px, 52vw);
-  height: 3px;
-  overflow: hidden;
+.merged-import-button > span { color: #c9491a; font-size: 17px; }
+.merged-import-button:hover { transform: translateY(-2px); border-color: rgba(20, 58, 80, .48); background: rgba(255,255,255,.52); }
+.builder .merged-start-continue {
+  width: auto;
+  min-width: 0;
+  min-height: 48px;
+  padding: 9px 15px;
   border-radius: 999px;
-  background: rgba(20, 50, 70, .16);
+  border: 1px solid rgba(20, 58, 80, .30);
+  color: #bd481b;
+  background: rgba(255,255,255,.30);
+  font-size: 11px;
+  box-shadow: 0 14px 34px rgba(33, 66, 73, .12);
+  backdrop-filter: blur(12px);
 }
-.start-splash-progress i {
-  display: block;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, #ffd65a, #83dcff);
-  transform: scaleX(0);
-  transform-origin: left;
-  animation: startSplashProgress 3.6s linear forwards;
+.builder .merged-start-continue .adtona-action-name {
+  color: #c9491a;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .02em;
 }
-.start-splash.is-leaving { animation: startSplashLeave .72s cubic-bezier(.55, 0, .75, .2) forwards !important; }
-.trip-form.v4-reveal { animation: tripBasicsReveal .55s cubic-bezier(.2, .8, .2, 1) both; }
-@keyframes startSplashArrive { from { opacity: 0; transform: scale(.985); } to { opacity: 1; transform: none; } }
-@keyframes startSplashLeave { to { opacity: 0; visibility: hidden; transform: scale(1.035); filter: blur(8px); } }
-@keyframes startSplashProgress { to { transform: scaleX(1); } }
-@keyframes tripBasicsReveal { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.builder .merged-start-continue > [aria-hidden="true"] { color: #c9491a; }
+.builder .merged-start-continue:hover { border-color: rgba(20, 58, 80, .5); background: rgba(255,255,255,.56); }
+@keyframes mergedStartArrive {
+  from { opacity: 0; transform: translateY(14px) scale(.992); }
+  to { opacity: 1; transform: none; }
+}
 
 /* Only the card changes; the existing wizard and selectedSuggestions Map remain
    the source of truth for saved drafts, itinerary generation, and export. */
@@ -5753,7 +5865,7 @@ body.start-splash-active { overflow: hidden; }
 .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
   display: grid;
   min-height: 0;
-  grid-template-rows: auto auto minmax(0, 1fr) auto auto auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
 }
 .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-board,
 .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-group,
@@ -5794,7 +5906,8 @@ body.start-splash-active { overflow: hidden; }
   width: 100%;
   height: 100%;
   min-height: 0;
-  grid-template-columns: minmax(0, 1.25fr) minmax(300px, .75fr);
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
   gap: 0;
   padding: 0;
   overflow: hidden;
@@ -6014,8 +6127,8 @@ body.start-splash-active { overflow: hidden; }
     grid-template-rows: auto auto auto;
   }
   .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
-    height: clamp(250px, 34dvh, 330px);
-    min-height: clamp(250px, 34dvh, 330px);
+    height: clamp(390px, 52dvh, 560px);
+    min-height: clamp(390px, 52dvh, 560px);
   }
   .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-body {
     display: grid;
@@ -6043,15 +6156,32 @@ body.start-splash-active { overflow: hidden; }
 }
 
 @media (max-width: 760px) {
-  .builder:not(.builder-wide) #startSplash.start-splash { padding: 28px 20px; }
-  .builder:not(.builder-wide) #startSplash .builder-hero-lockup { grid-template-columns: 1fr; justify-items: center; gap: 20px; text-align: center; }
-  .builder:not(.builder-wide) #startSplash .home-brand-lockup { gap: 8px; }
-  .builder:not(.builder-wide) #startSplash .home-brand-lockup > span { width: 132px; height: 132px; }
-  .builder:not(.builder-wide) #startSplash .home-brand-lockup strong { font-size: 18px; }
-  .builder:not(.builder-wide) #startSplash .builder-hero-message .eyebrow { font-size: 9px; }
-  .builder:not(.builder-wide) #startSplash .builder-hero-message h1 { font-size: clamp(36px, 11vw, 52px); }
-  .builder:not(.builder-wide) #startSplash .builder-hero-message .lede { margin-inline: auto; font-size: 12px; }
-  .start-splash-actions { justify-items: center; margin-top: 24px; }
+  .builder:not(.builder-wide) .trip-form[data-current-step="1"] { padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom)); }
+  .merged-start-step { min-height: calc(100dvh - max(36px, env(safe-area-inset-top) + env(safe-area-inset-bottom))); align-content: start; gap: 16px; }
+  .builder:not(.builder-wide) .merged-start-step .builder-hero-lockup {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 10px;
+    text-align: center;
+  }
+  .builder:not(.builder-wide) .merged-start-step .home-brand-lockup .home-brand-logo { width: clamp(142px, 42vw, 190px); }
+  .builder:not(.builder-wide) .merged-start-step .builder-hero-message .eyebrow { margin-bottom: 5px; font-size: 8px; }
+  .builder:not(.builder-wide) .merged-start-step .builder-hero-message h1 { margin-inline: auto; font-size: clamp(31px, 8.7vw, 42px); line-height: .98; }
+  .builder:not(.builder-wide) .merged-start-step .builder-hero-message .lede { margin: 9px auto 0; font-size: 11px; line-height: 1.4; }
+  .merged-start-layout { gap: 15px; }
+  .merged-start-questions { grid-template-columns: 1fr; gap: 10px; }
+  .merged-start-questions .field-group { padding: 0; }
+  .merged-start-questions .field-content > label,
+  .merged-start-questions .field-content > h2 { font-size: 19px; }
+  .merged-start-questions .input-wrap { height: 48px; }
+  .merged-start-questions .date-grid { grid-template-columns: minmax(0, 1fr) 16px minmax(0, 1fr); }
+  .merged-start-questions .date-arrow { display: block; }
+  .merged-start-questions .date-field { min-width: 0; height: 48px; padding: 5px 8px; }
+  .merged-start-questions .date-field input { min-width: 0; font-size: 12px; }
+  .merged-start-actions { gap: 9px; }
+  .merged-start-actions { margin-top: 10px; }
+  .merged-import-button { min-height: 48px; padding-inline: 12px; font-size: 10px; }
+  .builder .merged-start-continue { flex: 0 0 auto; min-width: 0; min-height: 48px; padding-inline: 12px; font-size: 10px; }
 
   .builder.builder-wide .trip-form[data-current-step="2"] {
     height: 100vh;
@@ -6063,7 +6193,7 @@ body.start-splash-active { overflow: hidden; }
   .builder.builder-wide .trip-form[data-current-step="2"] .form-progress { margin: 7px 0 9px; }
   .builder.builder-wide .trip-form[data-current-step="2"] .security-note { display: none; }
   .builder.builder-wide .trip-form[data-current-step="2"] .privacy-disclosure { display: none; }
-  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active { grid-template-rows: auto auto minmax(0, 1fr) auto auto auto; }
+  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active { grid-template-rows: auto minmax(0, 1fr) auto auto auto auto; }
   .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro { padding: 5px 0 4px; }
   .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro .eyebrow { margin-bottom: 2px; font-size: 9px; line-height: 1.3; }
   .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro h2 { font-size: clamp(21px, 6vw, 27px); }
@@ -6082,7 +6212,7 @@ body.start-splash-active { overflow: hidden; }
      description from being its own scroll container so horizontal swipes are never
      captured as a vertical scroll. */
   .builder .suggestion-swipe-card,
-  .builder.builder-wide .suggestion-swipe-card { min-height: 0; grid-template-columns: 1fr; grid-template-rows: minmax(0, 44%) minmax(0, 1fr); border-radius: 14px; }
+  .builder.builder-wide .suggestion-swipe-card { min-height: 0; grid-template-columns: 1fr; grid-template-rows: minmax(0, 2fr) minmax(0, 1fr); border-radius: 14px; }
   .builder .suggestion-swipe-card .suggestion-card-body { overflow: hidden; touch-action: pan-y; }
   .builder .suggestion-swipe-card .suggestion-card-detail { flex: 1 1 auto; min-height: 0; overflow: hidden; }
   .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-body { gap: 7px; padding: 13px; }
@@ -6114,15 +6244,12 @@ body.start-splash-active { overflow: hidden; }
   .builder.builder-wide .trip-form[data-current-step="2"] .security-note { display: none; }
   .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span { height: 54px; }
   .builder .suggestion-swipe-card,
-  .builder.builder-wide .suggestion-swipe-card { grid-template-columns: 1fr; grid-template-rows: minmax(0, 38%) minmax(0, 1fr); }
+  .builder.builder-wide .suggestion-swipe-card { grid-template-columns: 1fr; grid-template-rows: minmax(0, 3fr) minmax(0, 2fr); }
   .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-detail { font-size: 11px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .start-splash,
-  .start-splash.is-leaving,
-  .start-splash-progress i,
-  .trip-form.v4-reveal,
+  .trip-form.merged-start-reveal .merged-start-step,
   .suggestion-swipe-card,
   .suggestion-decision-overlay { animation: none !important; transition-duration: .01ms !important; }
 }
@@ -6292,6 +6419,25 @@ body.start-splash-active { overflow: hidden; }
 }
 .feedback-dialog .feedback-field input:focus,
 .feedback-dialog .feedback-field textarea:focus { outline: 2px solid rgba(36,89,76,.4); outline-offset: 1px; }
+.feedback-dialog .feedback-privacy {
+  margin: 10px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid rgba(176, 128, 0, .28);
+  border-radius: 10px;
+  color: #5e4908;
+  background: #fff7d8;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.feedback-dialog .feedback-honeypot {
+  position: absolute !important;
+  left: -10000px !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
 .feedback-dialog .feedback-status { min-height: 16px; margin: 4px 0 10px; color: var(--forest); font-size: 12px; font-weight: 600; }
 
 /* Hidden metrics report overlay (opened via #beta-metrics or Ctrl/Cmd+Shift+M) */
@@ -6337,4 +6483,274 @@ body.start-splash-active { overflow: hidden; }
 #ptgMetricsOverlay .ptg-metrics-actions button:hover { border-color: var(--forest); color: var(--forest); }
 #ptgMetricsOverlay .ptg-metrics-close {
   position: absolute; right: 14px; top: 10px; border: 0; background: transparent; color: #6b7b6f; font-size: 26px; line-height: 1; cursor: pointer;
+}
+
+/* ── Photo-first Adventure picker ──────────────────────────────────────────
+   Give each recommendation the visual hierarchy of a destination postcard:
+   two-thirds photography, one-third useful context, followed by the compact
+   auto-pick helper. These late rules intentionally override the earlier v4
+   swipe-deck sizing without changing its selection or gesture behavior. */
+.builder .form-step[hidden] {
+  display: none !important;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .step-row {
+  padding-bottom: 3px;
+  font-size: 11px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress {
+  margin: 3px 0 6px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span {
+  padding-block: 5px;
+  gap: 4px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span b {
+  width: 22px;
+  height: 22px;
+  flex-basis: 22px;
+  font-size: 9px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small strong {
+  font-size: 10px;
+  line-height: 1.05;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small em {
+  font-size: 7px;
+  line-height: 1.1;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro {
+  padding: 1px 0 4px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro .eyebrow {
+  margin-bottom: 2px;
+  font-size: 8px;
+  line-height: 1.2;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro h2 {
+  font-size: clamp(20px, 1.8vw, 27px);
+  line-height: 1.05;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro > p:not(.eyebrow) {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.25;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar {
+  width: min(100%, 1060px);
+  min-height: 34px;
+  margin: 6px auto 2px;
+  padding: 5px 8px;
+  border-radius: 10px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar > div {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 5px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar strong {
+  font-size: 9px;
+  line-height: 1.2;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar span {
+  font-size: 8px;
+  line-height: 1.2;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar button {
+  width: auto;
+  min-height: 28px;
+  padding: 5px 10px;
+  font-size: 8px;
+}
+.builder .suggestion-swipe-card,
+.builder.builder-wide .suggestion-swipe-card {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-body {
+  gap: 5px;
+  padding: clamp(12px, 1.55vw, 21px);
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-top strong {
+  font: 600 clamp(20px, 1.7vw, 27px)/1.05 "Fraunces", serif;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-meta {
+  font-size: 9px;
+  line-height: 1.25;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-detail {
+  font-size: clamp(12px, .9vw, 14px);
+  line-height: 1.35;
+  -webkit-line-clamp: 3;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-map-link,
+.builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .source-credit {
+  font-size: 8px;
+  line-height: 1.2;
+}
+
+@media (min-width: 761px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-deck {
+    height: clamp(390px, 52dvh, 560px);
+    min-height: clamp(390px, 52dvh, 560px);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr) auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] {
+    padding: 8px 10px max(10px, env(safe-area-inset-bottom));
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .step-row {
+    padding-bottom: 3px;
+    font-size: 10px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress {
+    margin: 3px 0 5px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span {
+    padding-block: 4px;
+    gap: 2px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span b {
+    width: 20px;
+    height: 20px;
+    flex-basis: 20px;
+    font-size: 8px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small strong {
+    font-size: 8px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span small em {
+    font-size: 6px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] [data-form-step="2"].active {
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto auto;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro {
+    padding: 1px 0 3px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro .eyebrow {
+    margin-bottom: 1px;
+    font-size: 7px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro h2 {
+    font-size: clamp(18px, 5vw, 22px);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro > p:not(.eyebrow) {
+    margin-top: 2px;
+    font-size: 8px;
+    line-height: 1.2;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-shell {
+    gap: 4px;
+  }
+  .builder .suggestion-swipe-card,
+  .builder.builder-wide .suggestion-swipe-card {
+    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-body {
+    gap: 4px;
+    padding: 9px 10px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-top strong {
+    font: 700 clamp(16px, 4.7vw, 20px)/1.08 "DM Sans", sans-serif;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-meta {
+    font-size: 8px;
+    line-height: 1.2;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-detail {
+    font-size: 10px;
+    line-height: 1.3;
+    -webkit-line-clamp: 3;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-links {
+    gap: 2px 7px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-map-link,
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .source-credit {
+    font-size: 7px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar {
+    margin: 4px auto 1px;
+    padding: 4px 6px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar > div {
+    display: flex;
+    gap: 3px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar strong {
+    font-size: 8px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar span {
+    display: inline;
+    font-size: 7px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-toolbar button {
+    min-height: 28px;
+    padding: 4px 8px;
+    font-size: 8px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .selection-summary {
+    margin-top: 2px;
+    padding: 4px 7px;
+    font-size: 10px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .preference-actions {
+    margin-top: 3px;
+  }
+}
+
+@media (max-width: 430px) and (max-height: 740px) {
+  .builder.builder-wide .trip-form[data-current-step="2"] .form-progress span {
+    height: auto;
+    min-height: 0;
+  }
+  .builder .suggestion-swipe-card,
+  .builder.builder-wide .suggestion-swipe-card {
+    grid-template-rows: minmax(0, 3fr) minmax(0, 2fr);
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-intro > p:not(.eyebrow) {
+    display: none;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-body {
+    gap: 2px;
+    padding: 6px 8px;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-top strong {
+    font-size: 15px;
+    line-height: 1.05;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-meta {
+    display: none;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-card-detail {
+    font-size: 9px;
+    line-height: 1.2;
+    -webkit-line-clamp: 2;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .suggestion-map-link {
+    display: none;
+  }
+  .builder.builder-wide .trip-form[data-current-step="2"] .suggestion-swipe-card .source-credit {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 6px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }

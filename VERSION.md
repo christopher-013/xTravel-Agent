@@ -1,5 +1,41 @@
 # Adtona — Version 5 UI working copy
 
+## v5.2.2 photo-first Adventure recommendations
+
+- Stacks every suggested location photo above its description on desktop and mobile, using a two-thirds image / one-third detail composition.
+- Enlarges the responsive recommendation canvas while retaining the swipe, keyboard, redo, skip, include, and favorite behaviors.
+- Compacts the Adventure progress navigation, heading, and explanatory copy so the destination image becomes the visual focus.
+- Moves the small **Not sure where to begin?** auto-pick helper beneath the recommendation deck.
+- Adds short-phone sizing that protects the image area without hiding the location description or 48px decision controls.
+
+## v5.1.17 simplified welcome layout
+
+- Removes the redundant “Turn your trip plan into a mobile travel guide” headline from the merged Trip Basics screen.
+- Replaces the generic mode label with the product-value sentence in the centered eyebrow style.
+- Further simplifies the first screen to the compact prompts **Where?** and **When?**, removes the secondary tagline, and anchors both import and continue actions to the bottom edge.
+- Gives the Adto na continue label a smaller orange brand treatment without changing its validation or navigation behavior.
+- Aligns **Where?** and **When?** in one centered desktop row while retaining the compact stacked layout on phones.
+- Normalizes the destination, date, import, and continue controls to a consistent 48px height and mirrors the two bottom pill actions.
+- Changes the continue label to the compact mixed-case orange treatment **Adto Na. Go Now**.
+- Narrows and compacts the destination and date controls while increasing the breathing room between the brand message, questions, and bottom actions.
+- Caps the centered destination field below the width of its question heading for a lighter, less form-heavy composition.
+- Keeps the concise Adtona tagline, destination/date validation, AI-plan import, and **Adto na - Go now** workflow unchanged.
+
+## v5.1.12 merged welcome + Trip Basics
+
+- Combines the opening Adtona brand screen and Trip Basics into one full-screen, sunrise-over-water experience instead of auto-dismissing into a second screen.
+- Places the destination and travel-date questions directly on the branded welcome screen while preserving autocomplete, validation, saved-draft restore, and the automatic seven-day departure default.
+- Replaces the old importer card with a compact **Import your AI plan** action and advances to Adventure only when the traveler chooses **Adto na - Go now**.
+- Adds responsive and reduced-motion coverage for the merged first screen and updates the V4 UI regression contract so a timer-driven splash cannot return.
+
+## v5.1.11 direct in-app feedback
+
+- Sends feedback to the same-origin `/api/feedback` Cloudflare Worker, which files the GitHub issue server-side without showing a GitHub dialog or requiring a GitHub account.
+- Keeps the GitHub credential in the encrypted `GITHUB_TOKEN` Worker secret and removes every browser-side GitHub fallback.
+- Removes the optional email field because feedback issues are public, adds a clear privacy warning, and hardens the endpoint with origin, media-type, body-size, honeypot, sanitization, rate-limiting, and generic-error controls.
+- Uses only Adtona's existing `bug` and `enhancement` labels so valid issue creation cannot fail because a requested label is missing.
+- Adds an isolated Worker contract test and deploy-configuration checks for the API route and static asset passthrough.
+
 ## v5.1.10 move Getting around & Daily budget into Bookings
 
 - Moved the **Getting around** ("Sets route and rest guidance") and **Daily budget** ("Guides meals and optional experiences") questions from **Travel style** (Step 3) into **Bookings & real-world constraints** (Step 4). Pure markup move — both are still read by their IDs, so preferences, saved-draft restore, and itinerary generation are unchanged.

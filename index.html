@@ -27,7 +27,7 @@
   <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
   <!-- When releasing, update the version string in version.js AND the ?v= value below — they must match. -->
-  <link rel="stylesheet" href="styles.css?v=5.1.10">
+  <link rel="stylesheet" href="styles.css?v=5.2.2">
 </head>
 <body>
   <main class="page-shell">
@@ -41,32 +41,6 @@
     </header>
 
     <section class="builder" id="builder" aria-label="Adtona trip builder">
-      <div class="builder-copy start-splash" id="startSplash" role="region" aria-labelledby="builderTitle" aria-describedby="startSplashDescription" hidden>
-        <div class="builder-hero-lockup">
-          <a class="builder-brand home-brand-lockup" href="#" aria-label="Adtona home"><img class="home-brand-logo" src="adtona-logo.png" alt="Adtona"></a>
-          <div class="builder-hero-message">
-            <p class="eyebrow">Trip website builder · Free browser mode</p>
-            <h1 id="builderTitle">Turn your trip plan into a mobile travel guide.</h1>
-            <p class="lede homepage-tagline" id="startSplashDescription">Plan your trip, then <strong>adto na</strong> — go now. Build a shareable trip website, printable itinerary, and AI-ready planning file, free in your browser.</p>
-          </div>
-        </div>
-        <div class="journey-line" aria-hidden="true">
-          <span class="journey-dot start"></span>
-          <span class="journey-path"></span>
-          <span class="journey-plane">✦</span>
-          <span class="journey-path"></span>
-          <span class="journey-dot end"></span>
-        </div>
-        <div class="trust-note">
-          <span class="avatar-stack" aria-hidden="true"><i>🌊</i><i>🌿</i><i>🏛️</i></span>
-          <span>Built for curious travelers, not tour groups.</span>
-        </div>
-        <div class="start-splash-actions">
-          <button class="start-splash-continue" id="startSplashContinue" type="button">Start planning <span aria-hidden="true">→</span></button>
-          <span class="start-splash-progress" aria-hidden="true"><i></i></span>
-        </div>
-      </div>
-
       <form class="trip-form" id="tripForm">
         <div class="workflow-brand" aria-label="Adtona — go now">
           <span class="workflow-brand-mark" aria-hidden="true"><img src="adtona-mark.png" alt=""></span>
@@ -91,53 +65,59 @@
           </div>
         </div>
 
-        <section class="form-step active" data-form-step="1">
-          <div class="field-group no-number">
-            <div class="field-content">
-              <label for="destination">Where will your adventure take you?</label>
-              <p>One city, a whole country, or anywhere in between.</p>
-              <div class="input-wrap">
-                <span aria-hidden="true">⌖</span>
-                <input id="destination" name="destination" type="text" list="knownDestinationList" placeholder="Start typing a supported destination" autocomplete="off" aria-describedby="destinationHelp destinationModeBadge destinationError" required>
-                <button class="input-clear-button" id="clearDestinationButton" type="button" aria-label="Clear destination" hidden>×</button>
-                <datalist id="knownDestinationList"></datalist>
+        <section class="form-step active merged-start-step" data-form-step="1" aria-label="Trip basics">
+          <div class="merged-start-layout">
+            <div class="builder-hero-lockup">
+              <a class="builder-brand home-brand-lockup" href="#" aria-label="Adtona home">
+                <img class="home-brand-logo" src="adtona-logo.png" alt="Adtona">
+              </a>
+              <div class="builder-hero-message">
+                <p class="eyebrow">Build a shareable trip website, printable itinerary, and AI-ready planning file, free in your browser.</p>
               </div>
-              <small class="destination-help" id="destinationHelp">Choose a catalog suggestion for richer local detail, or enter any destination to create a starter plan and AI-ready research file.</small>
-              <p class="destination-mode-badge" id="destinationModeBadge" role="status" aria-live="polite" hidden></p>
-              <p class="destination-error" id="destinationError" role="alert"></p>
+            </div>
+
+            <div class="merged-start-questions">
+              <div class="field-group no-number">
+                <div class="field-content">
+                  <label for="destination">Where?</label>
+                  <div class="input-wrap">
+                    <span aria-hidden="true">⌖</span>
+                    <input id="destination" name="destination" type="text" list="knownDestinationList" placeholder="Start typing a destination" autocomplete="off" aria-describedby="destinationModeBadge destinationError" required>
+                    <button class="input-clear-button" id="clearDestinationButton" type="button" aria-label="Clear destination" hidden>×</button>
+                    <datalist id="knownDestinationList"></datalist>
+                  </div>
+                  <p class="destination-mode-badge" id="destinationModeBadge" role="status" aria-live="polite" hidden></p>
+                  <p class="destination-error" id="destinationError" role="alert"></p>
+                </div>
+              </div>
+
+              <div class="field-group no-number last">
+                <div class="field-content">
+                  <h2>When?</h2>
+                  <div class="date-grid">
+                    <div class="date-field">
+                      <label for="startDate">Arrive</label>
+                      <input id="startDate" name="startDate" type="date" required>
+                    </div>
+                    <span class="date-arrow" aria-hidden="true">→</span>
+                    <div class="date-field">
+                      <label for="endDate">Depart</label>
+                      <input id="endDate" name="endDate" type="date" required>
+                    </div>
+                  </div>
+                  <p class="date-error" id="dateError" role="alert"></p>
+                </div>
+              </div>
             </div>
           </div>
 
-          <div class="field-group no-number last">
-            <div class="field-content">
-              <label>What dates are you going?</label>
-              <p>Choose your arrival and departure dates.</p>
-              <div class="date-grid">
-                <div class="date-field">
-                  <label for="startDate">Arrive</label>
-                  <input id="startDate" name="startDate" type="date" required>
-                </div>
-                <span class="date-arrow" aria-hidden="true">→</span>
-                <div class="date-field">
-                  <label for="endDate">Depart</label>
-                  <input id="endDate" name="endDate" type="date" required>
-                </div>
-              </div>
-              <p class="date-error" id="dateError" role="alert"></p>
-            </div>
-          </div>
-          <div class="trip-basics-action-row">
-            <div class="trip-basics-end-showcase">
-              <div class="trip-basics-support-row">
-                <button type="button" class="import-callout support-action-card" data-open-import>
-                  <strong>Already have an AI-updated plan?</strong>
-                  <span>Paste the TRIP-PLAN.md your AI returned and re-render your trip website instantly.</span>
-                  <span class="support-card-action">Import updated plan →</span>
-                </button>
-              </div>
-            </div>
-            <button class="primary-button compact-next-button" id="nextStepButton" type="button">
-              <span>Places to See</span>
+          <div class="trip-basics-action-row merged-start-actions">
+            <button type="button" class="merged-import-button" data-open-import>
+              <span aria-hidden="true">↥</span>
+              <strong>Import your AI plan</strong>
+            </button>
+            <button class="primary-button compact-next-button merged-start-continue" id="nextStepButton" type="button">
+              <span class="adtona-action-name">Adto Na. Go Now</span>
               <span aria-hidden="true">→</span>
             </button>
           </div>
@@ -150,11 +130,11 @@
             <p id="adventureStepCopy">Start with the places you would most like to see. Every selection is prioritized once in your daily itinerary.</p>
             <p class="starter-suggestion-note" id="starterSuggestionNote" hidden>Suggestions are limited for this destination — your selections and notes will be preserved for AI research.</p>
           </div>
+          <div class="suggestion-board" id="suggestionBoard" aria-label="Popular destination suggestions"></div>
           <div class="suggestion-toolbar">
             <div><strong>Not sure where to begin?</strong><span>We'll make a balanced mix for your trip length.</span></div>
             <button id="surpriseMeButton" type="button">Choose for me</button>
           </div>
-          <div class="suggestion-board" id="suggestionBoard" aria-label="Popular destination suggestions"></div>
           <div class="selection-summary"><span id="selectionCount">0 selected</span><button id="clearSelectionsButton" type="button">Clear</button></div>
 
           <div class="wizard-actions preference-actions">
@@ -200,7 +180,7 @@
             <button class="primary-button final-create-button" id="createTripButton" type="submit"><span>Create Your Own Adventure</span><span aria-hidden="true">→</span></button>
           </div>
         </section>
-        <p class="form-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="https://github.com/christopher-013/PlanToGuide/issues" target="_blank" rel="noopener noreferrer">send feedback ↗</a></p>
+        <p class="form-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a></p>
       </form>
     </section>
 
@@ -211,7 +191,7 @@
           <a class="brand app-brand" href="#" aria-label="Adtona trip home"><span class="brand-mark"><img src="adtona-mark.png" alt=""></span><span class="brand-wordmark">Adtona</span><span class="brand-go-now" aria-hidden="true">Go. Now</span></a>
           <span class="app-destination" id="appDestination">Your trip</span>
           <div class="trip-header-actions">
-            <a class="export-button feedback-header-link" href="https://github.com/christopher-013/PlanToGuide/issues" target="_blank" rel="noopener noreferrer">Feedback</a>
+            <a class="export-button feedback-header-link" href="#feedback" data-open-feedback>Feedback</a>
             <button class="export-button" id="exportTripButton" type="button">Export</button>
             <button class="export-button" id="editTripButton" type="button">Edit trip</button>
           </div>
@@ -343,7 +323,7 @@
           </section>
         </div>
 
-        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="https://github.com/christopher-013/PlanToGuide/issues" target="_blank" rel="noopener noreferrer">send feedback ↗</a></p>
+        <p class="form-footnote app-footnote">No account needed. Your draft stays in this browser. · Public beta — <a class="feedback-link" href="#feedback" data-open-feedback>send feedback</a></p>
 
         <nav class="app-nav" aria-label="Trip sections">
           <button class="app-nav-button active" type="button" data-tab="home"><span>🏠</span><small>Home</small></button>
@@ -409,7 +389,8 @@
     <span class="export-dialog-icon" aria-hidden="true">💬</span>
     <p class="eyebrow">Public beta</p>
     <h2 id="feedbackDialogTitle">Send feedback</h2>
-    <p>Tell us what worked or what broke. Your note is sent straight to our tracker — no GitHub account or sign-in needed. Add an email only if you'd like a reply.</p>
+    <p>Tell us what worked or what broke. Your note is sent directly from Adtona — no GitHub account, dialog, or sign-in needed.</p>
+    <p class="feedback-privacy"><strong>Public tracker:</strong> Your summary and details will be publicly visible. Do not include passwords, private trip details, email addresses, or other personal information.</p>
     <form id="feedbackForm">
       <fieldset class="feedback-category" aria-label="Feedback type">
         <label><input type="radio" name="feedbackCategory" value="bug" checked> 🐞 Bug</label>
@@ -419,7 +400,7 @@
       </fieldset>
       <label class="feedback-field" for="feedbackSummary"><span>Summary</span><input id="feedbackSummary" type="text" maxlength="120" placeholder="One line — e.g. Weather card overlaps banner" required></label>
       <label class="feedback-field" for="feedbackMessage"><span>Details</span><textarea id="feedbackMessage" rows="5" maxlength="2000" placeholder="What happened, what you expected, and any steps to reproduce."></textarea></label>
-      <label class="feedback-field" for="feedbackEmail"><span>Email <em>(optional, only if you want a reply)</em></span><input id="feedbackEmail" type="email" maxlength="120" placeholder="you@example.com" autocomplete="off"></label>
+      <label class="feedback-honeypot" for="feedbackWebsite" aria-hidden="true" inert>Website<input id="feedbackWebsite" name="website" type="text" tabindex="-1" autocomplete="off" aria-hidden="true"></label>
       <p class="feedback-status" id="feedbackStatus" role="status" aria-live="polite"></p>
       <div class="import-actions">
         <button class="secondary-button" id="feedbackCancel" type="button">Cancel</button>
@@ -454,13 +435,13 @@
     </article>
   </template>
 
-  <script src="version.js?v=5.1.10"></script>
-  <script src="dynamic-catalog.js?v=5.1.10"></script>
-  <script src="export-styles.js?v=5.1.10"></script>
-  <script src="icon-source.js?v=5.1.10"></script>
-  <script src="photo-store.js?v=5.1.10"></script>
-  <script src="trip-schema.js?v=5.1.10"></script>
-  <script src="beta-tools.js?v=5.1.10"></script>
-  <script src="app.js?v=5.1.10"></script>
+  <script src="version.js?v=5.2.2"></script>
+  <script src="dynamic-catalog.js?v=5.2.2"></script>
+  <script src="export-styles.js?v=5.2.2"></script>
+  <script src="icon-source.js?v=5.2.2"></script>
+  <script src="photo-store.js?v=5.2.2"></script>
+  <script src="trip-schema.js?v=5.2.2"></script>
+  <script src="beta-tools.js?v=5.2.2"></script>
+  <script src="app.js?v=5.2.2"></script>
 </body>
 </html>

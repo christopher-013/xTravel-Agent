@@ -13,8 +13,6 @@ const dateError = document.querySelector("#dateError");
 const preferenceError = document.querySelector("#preferenceError");
 const suggestionBoard = document.querySelector("#suggestionBoard");
 const selectionCount = document.querySelector("#selectionCount");
-const startSplash = document.querySelector("#startSplash");
-const startSplashContinue = document.querySelector("#startSplashContinue");
 
 function brandIconSource() {
   return "icons/favicon-32.png";
@@ -302,9 +300,8 @@ const SUGGESTION_DECISION_SWIPE_HOLD_MS = 300;
 const SUGGESTION_DECISION_SWIPE_EXIT_MS = 440;
 let currentFormStep = 1;
 const TRIP_BASICS_BRAND_REPLAY_INTERVAL_MS = 60_000;
-const START_SPLASH_DURATION_MS = 3600;
+const CREATION_TRANSITION_DURATION_MS = 3600;
 let tripBasicsBrandReplayTimer = 0;
-let startSplashTimer = 0;
 let destinationResearchTimer = 0;
 let destinationResearchController = null;
 let destinationResearchState = { query: "", geocode: null, status: "idle" };
@@ -776,12 +773,14 @@ document.querySelector("#addFoodEntry").addEventListener("click", () => addUserE
 document.querySelector("#addShopEntry").addEventListener("click", () => addUserEntry("shop"));
 
 function showBuilder(options = {}) {
-  dismissStartSplash({ immediate: true });
+  if (options.splash) {
+    showStartSplash({ focusDestination: options.focusDestination });
+    return;
+  }
   result.hidden = true;
   builder.hidden = false;
   document.body.classList.remove("trip-mode");
   showFormStep(1);
-  if (options.splash) showStartSplash({ focusDestination: options.focusDestination });
   requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "smooth" }));
 }
 
@@ -1316,19 +1315,15 @@ function crc32(bytes) {
 }
 
 function showStartSplash(options = {}) {
-  if (!startSplash) return;
-  window.clearTimeout(startSplashTimer);
   result.hidden = true;
   builder.hidden = false;
   document.body.classList.remove("trip-mode");
   showFormStep(1);
-  startSplash.dataset.focusDestination = options.focusDestination ? "true" : "false";
-  startSplash.hidden = false;
-  startSplash.classList.remove("is-leaving");
-  builder.classList.add("start-splash-active");
-  document.body.classList.add("start-splash-active");
+  form.classList.remove("merged-start-reveal");
+  void form.offsetWidth;
+  form.classList.add("merged-start-reveal");
 
-  const currentLogo = startSplash.querySelector(".home-brand-lockup img");
+  const currentLogo = form.querySelector('[data-form-step="1"] .home-brand-lockup img');
   if (currentLogo) {
     const replacement = currentLogo.cloneNode(true);
     const source = brandIconAnimationSource();
@@ -1337,50 +1332,19 @@ function showStartSplash(options = {}) {
     releaseBrandIconSource(source);
   }
 
-  requestAnimationFrame(() => startSplashContinue?.focus({ preventScroll: true }));
-  const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  startSplashTimer = window.setTimeout(
-    () => dismissStartSplash({ focusDestination: options.focusDestination }),
-    reducedMotion ? 1100 : START_SPLASH_DURATION_MS
-  );
-}
-
-function dismissStartSplash(options = {}) {
-  if (!startSplash || startSplash.hidden) return;
-  window.clearTimeout(startSplashTimer);
-  startSplashTimer = 0;
-  const focusDestination = options.focusDestination ?? startSplash.dataset.focusDestination === "true";
-  const finish = () => {
-    startSplash.hidden = true;
-    startSplash.classList.remove("is-leaving");
-    builder.classList.remove("start-splash-active");
-    document.body.classList.remove("start-splash-active");
-    form.classList.remove("v4-reveal");
-    void form.offsetWidth;
-    form.classList.add("v4-reveal");
+  requestAnimationFrame(() => {
     forceWizardTop();
-    if (focusDestination) destinationInput.focus({ preventScroll: true });
-    else {
-      const stepTitle = document.querySelector("#formStepTitle");
-      stepTitle?.setAttribute("tabindex", "-1");
-      stepTitle?.focus({ preventScroll: true });
-    }
-  };
-  if (options.immediate || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-    finish();
-    return;
-  }
-  startSplash.classList.add("is-leaving");
-  window.setTimeout(finish, 720);
+    if (options.focusDestination) destinationInput.focus({ preventScroll: true });
+  });
+  scheduleTripBasicsBrandReplay();
 }
-
-startSplashContinue?.addEventListener("click", () => dismissStartSplash({ focusDestination: true }));
 
 function showFormStep(stepNumber) {
   currentFormStep = stepNumber;
   window.ptgTrack?.(`step_reached_${stepNumber}`);
   builder.classList.toggle("builder-wide", stepNumber > 1);
   builder.classList.toggle("builder-adventure", stepNumber === 2);
+  document.body.classList.toggle("trip-basics-mode", stepNumber === 1 && !builder.hidden);
   form.dataset.currentStep = String(stepNumber);
   document.querySelectorAll("[data-form-step]").forEach((step) => {
     const active = Number(step.dataset.formStep) === stepNumber;
@@ -1497,7 +1461,7 @@ async function showTripCreationTransition() {
     };
     skipButton?.addEventListener("click", finish, { once: true });
     // Match the opening splash's logo-screen time.
-    timer = window.setTimeout(finish, reducedMotion ? 1100 : START_SPLASH_DURATION_MS);
+    timer = window.setTimeout(finish, reducedMotion ? 1100 : CREATION_TRANSITION_DURATION_MS);
   });
   safeStorageSet(seenKey, "1");
   overlay.classList.add("finishing");

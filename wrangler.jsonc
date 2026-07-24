@@ -2,13 +2,37 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "adtona",
   "compatibility_date": "2026-07-23",
+  "main": "./feedback-worker.js",
   "observability": {
     "enabled": true
   },
   "build": {
     "command": "node build-cloudflare.mjs"
   },
+  "secrets": {
+    "required": [
+      "GITHUB_TOKEN"
+    ]
+  },
+  "vars": {
+    "GITHUB_REPO": "christopher-013/Adtona",
+    "ALLOWED_ORIGINS": "https://adtona.com,https://www.adtona.com,https://adtona.cch13.workers.dev,http://127.0.0.1:8767,http://localhost:8767"
+  },
+  "ratelimits": [
+    {
+      "name": "FEEDBACK_RATE_LIMITER",
+      "namespace_id": "51011",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    }
+  ],
   "assets": {
-    "directory": "./dist"
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/feedback"
+    ]
   }
 }

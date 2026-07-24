@@ -13,8 +13,8 @@ assert.deepEqual(duplicateIds, [], `index.html contains duplicate IDs: ${duplica
 
 const version = versionSource.match(/PLANTOGUIDE_VERSION\s*=\s*["']([^"']+)/)?.[1];
 assert.ok(version, "version.js must define PLANTOGUIDE_VERSION");
-const assetVersions = [...html.matchAll(/(?:styles\.css|(?:version|dynamic-catalog|export-styles|icon-source|photo-store|trip-schema|app)\.js)\?v=([^"']+)/g)].map((match) => match[1]);
-assert.ok(assetVersions.length >= 8, "index.html should version every core stylesheet and script");
+const assetVersions = [...html.matchAll(/(?:styles\.css|(?:version|dynamic-catalog|export-styles|icon-source|photo-store|trip-schema|beta-tools|app)\.js)\?v=([^"']+)/g)].map((match) => match[1]);
+assert.ok(assetVersions.length >= 9, "index.html should version every core stylesheet and script");
 assert.ok(assetVersions.every((assetVersion) => assetVersion === version), "All index.html cache versions must match version.js");
 
 const encodedStyles = exportStylesSource.match(/XTRAVEL_STYLES_GZIP_BASE64\s*=\s*["']([^"']+)/)?.[1];

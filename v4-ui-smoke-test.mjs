@@ -12,11 +12,27 @@ function functionSource(name) {
   return script.slice(start, next === -1 ? script.length : next);
 }
 
-assert.match(html, /id="startSplash"[^>]*hidden/, "The opening splash markup must start hidden until JavaScript initializes the workflow");
-assert.match(html, /id="startSplashContinue"/, "The splash needs a keyboard-accessible continue button");
-assert.match(script, /function showStartSplash\(/, "The splash must have an explicit show lifecycle");
-assert.match(script, /function dismissStartSplash\(/, "The splash must have an explicit dismiss lifecycle");
-assert.match(styles, /\.start-splash\.is-leaving/, "The splash must expose a fade-away state");
+const stepOneStart = html.indexOf('<section class="form-step active merged-start-step" data-form-step="1"');
+const stepTwoStart = html.indexOf('<section class="form-step" data-form-step="2"');
+const stepThreeStart = html.indexOf('<section class="form-step" data-form-step="3"');
+assert.notEqual(stepOneStart, -1, "Trip Basics must use the merged branded start screen");
+assert.ok(stepTwoStart > stepOneStart, "The merged Trip Basics screen must precede Adventure");
+assert.ok(stepThreeStart > stepTwoStart, "Adventure must precede Travel style");
+const stepOneHtml = html.slice(stepOneStart, stepTwoStart);
+const stepTwoHtml = html.slice(stepTwoStart, stepThreeStart);
+
+assert.match(stepOneHtml, /class="builder-brand home-brand-lockup"[\s\S]*?src="adtona-logo\.png"/, "The merged first screen must show the Adtona logo");
+assert.doesNotMatch(stepOneHtml, /Turn your trip plan into a mobile travel guide\./, "The opening screen must omit the redundant large headline");
+assert.match(stepOneHtml, /class="eyebrow">Build a shareable trip website[\s\S]{0,180}?free in your browser\.<\/p>/, "The compact product-value eyebrow must remain on Trip Basics");
+assert.doesNotMatch(stepOneHtml, /Plan your trip, then/, "The opening screen must omit the secondary tagline");
+assert.match(stepOneHtml, /<label for="destination">Where\?<\/label>/, "The first screen must ask for the destination");
+assert.match(stepOneHtml, /<h2>When\?<\/h2>[\s\S]*?id="startDate"[\s\S]*?id="endDate"/, "The first screen must ask for arrival and departure dates");
+assert.match(stepOneHtml, /data-open-import[\s\S]{0,180}?Import your AI plan/, "The first screen must provide a compact AI-plan importer");
+assert.match(stepOneHtml, /id="nextStepButton"[^>]*type="button"[\s\S]{0,160}?Adto Na\. Go Now/, "The merged first screen must use the requested continue action");
+assert.doesNotMatch(html, /id="startSplash(?:Continue)?"/, "Trip Basics must not be hidden behind a separate splash layer");
+assert.match(script, /function showStartSplash\(/, "Refresh and workflow restarts must have an explicit merged-start lifecycle");
+assert.doesNotMatch(script, /function dismissStartSplash\(/, "The merged first screen must not auto-dismiss while the traveler is typing");
+assert.match(styles, /\.trip-form\[data-current-step="1"\][\s\S]{0,900}?linear-gradient\(150deg,\s*#fff4d6/, "Trip Basics must retain the branded startup background");
 assert.match(styles, /prefers-reduced-motion:\s*reduce/, "The v4 animations must honor reduced-motion preferences");
 
 assert.match(script, /function renderSuggestionDeckCard\(/, "Adventure recommendations must render as a one-card deck");
@@ -35,8 +51,13 @@ assert.match(script, /event\.key !== "ArrowLeft"/, "The deck must support keyboa
 assert.match(styles, /\.suggestion-swipe-card[\s\S]*?touch-action:\s*pan-y/, "The swipe card must preserve vertical page gestures");
 assert.match(script, /loading="eager" draggable="false"/, "Card images must not intercept desktop swipe gestures");
 assert.doesNotMatch(script, /suggestion-swipe-deck" role="region" aria-live=/, "Only the concise deck status should be announced as a live region");
+assert.match(styles, /\.builder\s+\.form-step\[hidden\]\s*\{[^}]*display:\s*none\s*!important/s, "Inactive workflow steps must never paint behind the Adventure deck");
 assert.match(html, /id="backStepButton"/, "Adventure Back navigation must remain available");
 assert.match(html, /id="detailsStepButton"/, "Adventure Next navigation must remain available");
+assert.ok(
+  stepTwoHtml.indexOf('id="suggestionBoard"') < stepTwoHtml.indexOf('class="suggestion-toolbar"'),
+  "The compact auto-pick helper must follow the photo and description deck"
+);
 
 const renderDeckSource = functionSource("renderSuggestionDeckCard");
 const showBuilderSource = functionSource("showBuilder");
@@ -52,7 +73,8 @@ const uniqueActivitiesSource = functionSource("makeActivitiesUnique");
 
 assert.match(script, /renderKnownDestinationOptions\(\);\s*showStartSplash\(\);/, "Every page load must show the opening title, even when a trip is saved");
 assert.doesNotMatch(script, /if\s*\(\s*!hasSavedTripAtLoad\(\)\s*\)\s*showStartSplash\(\)/, "Saved trips must not bypass the opening title");
-assert.match(showStartSplashSource, /result\.hidden\s*=\s*true[\s\S]*builder\.hidden\s*=\s*false[\s\S]*showFormStep\(1\)[\s\S]*startSplash\.hidden\s*=\s*false/, "The title must always prepare Trip Basics as its fade destination");
+assert.match(showStartSplashSource, /result\.hidden\s*=\s*true[\s\S]*builder\.hidden\s*=\s*false[\s\S]*showFormStep\(1\)[\s\S]*merged-start-reveal/, "The title lifecycle must reveal the merged Trip Basics screen");
+assert.doesNotMatch(showStartSplashSource, /setTimeout\(|START_SPLASH_DURATION|dismissStartSplash/, "The merged Trip Basics screen must wait for the traveler's explicit continue action");
 assert.match(showBuilderSource, /options\.splash[\s\S]*showStartSplash/, "Workflow restarts must be able to replay the title");
 assert.match(script, /#editTripButton"\)\.addEventListener\("click",\s*\(\)\s*=>\s*showBuilder\(\{\s*splash:\s*true\s*\}\)\)/, "Edit Trip must restart through the title page");
 assert.match(script, /#newTripButton"\)[\s\S]{0,900}?showBuilder\(\{\s*splash:\s*true,\s*focusDestination:\s*true\s*\}\)/, "New Trip must restart through the title page after clearing the prior trip");
@@ -85,12 +107,15 @@ assert.match(script, /--include-progress/, "Rightward dragging must control only
 // its content instead of growing or scrolling.
 assert.match(styles, /\.suggestion-swipe-shell\s*\{[^}]*grid-template-rows:\s*minmax\(0,\s*1fr\)\s+auto\s+auto/s, "The swipe deck shell must keep the card row flexible (grid-template-rows: minmax(0,1fr) auto auto) so the Skip/Include/Favorite action rail stays visible");
 assert.match(styles, /\.suggestion-swipe-card\s+\.suggestion-card-body\s*\{[^}]*overflow:\s*hidden/s, "The recommendation card body must clip its content (overflow: hidden) so it can't grow and push the action rail below the fold");
-assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-swipe-deck\s*\{[^}]*height:\s*clamp\(250px,\s*34dvh,\s*330px\)[^}]*min-height:\s*clamp\(250px,\s*34dvh,\s*330px\)/s, "Desktop recommendation photography must retain a useful responsive height");
+assert.match(styles, /\.suggestion-swipe-card\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)[^}]*grid-template-rows:\s*minmax\(0,\s*2fr\)\s+minmax\(0,\s*1fr\)/s, "Recommendation cards must stack the photo above the description in a two-thirds/one-third split");
+assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-swipe-deck\s*\{[^}]*height:\s*clamp\(390px,\s*52dvh,\s*560px\)[^}]*min-height:\s*clamp\(390px,\s*52dvh,\s*560px\)/s, "Desktop recommendation photography must retain a large responsive height");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.trip-form\[data-current-step="2"\]\s*\{[^}]*height:\s*100%[^}]*max-height:\s*100%[^}]*min-height:\s*0[^}]*overflow-y:\s*auto/s, "Low-height desktop Adventure screens must scroll instead of clipping the taller card or navigation");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\[data-form-step="2"\]\.active\s*\{[^}]*height:\s*max-content[^}]*min-height:\s*max-content[^}]*overflow:\s*visible/s, "The desktop Adventure step must grow with the taller card so its decision controls cannot overlap the selection summary");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-swipe-shell\s*\{[^}]*grid-template-rows:\s*auto\s+auto\s+auto/s, "The desktop swipe shell must flow the card, decision controls, and hint in separate rows");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-swipe-card\s+\.suggestion-card-body\s*\{[^}]*display:\s*grid[^}]*grid-template-rows:\s*auto\s+auto\s+minmax\(0,\s*1fr\)\s+auto/s, "Desktop recommendation text must reserve independent rows for the title, metadata, bounded description, and links");
 assert.match(styles, /@media\s*\(min-width:\s*761px\)[\s\S]*?\.suggestion-card-body\s*>\s*\*\s*\{[^}]*grid-column:\s*1/s, "Legacy card-column rules must be reset so desktop recommendation text cannot overlap across implicit columns");
+assert.match(styles, /@media\s*\(max-width:\s*760px\)[\s\S]*?\.suggestion-swipe-card\s*\{[^}]*grid-template-rows:\s*minmax\(0,\s*2fr\)\s+minmax\(0,\s*1fr\)/s, "Mobile recommendations must maximize the image while retaining a bounded description");
+assert.doesNotMatch(styles, /grid-template-rows:\s*minmax\(0,\s*38%\)\s+minmax\(0,\s*1fr\)/, "Short phones must not regress to a description-heavy 38% photo");
 assert.match(script, /section\.innerHTML[^;]*suggestion-swipe-actions/s, "Every recommendation group must render the action-rail container");
 
 assert.match(applyDecisionSource, /decision\s*===\s*["']favorite["']/, "Favorite must be a first-class deck decision");
@@ -112,4 +137,4 @@ assert.match(uniqueActivitiesSource, /item\.userSelected\s*\|\|\s*item\.favorite
 const obsoleteZeroSelectionGuard = /if\s*\(\s*!selectedSuggestions\.size\s*&&\s*!wishListInput\.value\.trim\(\)\s*\)/;
 assert.doesNotMatch(script, obsoleteZeroSelectionGuard, "Skipping every card must not dead-end the workflow");
 
-console.log("Version 4 splash and four-action swipe-deck smoke test passed.");
+console.log("Merged welcome screen and four-action swipe-deck smoke test passed.");
